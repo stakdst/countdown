@@ -19,6 +19,8 @@
   }
   *{box-sizing:border-box;-webkit-tap-highlight-color:transparent}
   html,body{margin:0;width:100%;height:100%;min-height:100%;overflow:hidden}
+  html{height:100%;min-height:100dvh;background:#000}
+  body{min-height:100dvh}
   body{
     font-family:-apple-system,BlinkMacSystemFont,"SF Pro JP","Hiragino Sans","Noto Sans JP","Yu Gothic",Meiryo,sans-serif;
     color:var(--text);
@@ -30,7 +32,7 @@
   /* ===== 背景（用意済みの background.PNG のみ） ===== */
   .bg{
     position:fixed;inset:0;z-index:0;
-    width:100%;height:100dvh;min-height:100svh;
+    width:100%;height:100%;min-height:100dvh;
     background-color:#000;
     background-image:url("background.PNG");
     background-position:65% center;
@@ -45,7 +47,7 @@
   .app{
     position:relative;z-index:2;
     width:min(100%,780px);
-    height:100dvh;min-height:100svh;
+    height:100%;min-height:100dvh;
     margin:auto;
     padding:calc(10px + var(--safe-t)) 18px 0;
     display:flex;
@@ -158,11 +160,11 @@
   }
   /* 削除色がカード内部に透けて赤く見えないようにする */
   .item{
-    /* 文字の視認性を上げるため、カードを薄く曇らせる。
-       背景をやや不透明にして、削除用の赤がカード内へ透けにくくする。 */
-    backdrop-filter:blur(9px) saturate(112%);
-    -webkit-backdrop-filter:blur(9px) saturate(112%);
-    background:linear-gradient(135deg,rgba(18,18,22,.38),rgba(18,18,22,.28) 48%,rgba(18,18,22,.24));
+    /* 白く曇らせる。背景をかなり不透明にして文字を見やすくし、
+       削除用の赤がカードへ透けにくいようにする。 */
+    backdrop-filter:blur(12px) saturate(105%);
+    -webkit-backdrop-filter:blur(12px) saturate(105%);
+    background:linear-gradient(135deg,rgba(255,255,255,.34),rgba(255,255,255,.22) 48%,rgba(255,255,255,.13));
   }
   .row-bg .trash{width:26px;height:26px;opacity:.96;transition:transform .18s cubic-bezier(.2,.9,.25,1)}
   .row.armed .row-bg .trash{transform:scale(1.22)}
@@ -276,6 +278,14 @@
   #sortLabel{font-size:13px;opacity:.88;letter-spacing:.05em;font-variant-numeric:tabular-nums}
   #sortBtn .chev{transition:transform .26s cubic-bezier(.2,.9,.25,1);opacity:.7}
   #sortBtn.desc .chev{transform:rotate(180deg)}
+  #sakuraToggle .sakura-status{font-size:12px;opacity:.62;letter-spacing:.04em}
+  #sakuraToggle.paused .sakura-status{opacity:.9;color:#ffd7e6}
+  #sakuraToggle .sp{font-weight:400;letter-spacing:.02em}
+  #sakuraToggle .sw{margin-left:auto}
+  #sakuraToggle .ic{color:#fff}
+  #sakuraToggle .ic svg{display:block;width:23px;height:23px}
+  .sakura-layer.hidden{visibility:hidden;opacity:0;transition:opacity .18s}
+  .sakura-layer{transition:opacity .18s}
   .chips{display:flex;flex-wrap:wrap;gap:6px;margin:4px 6px 0;transition:opacity .2s}
   .chips.off{opacity:.34}
   .chip{
@@ -440,6 +450,20 @@
         <path d="M12 5v14M12 19l-5-5M12 19l5-5"/>
       </svg>
     </button>
+    <div class="divider"></div>
+    <div class="prow" id="sakuraToggle" role="group" aria-label="sakura">
+      <span class="ic">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.55" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+          <path d="M12 11.1c-1.1-2.5-.4-5.2 1.5-6.1 1.9-.9 4.1.7 4.1 2.9 0 2.2-2.2 3.8-5.6 3.2Z"/>
+          <path d="M12.9 11.5c2.7-1.4 5.3-.9 6.1 1 .8 1.9-.9 3.9-3.1 3.8-2.2-.1-3.7-2.3-3-4.8Z"/>
+          <path d="M12.1 12.2c.2 3-1.4 5.2-3.4 5.2-2 0-3.4-2.1-2.7-4.1.7-2 3-2.7 6.1-1.1Z"/>
+          <path d="M11.6 11.3c-2.4-.9-4.9-.1-5.3-2-.4-1.9 1.5-3.5 3.5-3 2 .5 2.9 2.8 1.8 5Z"/>
+          <circle cx="12" cy="12" r="2.05"/>
+        </svg>
+      </span>
+      <span class="sp">sakura</span>
+      <div class="sw on" id="swSakura" role="switch" aria-checked="true" aria-label="sakura"><i></i></div>
+    </div>
   </aside>
 
   <!-- 編集シート -->
@@ -1294,6 +1318,8 @@
   ============================================================ */
   var panel = $('#panel'), menuBtn = $('#menuBtn'), swNotify = $('#swNotify'), chips = $('#chips');
   var sortBtn = $('#sortBtn'), sortLabel = $('#sortLabel');
+  var sakuraToggle = $('#sakuraToggle'), swSakura = $('#swSakura');
+  var sakuraPaused = false;
 
   (function(){
     var html = '';
@@ -1337,6 +1363,31 @@
     panel.classList.add('shake');
     setTimeout(function(){ panel.classList.remove('shake'); }, 400);
   }
+
+  function syncSakuraUI(){
+    swSakura.classList.toggle('on', !sakuraPaused);
+    swSakura.setAttribute('aria-checked', sakuraPaused ? 'false' : 'true');
+    swSakura.setAttribute('aria-label', sakuraPaused ? 'sakura オフ' : 'sakura オン');
+  }
+
+  swSakura.addEventListener('click', function(e){
+    e.preventDefault();
+    e.stopPropagation();
+    if (!window.sakuraPetals) return;
+    if (sakuraPaused) {
+      try { window.sakuraPetals.play(); } catch(err) {}
+      document.getElementById('sakura').classList.remove('hidden');
+      sakuraPaused = false;
+    } else {
+      try { window.sakuraPetals.pause(); } catch(err) {}
+      /* 停止時は花びらを画面から消す */
+      document.getElementById('sakura').classList.add('hidden');
+      sakuraPaused = true;
+    }
+    syncSakuraUI();
+    haptic(8);
+  });
+  syncSakuraUI();
 
   /* --- 並び替え（昇順 / 降順トグル） --- */
   function rank(it, now){
