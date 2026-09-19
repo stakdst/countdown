@@ -22,13 +22,11 @@
       );
     --glass-highlight:rgba(255,255,255,.26);
     --glass-shadow:rgba(0,0,0,.22);
-/* == 透明感を個別調整 == */
     --card-glass-1:rgba(255,255,255,.40);
     --card-glass-2:rgba(255,255,255,.20);
     --card-glass-3:rgba(255,255,255,.08);
     --control-glass-1:rgba(255,255,255,.13);
     --control-glass-2:rgba(255,255,255,.045);
-    /* 追加画面はガラス感をかなり弱め、白を強める */
     --sheet-glass-1:rgba(255,255,255,.88);
     --sheet-glass-2:rgba(255,255,255,.72);
     --item-h:50px;
@@ -36,7 +34,6 @@
     --safe-t:env(safe-area-inset-top,0px);
     --safe-b:env(safe-area-inset-bottom,0px);
   }
-  /* カードと同じ文字影を追加画面にも適用 */
   .item .ttl,
   .item .card-date,
   .item .count,
@@ -50,7 +47,6 @@
   .sheet .gbtn{
     text-shadow:0 2px 5px rgba(0,0,0,.68), 0 1px 2px rgba(0,0,0,.48);
   }
-  /* 追加画面のTITLEは黒ずませない */
   .sheet .tinput{
     color:#fff;
     -webkit-text-fill-color:#fff;
@@ -100,7 +96,7 @@
     background-position:55% center;
     background-size:cover;
     background-repeat:no-repeat;
-    vertical-align:bottom;
+    vertical-align: top;
   }
   .sakura-layer{
     position:fixed;
