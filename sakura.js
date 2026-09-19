@@ -223,10 +223,10 @@
             : 0.7;
       const speed =
         depth === "near"
-          ? rand(30, 42)
+          ? rand(41, 56)
           : depth === "far"
-            ? rand(12, 18)
-            : rand(20, 30);
+            ? rand(16, 23)
+            : rand(27, 39);
       const travelX = rand(135, 170);
       const travelY = rand(115, 155);
       <!-- const travelX = rand(105, 140); -->
