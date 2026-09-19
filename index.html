@@ -18,7 +18,7 @@
     --safe-b:env(safe-area-inset-bottom,0px);
   }
   *{box-sizing:border-box;-webkit-tap-highlight-color:transparent}
-  html,body{margin:0;width:100%;height:100%;overflow:hidden}
+  html,body{margin:0;width:100%;height:100%;min-height:100%;overflow:hidden}
   body{
     font-family:-apple-system,BlinkMacSystemFont,"SF Pro JP","Hiragino Sans","Noto Sans JP","Yu Gothic",Meiryo,sans-serif;
     color:var(--text);
@@ -30,9 +30,10 @@
   /* ===== 背景（用意済みの background.PNG のみ） ===== */
   .bg{
     position:fixed;inset:0;z-index:0;
+    width:100%;height:100dvh;min-height:100svh;
     background-color:#000;
     background-image:url("background.PNG");
-    background-position:center center;
+    background-position:65% center;
     background-size:cover;
     background-repeat:no-repeat;
   }
@@ -44,7 +45,7 @@
   .app{
     position:relative;z-index:2;
     width:min(100%,780px);
-    height:100%;
+    height:100dvh;min-height:100svh;
     margin:auto;
     padding:calc(10px + var(--safe-t)) 18px 0;
     display:flex;
@@ -157,9 +158,11 @@
   }
   /* 削除色がカード内部に透けて赤く見えないようにする */
   .item{
-    backdrop-filter:none;
-    -webkit-backdrop-filter:none;
-    background:linear-gradient(135deg,rgba(255,255,255,.22),rgba(255,255,255,.065) 48%,rgba(255,255,255,.03));
+    /* 文字の視認性を上げるため、カードを薄く曇らせる。
+       背景をやや不透明にして、削除用の赤がカード内へ透けにくくする。 */
+    backdrop-filter:blur(9px) saturate(112%);
+    -webkit-backdrop-filter:blur(9px) saturate(112%);
+    background:linear-gradient(135deg,rgba(18,18,22,.38),rgba(18,18,22,.28) 48%,rgba(18,18,22,.24));
   }
   .row-bg .trash{width:26px;height:26px;opacity:.96;transition:transform .18s cubic-bezier(.2,.9,.25,1)}
   .row.armed .row-bg .trash{transform:scale(1.22)}
@@ -932,7 +935,7 @@
   ============================================================ */
   var OPEN_X = -96;      // 1段階目：ゴミ箱を露出させる位置
   var CONFIRM_X = -168;  // 2段階目：ここを越えて離すと削除
-  var DEL_X = -220;      // ドラッグ上限
+  var DEL_X = -9999;    // 赤色が途中で止まらないよう、実質的な上限を設けない
   var openRow = null;
   var sheetOpen = false;
   var blockTouch = function(e){ e.preventDefault(); };
@@ -1090,11 +1093,12 @@
         var base = opened ? OPEN_X : 0;
         var v = base + dx;
         if (v > 0) v = v * 0.22;
-        if (v < DEL_X) v = DEL_X + (v - DEL_X) * 0.35;
+        /* 左フリックの距離に合わせて赤色を最後まで伸ばす。
+           固定の上限を設けない。 */
         tx = v;
         card.style.transform = 'translateX(' + v + 'px)';
         /* 赤色の左端をカードの右端に追従させる */
-        row.style.setProperty('--delete-width', Math.max(0, Math.min(220, -v)) + 'px');
+        row.style.setProperty('--delete-width', Math.max(0, -v) + 'px');
         // 2段階目のアーム表示（1段階目では削除しない）
         var armed = opened && v < CONFIRM_X;
         if (armed !== wasArmed) {
@@ -1409,6 +1413,6 @@
   document.addEventListener('gesturestart', function(e){ e.preventDefault(); });
 })();
 </script>
-<script src="./sakura2.js"></script>
+<script src="./sakura.js"></script>
 </body>
 </html>
