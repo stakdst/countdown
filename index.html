@@ -22,7 +22,7 @@
       );
     --glass-highlight:rgba(255,255,255,.26);
     --glass-shadow:rgba(0,0,0,.22);
-/* == 透明感を個別調整 == */
+    /* == 透明感を個別調整 == */
     --card-glass-1:rgba(255,255,255,.40);
     --card-glass-2:rgba(255,255,255,.20);
     --card-glass-3:rgba(255,255,255,.08);
@@ -49,6 +49,14 @@
   .sheet .sheet-hint,
   .sheet .gbtn{
     text-shadow:0 2px 5px rgba(0,0,0,.68), 0 1px 2px rgba(0,0,0,.48);
+  }
+  /* 追加画面のTITLEは黒ずませない */
+  .sheet .tinput{
+    color:#fff;
+    -webkit-text-fill-color:#fff;
+    text-shadow:
+      0 1px 2px rgba(0,0,0,.55),
+      0 2px 5px rgba(0,0,0,.28);
   }
   *{
     box-sizing:border-box;
@@ -691,17 +699,19 @@
     padding:10px 20px calc(20px + var(--safe-b));
     transition:transform .34s cubic-bezier(.22,.9,.24,1);
     will-change:transform;
+    /* メニューと同じ「すりガラス」 */
     background:
       linear-gradient(
-        135deg,
-        var(--sheet-glass-1),
-        var(--sheet-glass-2) 55%,
-        rgba(255,255,255,.62)
+        145deg,
+        var(--control-glass-1),
+        var(--control-glass-2)
       );
     box-shadow:
       inset 0 1px 1px var(--glass-highlight),
       inset 0 -1px 1px rgba(0,0,0,.08),
       0 12px 34px var(--glass-shadow);
+    backdrop-filter:blur(22px) saturate(130%);
+    -webkit-backdrop-filter:blur(22px) saturate(130%);
   }
   .sheet.show{
     transform:translate(-50%,0)
@@ -723,7 +733,7 @@
     border:1px solid rgba(255,255,255,.22);
     background:rgba(255,255,255,.075);
     color:#fff;
-    font-size:18px;
+    font-size:24px;
     font-weight:600;
     padding:13px 16px;
     border-radius:15px;
@@ -735,7 +745,7 @@
   .tinput::placeholder{
     color:rgba(255,255,255,.50);
     font-weight:600;
-    font-size:15px;
+    font-size:20px;
     letter-spacing:.3em;
     text-indent:.3em
   }
@@ -2568,7 +2578,7 @@
     var o =
       split(diff);
     hintEl.textContent =
-      (o.past ? '+' : '−') +
+      (o.past ? '+' : '') +
       o.day +
       '日 ' +
       formatRest(o);
@@ -3249,6 +3259,6 @@
   );
 })();
 </script>
-<script src="./sakura.js"></script>
+<script src="./sakura2.js"></script>
 </body>
 </html>
