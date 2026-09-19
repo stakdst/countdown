@@ -1,19 +1,6 @@
-/*
-画面右上と画面左下に花びらがない画面全体に花びらがある様に注意して。
-
-あと、花びらにレイヤーをつけ、画面の背景を舞う花びらと、最前列を舞う花びら（少量）を実装して。
-
-コード全体を出力して
-/*
-
-
-
+// File: sakura.js
 /* sakura.js
- * Bloom の「花びら」部分だけを独立させたスタンドアロン版。
- * 右下から左上へ、強い風に吹かれるように花びらが舞います。
- *
- * 使い方:
- *   <script src="./sakura.js"></script>
+ * 画面全体（四隅を含む）に花びらが舞うバージョン
  *
  * 任意:
  *   window.sakuraPetals.setCount(40);
@@ -26,7 +13,7 @@
 
   const STYLE_ID = "sakura-petals-style";
   const CONTAINER_ID = "sakura-petals";
-  const DEFAULT_COUNT = 30;
+  const DEFAULT_COUNT = 36;
 
   const css = `
     #${CONTAINER_ID} {
@@ -98,46 +85,28 @@
     }
 
     /*
-     * 右下 → 左上
+     * 風に流される移動。
      *
-     * 0%   : 画面右下
-     * 36%  : 右下から左上へ移動
-     * 67%  : 画面中央より上
-     * 100% : 画面左上
+     * 開始点（--sakura-start-x / --sakura-start-y）と
+     * 終了点（--sakura-end-x / --sakura-end-y）を
+     * 花びらごとにJS側で与えるため、
+     * 画面右上・左下を含む全域を通過します。
      */
     @keyframes sakura-wind {
-      0% {
+      from {
         transform:
           translate3d(
-            120vw,
+            var(--sakura-start-x),
             var(--sakura-start-y),
             0
           );
       }
 
-      36% {
+      to {
         transform:
           translate3d(
-            75vw,
-            calc(var(--sakura-start-y) - var(--sakura-rise) * 0.3),
-            0
-          );
-      }
-
-      67% {
-        transform:
-          translate3d(
-            35vw,
-            calc(var(--sakura-start-y) - var(--sakura-rise) * 0.65),
-            0
-          );
-      }
-
-      100% {
-        transform:
-          translate3d(
-            -16vw,
-            calc(var(--sakura-start-y) - var(--sakura-rise)),
+            var(--sakura-end-x),
+            var(--sakura-end-y),
             0
           );
       }
@@ -202,6 +171,11 @@
       }
     }
   `;
+
+  /*
+   * min〜maxの乱数
+   */
+  const rand = (min, max) => min + Math.random() * (max - min);
 
   class SakuraPetals {
     constructor(options = {}) {
@@ -276,6 +250,94 @@
       );
     }
 
+    /*
+     * 1枚分のパラメータを生成
+     *
+     * 風は「右下 → 左上」方向ですが、
+     * 出現位置を右辺・下辺の両方に分散させることで、
+     * 画面右上と左下も花びらが通過します。
+     */
+    createPetalParams(index) {
+      /*
+       * 奥行き（大きさ・速度・透明度）
+       */
+      const depthRoll = Math.random();
+
+      const depth =
+        depthRoll < 0.16
+          ? "near"
+          : depthRoll < 0.56
+            ? "far"
+            : "mid";
+
+      const size =
+        depth === "near"
+          ? rand(14, 20)
+          : depth === "far"
+            ? rand(4, 7)
+            : rand(7, 12);
+
+      const opacity =
+        depth === "near"
+          ? 0.8
+          : depth === "far"
+            ? 0.42
+            : 0.7;
+
+      /*
+       * 1秒あたりの移動量（画面幅換算）
+       */
+      const speed =
+        depth === "near"
+          ? rand(52, 70)
+          : depth === "far"
+            ? rand(19, 28)
+            : rand(34, 48);
+
+      /*
+       * 移動ベクトル（左上方向）
+       *
+       * 画面を必ず横断しきる距離を確保します。
+       */
+      const travelX = rand(135, 170);
+      const travelY = rand(115, 155);
+
+      /*
+       * 出現位置
+       *
+       * index の偶奇で右辺／下辺に振り分け、
+       * さらに座標を乱数で散らします。
+       *
+       * ・右辺出現 → 画面右上〜右下をカバー
+       * ・下辺出現 → 画面左下〜右下をカバー
+       */
+      const fromRightEdge = index % 2 === 0;
+
+      const startX = fromRightEdge
+        ? rand(101, 118)
+        : rand(-12, 116);
+
+      const startY = fromRightEdge
+        ? rand(-18, 116)
+        : rand(101, 118);
+
+      const distance =
+        Math.hypot(travelX, travelY);
+
+      return {
+        depth,
+        size,
+        opacity,
+        startX,
+        startY,
+        endX: startX - travelX,
+        endY: startY - travelY,
+        duration: distance / speed,
+        swayDuration: rand(0.9, 2.2),
+        rotationDuration: rand(1.3, 3.1)
+      };
+    }
+
     createPetals() {
       if (!this.container) {
         return;
@@ -289,6 +351,9 @@
         index < this.count;
         index += 1
       ) {
+        const params =
+          this.createPetalParams(index);
+
         const path =
           document.createElement("div");
 
@@ -298,46 +363,8 @@
         const petal =
           document.createElement("div");
 
-        const near =
-          index % 7 === 0;
-
-        const far =
-          !near &&
-          index % 3 === 0;
-
-        const size = near
-          ? 15 + (index % 7)
-          : far
-            ? 4 + (index % 3)
-            : 7 + (index % 6);
-
-        /*
-         * 元の速度から1.5倍速。
-         *
-         * 例:
-         * 6秒 → 4秒
-         * 9秒 → 6秒
-         *
-         * 「時間を2/3にする」ことで
-         * 移動速度が1.5倍になります。
-         */
-        const baseDuration = near
-          ? 5.5 + (index % 3)
-          : far
-            ? 13 + (index % 5)
-            : 7.5 + (index % 5);
-
-        const duration =
-          baseDuration / 1.5;
-
         path.className =
-          `sakura-petal-path${
-            near
-              ? " near"
-              : far
-                ? " far"
-                : ""
-          }`;
+          `sakura-petal-path ${params.depth}`;
 
         sway.className =
           "sakura-petal-sway";
@@ -347,73 +374,57 @@
 
         path.style.setProperty(
           "--sakura-size",
-          `${size}px`
+          `${params.size.toFixed(2)}px`
         );
 
-        /*
-         * 開始位置を画面下部にする。
-         *
-         * 80vh〜114vhの範囲なので、
-         * 画面の右下から入ってくるようになります。
-         */
+        path.style.setProperty(
+          "--sakura-start-x",
+          `${params.startX.toFixed(2)}vw`
+        );
+
         path.style.setProperty(
           "--sakura-start-y",
-          `${80 + ((index * 43) % 35)}vh`
+          `${params.startY.toFixed(2)}vh`
         );
 
-        /*
-         * 下から上へ移動する距離。
-         *
-         * 100vh〜139vh程度上昇するため、
-         * 最終的に画面左上へ抜けていきます。
-         */
         path.style.setProperty(
-          "--sakura-rise",
-          `${100 + ((index * 11) % 40)}vh`
+          "--sakura-end-x",
+          `${params.endX.toFixed(2)}vw`
         );
 
-        /*
-         * 1.5倍速になった移動時間
-         */
+        path.style.setProperty(
+          "--sakura-end-y",
+          `${params.endY.toFixed(2)}vh`
+        );
+
         path.style.setProperty(
           "--sakura-duration",
-          `${duration}s`
+          `${params.duration.toFixed(2)}s`
         );
 
         /*
-         * 花びらごとに開始タイミングをずらす
+         * 負のディレイを移動時間の範囲内でばらつかせ、
+         * 初期表示の時点から画面全域に
+         * 花びらが散っている状態にします。
          */
         path.style.setProperty(
           "--sakura-delay",
-          `${-((index * 2.73) % 23)}s`
+          `${(-Math.random() * params.duration).toFixed(2)}s`
         );
 
-        /*
-         * 花びらの左右・上下の揺れ
-         */
         path.style.setProperty(
           "--sakura-sway-duration",
-          `${0.9 + (index % 5) * 0.3}s`
+          `${params.swayDuration.toFixed(2)}s`
         );
 
-        /*
-         * 花びらの回転速度
-         */
         path.style.setProperty(
           "--sakura-rotation-duration",
-          `${1.3 + (index % 6) * 0.35}s`
+          `${params.rotationDuration.toFixed(2)}s`
         );
 
-        /*
-         * 奥行きによる透明度
-         */
         path.style.setProperty(
           "--sakura-opacity",
-          near
-            ? "0.8"
-            : far
-              ? "0.42"
-              : "0.7"
+          String(params.opacity)
         );
 
         sway.append(petal);
