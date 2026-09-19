@@ -1,6713 +1,3355 @@
+
+
 <!doctype html>
-
 <html lang="ja">
-
 <head>
-
 <meta charset="utf-8">
-
 <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover,maximum-scale=1,user-scalable=no">
-
 <meta name="theme-color" content="#000000">
-
 <meta name="apple-mobile-web-app-capable" content="yes">
-
 <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
-
 <title>SAKURA COUNTDOWN</title>
-
 <style>
-
-   :root{
+  :root{
     --text:#fff;
     --accent:#ff87b2;
-
-    /* ===== ガラスの透明感 =====
-       数値を下げるほど透明に、上げるほど不透明になります。 */
-    --glass-line-alpha:.22;
-    --glass-top-alpha:.14;
-    --glass-mid-alpha:.055;
-    --glass-bottom-alpha:.025;
-    --glass-highlight-alpha:.24;
-    --glass-shadow-alpha:.20;
-
-    /* 追加ボタン / 追加画面 */
-    --glass-action-top-alpha:.16;
-    --glass-action-bottom-alpha:.055;
-    --glass-blur:20px;
-
+    /* ===== ガラス共通 ===== */
+    --glass-line:rgba(255,255,255,.25);
+    --glass-bg:
+      linear-gradient(
+        135deg,
+        var(--card-glass-1),
+        var(--card-glass-2) 48%,
+        var(--card-glass-3)
+      );
+    --glass-highlight:rgba(255,255,255,.26);
+    --glass-shadow:rgba(0,0,0,.22);
+    /* ===== 透明感を個別調整 =====
+       数値を小さくすると透明に、大きくすると不透明に。 */
+    --card-glass-1:rgba(255,255,255,.11);
+    --card-glass-2:rgba(255,255,255,.035);
+    --card-glass-3:rgba(255,255,255,.012);
+    --control-glass-1:rgba(255,255,255,.13);
+    --control-glass-2:rgba(255,255,255,.045);
+    --sheet-glass-1:rgba(255,255,255,.14);
+    --sheet-glass-2:rgba(255,255,255,.045);
     --item-h:50px;
     --view-h:150px;
     --safe-t:env(safe-area-inset-top,0px);
     --safe-b:env(safe-area-inset-bottom,0px);
   }
-
-  *{
-
-    box-sizing:border-box;
-
-    -webkit-tap-highlight-color:transparent
-
-  }
-
-  html,body{
-
-    margin:0;
-
-    width:100%;
-
-    height:100%;
-
-    min-height:100%;
-
-    overflow:hidden
-
-  }
-
-  html{
-
-    height:100%;
-
-    min-height:100dvh;
-
-  }
-
-  body{
-
-    min-height:100dvh;
-
-    font-family:
-
-      -apple-system,
-
-      BlinkMacSystemFont,
-
-      "SF Pro JP",
-
-      "Hiragino Sans",
-
-      "Noto Sans JP",
-
-      "Yu Gothic",
-
-      Meiryo,
-
-      sans-serif;
-
-    color:var(--text);
-
-    touch-action:manipulation;
-
-    -webkit-font-smoothing:antialiased;
-
-  }
-
-  /* ============================================================
-
-     背景
-
-  ============================================================ */
-
-  .bg{
-
-    position:fixed;
-
-    inset:0;
-
-    z-index:0;
-
-    width:100%;
-
-    height:100%;
-
-    min-height:100dvh;
-
-    background-image:url("background.PNG");
-
-    background-position:55% center;
-
-    background-size:cover;
-
-    background-repeat:no-repeat;
-
-  }
-
-  .sakura-layer{
-
-    position:fixed;
-
-    inset:0;
-
-    z-index:1;
-
-    pointer-events:none;
-
-    transition:opacity .18s ease;
-
-  }
-
-  .sakura-layer.hidden{
-
-    visibility:hidden;
-
-    opacity:0;
-
-  }
-
-  canvas{
-
-    pointer-events:none;
-
-  }
-
-  /* ============================================================
-
-     共通ガラス
-
-  ============================================================ */
-
-  .glass{
-
-    border:1px solid rgba(255,255,255,var(--glass-line-alpha));
-
-    background:var(--glass-bg);
-
-    box-shadow:
-
-      inset 0 1px 1px rgba(255,255,255,var(--glass-highlight-alpha)),
-
-      inset 0 -1px 1px rgba(0,0,0,.08),
-
-      0 12px 34px rgba(0,0,0,var(--glass-shadow-alpha));
-
-    /*
-
-      backdrop-filter は panel / sheet / FAB のみに使用。
-
-      大量のカードでは使用しないことでGPU負荷を抑える。
-
-    */
-
-  }
-
-  /* ============================================================
-
-     レイアウト
-
-  ============================================================ */
-
-  .app{
-
-    position:relative;
-
-    z-index:2;
-
-    width:min(100%,780px);
-
-    height:100%;
-
-    min-height:100dvh;
-
-    margin:auto;
-
-    padding:calc(10px + var(--safe-t)) 18px 0;
-
-    display:flex;
-
-    flex-direction:column;
-
-  }
-
-  .topbar{
-
-    flex:0 0 auto;
-
-    position:relative;
-
-    min-height:70px;
-
-    display:flex;
-
-    flex-direction:column;
-
-    align-items:center;
-
-    justify-content:center;
-
-    gap:5px;
-
-    padding:6px 42px 10px;
-
-  }
-
-  .brand{
-
-    font-size:clamp(14px,4.2vw,21px);
-
-    font-weight:600;
-
-    letter-spacing:.16em;
-
-    text-indent:.16em;
-
-    white-space:nowrap;
-
-    opacity:.95;
-
-    text-shadow:0 2px 12px rgba(0,0,0,.45);
-
-  }
-
-  .now{
-
-    display:flex;
-
-    align-items:baseline;
-
-    justify-content:center;
-
-    gap:clamp(12px,4vw,22px);
-
-    font-size:clamp(13px,4vw,18px);
-
-    font-weight:300;
-
-    letter-spacing:.04em;
-
-    font-variant-numeric:tabular-nums;
-
-    text-shadow:0 2px 9px rgba(0,0,0,.4);
-
-    white-space:nowrap;
-
-  }
-
-  .iconbtn{
-
-    -webkit-appearance:none;
-
-    appearance:none;
-
-    border:0;
-
-    background:transparent;
-
-    padding:0;
-
-    margin:0;
-
-    color:#fff;
-
-    display:grid;
-
-    place-items:center;
-
-    cursor:pointer;
-
-  }
-
-  .topbar .menu{
-
-    position:absolute;
-
-    right:0;
-
-    top:calc(50% - 20px);
-
-    width:40px;
-
-    height:40px;
-
-    border-radius:50%;
-
-  }
-
-  .hamburger{
-
-    display:flex;
-
-    flex-direction:column;
-
-    gap:6px;
-
-    width:24px;
-
-    filter:drop-shadow(0 2px 5px rgba(0,0,0,.35))
-
-  }
-
-  .hamburger span{
-
-    height:2px;
-
-    width:24px;
-
-    background:#fff;
-
-    border-radius:2px;
-
-    transition:.26s cubic-bezier(.3,.9,.3,1)
-
-  }
-
-  .menu.open .hamburger span:nth-child(1){
-
-    transform:translateY(8px) rotate(45deg)
-
-  }
-
-  .menu.open .hamburger span:nth-child(2){
-
-    opacity:0;
-
-    transform:scaleX(.3)
-
-  }
-
-  .menu.open .hamburger span:nth-child(3){
-
-    transform:translateY(-8px) rotate(-45deg)
-
-  }
-
-  /* ============================================================
-
-     リスト
-
-  ============================================================ */
-
-  .list{
-
-    flex:1 1 auto;
-
-    overflow-y:auto;
-
-    overflow-x:hidden;
-
-    -webkit-overflow-scrolling:touch;
-
-    scrollbar-width:none;
-
-    padding:4px 2px calc(130px + var(--safe-b));
-
-    overscroll-behavior:contain;
-
-  }
-
-  .list::-webkit-scrollbar{
-
-    display:none
-
-  }
-
-  .list.locked{
-
-    overflow:hidden
-
-  }
-
-  .row{
-
-    position:relative;
-
-    margin:0 0 14px;
-
-    border-radius:22px;
-
-    transition:transform .2s cubic-bezier(.2,.9,.25,1);
-
-  }
-
-  .row.dragging{
-
-    z-index:5;
-
-    transition:none
-
-  }
-
-  .row.removing{
-
-    transition:
-
-      transform .26s ease,
-
-      opacity .26s ease,
-
-      height .26s ease,
-
-      margin .26s ease
-
-  }
-
-  @keyframes pop{
-
-    from{
-
-      opacity:0;
-
-      transform:translateY(12px)
-
-    }
-
-    to{
-
-      opacity:1;
-
-      transform:none
-
-    }
-
-  }
-
-  .row.pop{
-
-    animation:pop .34s cubic-bezier(.2,.9,.25,1) both
-
-  }
-
-  /* ============================================================
-
-     削除背景
-
-  ============================================================ */
-
-  .row-bg{
-
-    position:absolute;
-
-    top:0;
-
-    right:0;
-
-    bottom:0;
-
-    width:var(--delete-width,0px);
-
-    border-radius:0 22px 22px 0;
-
-    background:transparent;
-
-    display:flex;
-
-    align-items:center;
-
-    justify-content:center;
-
-    padding-right:0;
-
-    opacity:0;
-
-    transition:opacity .16s,background .2s;
-
-    cursor:pointer;
-
-    z-index:0;
-
-  }
-
-  .row.swiping .row-bg,
-
-  .row.open .row-bg{
-
-    opacity:1;
-
-    background:rgba(255,60,105,.62);
-
-  }
-
-  .row.armed .row-bg{
-
-    background:rgba(255,60,105,.62);
-
-  }
-
-  .row-bg .trash{
-
-    width:26px;
-
-    height:26px;
-
-    opacity:.96;
-
-    transition:transform .18s cubic-bezier(.2,.9,.25,1)
-
-  }
-
-  .row.armed .row-bg .trash{
-
-    transform:scale(1.22)
-
-  }
-
-  /* ============================================================
-
-     カード
-
-  ============================================================ */
-
-  .item{
-
-    position:relative;
-
-    z-index:1;
-
-    padding:20px 22px 22px;
-
-    border-radius:22px;
-
-    overflow:hidden;
-
-    /*
-
-      カードは透明感を上げつつ、
-
-      backdrop-filterを使わない。
-
-      カード数が増えた場合のGPU負荷を大幅に抑える。
-
-    */
-
-    background:
-
-      linear-gradient(
-
-        135deg,
-
-        rgba(255,255,255,.16),
-
-        rgba(255,255,255,.055) 48%,
-
-        rgba(255,255,255,.025)
-
-      );
-
-    text-shadow:0 2px 8px rgba(0,0,0,.30);
-
-    touch-action:pan-y;
-
-    cursor:pointer;
-
-    will-change:transform;
-
-    box-shadow:
-
-      inset 0 1px 1px rgba(255,255,255,var(--glass-highlight-alpha)),
-
-      inset 0 -1px 1px rgba(0,0,0,.08);
-
-  }
-
-  .item::before{
-
-    content:"";
-
-    position:absolute;
-
-    inset:1px;
-
-    border-radius:21px;
-
-    pointer-events:none;
-
-    background:
-
-      linear-gradient(
-
-        120deg,
-
-        rgba(255,255,255,.12),
-
-        transparent 30%,
-
-        transparent 72%,
-
-        rgba(255,255,255,.035)
-
-      );
-
-  }
-
-  .row.dragging .item{
-
-    box-shadow:
-
-      inset 0 1px 1px rgba(255,255,255,.38),
-
-      inset 0 -1px 1px rgba(0,0,0,.08);
-
-    background:
-
-      linear-gradient(
-
-        135deg,
-
-        rgba(255,255,255,.19),
-
-        rgba(255,255,255,.065)
-
-      );
-
-    border-color:rgba(255,255,255,.42);
-
-  }
-
-  .label{
-
-    position:relative;
-
-    z-index:1;
-
-    display:flex;
-
-    align-items:baseline;
-
-    gap:10px;
-
-    font-size:20px;
-
-    line-height:1.25;
-
-    font-weight:600;
-
-    margin-bottom:6px;
-
-    min-width:0;
-
-    padding-right:26px;
-
-  }
-
-  .label .ttl{
-
-    overflow:hidden;
-
-    text-overflow:ellipsis;
-
-    white-space:nowrap;
-
-    min-width:0
-
-  }
-
-  .card-date{
-
-    flex:0 0 auto;
-
-    font-size:12px;
-
-    font-weight:400;
-
-    opacity:.9;
-
-    letter-spacing:.02em;
-
-    white-space:nowrap;
-
-    font-variant-numeric:tabular-nums
-
-  }
-
-  .count{
-
-    position:relative;
-
-    z-index:1;
-
-    display:block;
-
-    font-size:clamp(32px,8vw,62px);
-
-    line-height:1.08;
-
-    font-weight:250;
-
-    letter-spacing:-.02em;
-
-    white-space:nowrap;
-
-    font-variant-numeric:tabular-nums;
-
-  }
-
-  .count .n{
-
-    display:inline-block;
-
-    min-width:3ch;
-
-    text-align:right;
-
-    font-variant-numeric:tabular-nums;
-
-  }
-
-  .count small{
-
-    font-size:.74em;
-
-    font-weight:300;
-
-    letter-spacing:-.01em;
-
-    opacity:.96
-
-  }
-
-  .item.past .count{
-
-    color:#ffd3e2
-
-  }
-
-  .item.soon .count{
-
-    color:#fff0f5;
-
-    text-shadow:
-
-      0 0 18px rgba(255,120,170,.65),
-
-      0 2px 8px rgba(0,0,0,.3)
-
-  }
-
-  .item.soon::after{
-
-    content:"";
-
-    position:absolute;
-
-    inset:-1px;
-
-    border-radius:22px;
-
-    pointer-events:none;
-
-    border:1px solid rgba(255,150,185,.55);
-
-    animation:pulse 1.6s ease-in-out infinite;
-
-  }
-
-  @keyframes pulse{
-
-    0%,100%{opacity:.25}
-
-    50%{opacity:.85}
-
-  }
-
-  .bar{
-
-    position:relative;
-
-    z-index:1;
-
-    margin-top:12px;
-
-    height:3px;
-
-    border-radius:3px;
-
-    background:rgba(255,255,255,.16);
-
-    overflow:hidden
-
-  }
-
-  .bar i{
-
-    display:block;
-
-    height:100%;
-
-    width:0;
-
-    border-radius:3px;
-
-    background:linear-gradient(
-
-      90deg,
-
-      rgba(255,255,255,.75),
-
-      var(--accent)
-
-    )
-
-  }
-
-  .bell-dot{
-
-    position:absolute;
-
-    right:18px;
-
-    top:18px;
-
-    z-index:1;
-
-    opacity:.85
-
-  }
-
-  .bell-dot svg{
-
-    width:15px;
-
-    height:15px
-
-  }
-
-  /* ============================================================
-
-     FAB
-
-  ============================================================ */
-
-  .fab{
-
-    position:fixed;
-
-    z-index:6;
-
-    right:max(20px,env(safe-area-inset-right,0px));
-
-    bottom:calc(22px + var(--safe-b));
-
-    width:72px;
-
-    height:72px;
-
-    border-radius:50%;
-
-    border:1px solid rgba(255,255,255,var(--glass-line-alpha));
-
-    background:var(--glass-bg);
-    backdrop-filter:blur(var(--glass-blur)) saturate(125%);
-    -webkit-backdrop-filter:blur(var(--glass-blur)) saturate(125%);
-
-    box-shadow:
-
-      inset 0 1px 1px rgba(255,255,255,var(--glass-highlight-alpha)),
-
-      0 14px 34px rgba(0,0,0,.28),
-
-      0 12px 34px rgba(0,0,0,var(--glass-shadow-alpha));
-
-
-
-
-
-    cursor:pointer;
-
-    transition:transform .18s cubic-bezier(.2,.9,.25,1);
-
-  }
-
-  .fab:active{
-
-    transform:scale(.92)
-
-  }
-
-  .fab:before,
-
-  .fab:after{
-
-    content:"";
-
-    position:absolute;
-
-    left:50%;
-
-    top:50%;
-
-    background:rgba(255,255,255,.95);
-
-    border-radius:2px;
-
-    transform:translate(-50%,-50%);
-
-    box-shadow:0 1px 4px rgba(0,0,0,.18);
-
-  }
-
-  .fab:before{
-
-    width:26px;
-
-    height:2px
-
-  }
-
-  .fab:after{
-
-    width:2px;
-
-    height:26px
-
-  }
-
-  /* ============================================================
-
-     設定パネル
-
-  ============================================================ */
-
-  .panel{
-
-    position:fixed;
-
-    z-index:8;
-
-    top:calc(72px + var(--safe-t));
-
-    right:16px;
-
-    width:min(320px,calc(100vw - 32px));
-
-    border-radius:22px;
-
-    padding:16px;
-
-    transform:translateY(-12px) scale(.96);
-
-    opacity:0;
-
-    pointer-events:none;
-
-    transform-origin:100% 0;
-
-    transition:.24s cubic-bezier(.2,.9,.25,1);
-
-    backdrop-filter:blur(22px) saturate(130%);
-
-    -webkit-backdrop-filter:blur(22px) saturate(130%);
-
-  }
-
-  .panel.show{
-
-    opacity:1;
-
-    transform:none;
-
-    pointer-events:auto
-
-  }
-
-  .prow{
-
-    display:flex;
-
-    align-items:center;
-
-    gap:14px;
-
-    padding:8px 6px
-
-  }
-
-  .prow .ic{
-
-    width:26px;
-
-    height:26px;
-
-    display:grid;
-
-    place-items:center;
-
-    opacity:.95;
-
-    flex:0 0 auto
-
-  }
-
-  .prow .sp{
-
-    flex:1;
-
-    min-width:0
-
-  }
-
-  button.prow{
-
-    -webkit-appearance:none;
-
-    appearance:none;
-
-    width:100%;
-
-    border:0;
-
-    background:transparent;
-
-    color:inherit;
-
-    font:inherit;
-
-    text-align:left;
-
-    cursor:pointer;
-
-    border-radius:14px;
-
-    transition:background .18s;
-
-  }
-
-  button.prow:active{
-
-    background:rgba(255,255,255,.10)
-
-  }
-
-  #sortLabel{
-
-    font-size:13px;
-
-    opacity:.88;
-
-    letter-spacing:.05em;
-
-    font-variant-numeric:tabular-nums
-
-  }
-
-  #sortBtn .chev{
-
-    transition:transform .26s cubic-bezier(.2,.9,.25,1);
-
-    opacity:.7
-
-  }
-
-  #sortBtn.desc .chev{
-
-    transform:rotate(180deg)
-
-  }
-
-  #sakuraToggle .sakura-status{
-
-    font-size:12px;
-
-    opacity:.62;
-
-    letter-spacing:.04em
-
-  }
-
-  #sakuraToggle.paused .sakura-status{
-
-    opacity:.9;
-
-    color:#ffd7e6
-
-  }
-
-  #sakuraToggle .sp{
-
-    font-weight:400;
-
-    letter-spacing:.02em
-
-  }
-
-  #sakuraToggle .sw{
-
-    margin-left:auto
-
-  }
-
-  #sakuraToggle .ic{
-
-    color:#fff
-
-  }
-
-  #sakuraToggle .ic svg{
-
-    display:block;
-
-    width:23px;
-
-    height:23px
-
-  }
-
-  .chips{
-
-    display:flex;
-
-    flex-wrap:wrap;
-
-    gap:6px;
-
-    margin:4px 6px 0;
-
-    transition:opacity .2s
-
-  }
-
-  .chips.off{
-
-    opacity:.34
-
-  }
-
-  .chip{
-
-    font-size:11px;
-
-    padding:4px 9px;
-
-    border-radius:999px;
-
-    border:1px solid rgba(255,255,255,.24);
-
-    background:rgba(255,255,255,.09);
-
-    font-variant-numeric:tabular-nums;
-
-    letter-spacing:.02em;
-
-  }
-
-  .chip.now{
-
-    background:rgba(255,135,178,.48);
-
-    border-color:rgba(255,190,214,.6)
-
-  }
-
-  .divider{
-
-    height:1px;
-
-    background:rgba(255,255,255,.15);
-
-    margin:12px 4px
-
-  }
-
-  .sw{
-
-    width:52px;
-
-    height:31px;
-
-    border-radius:16px;
-
-    flex:0 0 auto;
-
-    cursor:pointer;
-
-    background:rgba(255,255,255,.12);
-
-    border:1px solid rgba(255,255,255,.28);
-
-    position:relative;
-
-    transition:.24s cubic-bezier(.2,.9,.25,1);
-
-  }
-
-  .sw.on{
-
-    background:
-
-      linear-gradient(
-
-        90deg,
-
-        rgba(255,135,178,.75),
-
-        rgba(255,105,160,.88)
-
-      );
-
-    border-color:rgba(255,200,220,.55)
-
-  }
-
-  .sw i{
-
-    position:absolute;
-
-    top:2px;
-
-    left:2px;
-
-    width:25px;
-
-    height:25px;
-
-    border-radius:50%;
-
-    background:#fff;
-
-    box-shadow:0 2px 6px rgba(0,0,0,.28);
-
-    transition:.24s cubic-bezier(.2,.9,.25,1)
-
-  }
-
-  .sw.on i{
-
-    transform:translateX(21px)
-
-  }
-
-  .shake{
-
-    animation:shake .38s
-
-  }
-
-  @keyframes shake{
-
-    0%,100%{transform:translateX(0)}
-
-    20%{transform:translateX(-7px)}
-
-    40%{transform:translateX(6px)}
-
-    60%{transform:translateX(-4px)}
-
-    80%{transform:translateX(3px)}
-
-  }
-
-  /* ============================================================
-
-     シート
-
-  ============================================================ */
-
-  .scrim{
-
-    position:fixed;
-
-    inset:0;
-
-    z-index:9;
-
-    background:rgba(10,10,12,.18);
-
-    backdrop-filter:blur(3px);
-
-    -webkit-backdrop-filter:blur(3px);
-
-    opacity:0;
-
-    pointer-events:none;
-
-    transition:opacity .28s;
-
-  }
-
-  .scrim.show{
-
-    opacity:1;
-
-    pointer-events:auto
-
-  }
-
-  .sheet{
-
-    position:fixed;
-
-    z-index:10;
-
-    left:50%;
-
-    bottom:0;
-
-    width:min(100%,520px);
-
-    transform:translate(-50%,110%);
-
-    border-radius:30px 30px 0 0;
-
-    padding:10px 20px calc(20px + var(--safe-b));
-
-    transition:transform .34s cubic-bezier(.22,.9,.24,1);
-
-    will-change:transform;
-
-
-
-
-
-    background:var(--glass-bg);
-
-
-
-
-
-    backdrop-filter:blur(var(--glass-blur)) saturate(130%);
-    -webkit-backdrop-filter:blur(var(--glass-blur)) saturate(130%);
+  *{
+    box-sizing:border-box;
+    -webkit-tap-highlight-color:transparent
+  }
+  html,body{
+    margin:0;
+    width:100%;
+    height:100%;
+    min-height:100%;
+    overflow:hidden
+  }
+  html{
+    height:100%;
+    min-height:100dvh;
+  }
+  body{
+    min-height:100dvh;
+    font-family:
+      -apple-system,
+      BlinkMacSystemFont,
+      "SF Pro JP",
+      "Hiragino Sans",
+      "Noto Sans JP",
+      "Yu Gothic",
+      Meiryo,
+      sans-serif;
+    color:var(--text);
+    touch-action:manipulation;
+    -webkit-font-smoothing:antialiased;
+  }
+  /* ============================================================
+     背景
+  ============================================================ */
+  .bg{
+    position:fixed;
+    inset:0;
+    z-index:0;
+    width:100%;
+    height:100%;
+    min-height:100dvh;
+    background-image:url("background.PNG");
+    background-position:55% center;
+    background-size:cover;
+    background-repeat:no-repeat;
+  }
+  .sakura-layer{
+    position:fixed;
+    inset:0;
+    z-index:1;
+    pointer-events:none;
+    transition:opacity .18s ease;
+  }
+  .sakura-layer.hidden{
+    visibility:hidden;
+    opacity:0;
+  }
+  canvas{
+    pointer-events:none;
+  }
+  /* ============================================================
+     共通ガラス
+  ============================================================ */
+  .glass{
+    border:1px solid var(--glass-line);
+    background:
+      linear-gradient(
+        145deg,
+        var(--control-glass-1),
+        var(--control-glass-2)
+      );
     box-shadow:
-
-      inset 0 1px 1px rgba(255,255,255,var(--glass-highlight-alpha)),
-
-      inset 0 -1px 1px rgba(0,0,0,.08),
-
-      0 12px 34px rgba(0,0,0,var(--glass-shadow-alpha));
-
-  }
-
-  .sheet.show{
-
-    transform:translate(-50%,0)
-
-  }
-
-  .grip{
-
-    width:42px;
-
-    height:5px;
-
-    border-radius:3px;
-
-    background:rgba(255,255,255,.50);
-
-    margin:2px auto 12px;
-
-    cursor:grab;
-
-    touch-action:none
-
-  }
-
-  .tinput{
-
-    width:100%;
-
-    display:block;
-
-    -webkit-appearance:none;
-
-    appearance:none;
-
-    border:1px solid rgba(255,255,255,.22);
-
-    background:rgba(255,255,255,.075);
-
-    color:#fff;
-
-    font-size:18px;
-
-    font-weight:600;
-
-    padding:13px 16px;
-
-    border-radius:15px;
-
-    text-align:center;
-
-    letter-spacing:.02em;
-
-    font-family:inherit;
-
-    outline:none;
-
-  }
-
-  .tinput::placeholder{
-
-    color:rgba(255,255,255,.50);
-
-    font-weight:600;
-
-    font-size:15px;
-
-    letter-spacing:.3em;
-
-    text-indent:.3em
-
-  }
-
-  .tinput:focus{
-
-    border-color:rgba(255,160,195,.75);
-
-    background:rgba(255,255,255,.11)
-
-  }
-
-  .picker{
-
-    position:relative;
-
-    height:var(--view-h);
-
-    margin:16px 0 6px;
-
-    user-select:none;
-
-    -webkit-user-select:none
-
-  }
-
-  .band{
-
-    position:absolute;
-
-    left:-4px;
-
-    right:-4px;
-
-    top:50px;
-
-    height:50px;
-
-    border-radius:13px;
-
-    pointer-events:none;
-
-    background:rgba(255,255,255,.11);
-
-    border-top:1px solid rgba(255,255,255,.25);
-
-    border-bottom:1px solid rgba(255,255,255,.25);
-
-    box-shadow:inset 0 1px 0 rgba(255,255,255,.18);
-
-  }
-
-  .reels{
-
-    position:relative;
-
-    height:100%;
-
-    display:flex;
-
-    align-items:stretch;
-
-    justify-content:center;
-
-    gap:0;
-
-    -webkit-mask-image:
-
-      linear-gradient(
-
-        180deg,
-
-        transparent 0,
-
-        #000 24%,
-
-        #000 76%,
-
-        transparent 100%
-
-      );
-
-    mask-image:
-
-      linear-gradient(
-
-        180deg,
-
-        transparent 0,
-
-        #000 24%,
-
-        #000 76%,
-
-        transparent 100%
-
-      );
-
-  }
-
-  .reel{
-
-    position:relative;
-
-    height:100%;
-
-    overflow:hidden;
-
-    perspective:760px;
-
-    touch-action:none;
-
-    cursor:grab;
-
-  }
-
-  .reel:active{
-
-    cursor:grabbing
-
-  }
-
-  .reel .it{
-
-    position:absolute;
-
-    left:0;
-
-    right:0;
-
-    top:0;
-
-    height:var(--item-h);
-
-    display:grid;
-
-    place-items:center;
-
-    font-size:21px;
-
-    font-weight:400;
-
-    font-variant-numeric:tabular-nums;
-
-    letter-spacing:.01em;
-
-    will-change:transform,opacity;
-
-    backface-visibility:hidden;
-
-  }
-
-  .reel .it.sel{
-
-    font-weight:600;
-
-    text-shadow:0 0 14px rgba(255,255,255,.25)
-
-  }
-
-  .unit{
-
-    align-self:center;
-
-    font-size:12px;
-
-    opacity:.8;
-
-    padding:0 2px 0 1px;
-
-    transform:translateY(1px)
-
-  }
-
-  .colon{
-
-    align-self:center;
-
-    font-size:20px;
-
-    opacity:.85;
-
-    padding:0 2px;
-
-    transform:translateY(-1px)
-
-  }
-
-  .w-y{width:92px}
-
-  .w-m{width:56px}
-
-  .w-d{width:56px}
-
-  .w-h{width:58px}
-
-  .w-i{width:58px}
-
-  .sheet-actions{
-
-    display:flex;
-
-    align-items:center;
-
-    gap:12px;
-
-    margin-top:14px
-
-  }
-
-  .sheet-actions .spacer{
-
-    flex:1
-
-  }
-
-  .gbtn{
-
-    -webkit-appearance:none;
-
-    appearance:none;
-
-    cursor:pointer;
-
-    width:54px;
-
-    height:54px;
-
-    border-radius:50%;
-
-    border:1px solid rgba(255,255,255,var(--glass-line-alpha));
-
-    background:
-
-      linear-gradient(
-
-        145deg,
-
-        rgba(255,255,255,var(--glass-action-top-alpha)),
-
-        rgba(255,255,255,var(--glass-action-bottom-alpha))
-
-      );
-
-    backdrop-filter:blur(var(--glass-blur)) saturate(125%);
-    -webkit-backdrop-filter:blur(var(--glass-blur)) saturate(125%);
+      inset 0 1px 1px var(--glass-highlight),
+      inset 0 -1px 1px rgba(0,0,0,.08),
+      0 12px 34px var(--glass-shadow);
+    /*
+      backdrop-filter は panel / sheet / FAB のみに使用。
+      大量のカードでは使用しないことでGPU負荷を抑える。
+    */
+  }
+  /* ============================================================
+     レイアウト
+  ============================================================ */
+  .app{
+    position:relative;
+    z-index:2;
+    width:min(100%,780px);
+    height:100%;
+    min-height:100dvh;
+    margin:auto;
+    padding:calc(10px + var(--safe-t)) 18px 0;
+    display:flex;
+    flex-direction:column;
+  }
+  .topbar{
+    flex:0 0 auto;
+    position:relative;
+    min-height:70px;
+    display:flex;
+    flex-direction:column;
+    align-items:center;
+    justify-content:center;
+    gap:5px;
+    padding:6px 42px 10px;
+  }
+  .brand{
+    font-size:clamp(14px,4.2vw,21px);
+    font-weight:600;
+    letter-spacing:.16em;
+    text-indent:.16em;
+    white-space:nowrap;
+    opacity:.95;
+    text-shadow:0 2px 12px rgba(0,0,0,.45);
+  }
+  .now{
+    display:flex;
+    align-items:baseline;
+    justify-content:center;
+    gap:clamp(12px,4vw,22px);
+    font-size:clamp(13px,4vw,18px);
+    font-weight:300;
+    letter-spacing:.04em;
+    font-variant-numeric:tabular-nums;
+    text-shadow:0 2px 9px rgba(0,0,0,.4);
+    white-space:nowrap;
+  }
+  .iconbtn{
+    -webkit-appearance:none;
+    appearance:none;
+    border:0;
+    background:transparent;
+    padding:0;
+    margin:0;
+    color:#fff;
+    display:grid;
+    place-items:center;
+    cursor:pointer;
+  }
+  .topbar .menu{
+    position:absolute;
+    right:0;
+    top:calc(50% - 20px);
+    width:40px;
+    height:40px;
+    border-radius:50%;
+  }
+  .hamburger{
+    display:flex;
+    flex-direction:column;
+    gap:6px;
+    width:24px;
+    filter:drop-shadow(0 2px 5px rgba(0,0,0,.35))
+  }
+  .hamburger span{
+    height:2px;
+    width:24px;
+    background:#fff;
+    border-radius:2px;
+    transition:.26s cubic-bezier(.3,.9,.3,1)
+  }
+  .menu.open .hamburger span:nth-child(1){
+    transform:translateY(8px) rotate(45deg)
+  }
+  .menu.open .hamburger span:nth-child(2){
+    opacity:0;
+    transform:scaleX(.3)
+  }
+  .menu.open .hamburger span:nth-child(3){
+    transform:translateY(-8px) rotate(-45deg)
+  }
+  /* ============================================================
+     リスト
+  ============================================================ */
+  .list{
+    flex:1 1 auto;
+    overflow-y:auto;
+    overflow-x:hidden;
+    -webkit-overflow-scrolling:touch;
+    scrollbar-width:none;
+    padding:4px 2px calc(130px + var(--safe-b));
+    overscroll-behavior:contain;
+  }
+  .list::-webkit-scrollbar{
+    display:none
+  }
+  .list.locked{
+    overflow:hidden
+  }
+  .row{
+    position:relative;
+    margin:0 0 14px;
+    border-radius:22px;
+    transition:transform .2s cubic-bezier(.2,.9,.25,1);
+  }
+  .row.dragging{
+    z-index:5;
+    transition:none
+  }
+  .row.removing{
+    transition:
+      transform .26s ease,
+      opacity .26s ease,
+      height .26s ease,
+      margin .26s ease
+  }
+  @keyframes pop{
+    from{
+      opacity:0;
+      transform:translateY(12px)
+    }
+    to{
+      opacity:1;
+      transform:none
+    }
+  }
+  .row.pop{
+    animation:pop .34s cubic-bezier(.2,.9,.25,1) both
+  }
+  /* ============================================================
+     削除背景
+  ============================================================ */
+  .row-bg{
+    position:absolute;
+    top:0;
+    right:0;
+    bottom:0;
+    width:var(--delete-width,0px);
+    border-radius:0 22px 22px 0;
+    background:transparent;
+    display:flex;
+    align-items:center;
+    justify-content:center;
+    padding-right:0;
+    opacity:0;
+    transition:opacity .16s,background .2s;
+    cursor:pointer;
+    z-index:0;
+  }
+  .row.swiping .row-bg,
+  .row.open .row-bg{
+    opacity:1;
+    background:rgba(255,60,105,.62);
+  }
+  .row.armed .row-bg{
+    background:rgba(255,60,105,.62);
+  }
+  .row-bg .trash{
+    width:26px;
+    height:26px;
+    opacity:.96;
+    transition:transform .18s cubic-bezier(.2,.9,.25,1)
+  }
+  .row.armed .row-bg .trash{
+    transform:scale(1.22)
+  }
+  /* ============================================================
+     カード
+  ============================================================ */
+  .item{
+    position:relative;
+    z-index:1;
+    padding:20px 22px 22px;
+    border-radius:22px;
+    overflow:hidden;
+    /*
+      カードは透明感を上げつつ、
+      backdrop-filterを使わない。
+      カード数が増えた場合のGPU負荷を大幅に抑える。
+    */
+    background:
+      linear-gradient(
+        135deg,
+        rgba(255,255,255,.16),
+        rgba(255,255,255,.055) 48%,
+        rgba(255,255,255,.025)
+      );
+    text-shadow:0 2px 8px rgba(0,0,0,.30);
+    touch-action:pan-y;
+    cursor:pointer;
+    /* 全カードへの will-change はGPUメモリを消費するため、
+       実際にドラッグ中のカードだけ付与する。 */
     box-shadow:
-
-      inset 0 1px 1px rgba(255,255,255,var(--glass-highlight-alpha)),
-
-      0 8px 20px rgba(0,0,0,.22);
-
-    color:#fff;
-
-    display:grid;
-
-    place-items:center;
-
-    transition:
-
-      transform .16s cubic-bezier(.2,.9,.25,1),
-
-      background .2s,
-
-      opacity .2s;
-
-  }
-
-  .gbtn:active{
-
-    transform:scale(.9)
-
-  }
-
-  .gbtn.ok{
-
-    background:
-
-      linear-gradient(
-
-        145deg,
-
-        rgba(255,150,190,.82),
-
-        rgba(255,95,150,.76)
-
-      );
-
-    border-color:rgba(255,205,225,.60)
-
-  }
-
-  .gbtn.bell.off{
-
-    opacity:.42
-
-  }
-
-  .gbtn svg{
-
-    width:23px;
-
-    height:23px
-
-  }
-
-  .sheet-hint{
-
-    text-align:center;
-
-    font-size:11px;
-
-    letter-spacing:.06em;
-
-    opacity:.62;
-
-    margin-top:12px;
-
-    font-variant-numeric:tabular-nums;
-
-  }
-
-  /* ============================================================
-
-     Responsive
-
-  ============================================================ */
-
-  @media (max-width:420px){
-
-    .app{
-
-      padding-left:14px;
-
-      padding-right:14px
-
-    }
-
-    .item{
-
-      padding:17px 17px 19px
-
-    }
-
-    .label{
-
-      font-size:18px;
-
-      gap:8px
-
-    }
-
-    .w-y{width:84px}
-
-    .w-m{width:50px}
-
-    .w-d{width:50px}
-
-    .w-h{width:52px}
-
-    .w-i{width:52px}
-
-    .fab{
-
-      width:64px;
-
-      height:64px
-
-    }
-
-  }
-
-  @media (min-width:760px){
-
-    .item{
-
-      padding:24px 26px 26px
-
-    }
-
-  }
-
-  @media (prefers-reduced-motion:reduce){
-
-    *{
-
-      animation-duration:.001ms!important
-
-    }
-
-  }
-
+      inset 0 1px 1px rgba(255,255,255,.27),
+      inset 0 -1px 1px rgba(0,0,0,.08);
+  }
+  .item::before{
+    content:"";
+    position:absolute;
+    inset:1px;
+    border-radius:21px;
+    pointer-events:none;
+    background:
+      linear-gradient(
+        120deg,
+        rgba(255,255,255,.12),
+        transparent 30%,
+        transparent 72%,
+        rgba(255,255,255,.035)
+      );
+  }
+  .row.dragging .item{
+    will-change:transform;
+    box-shadow:
+      inset 0 1px 1px rgba(255,255,255,.38),
+      inset 0 -1px 1px rgba(0,0,0,.08);
+    background:
+      linear-gradient(
+        135deg,
+        rgba(255,255,255,.19),
+        rgba(255,255,255,.065)
+      );
+    border-color:rgba(255,255,255,.42);
+  }
+  .label{
+    position:relative;
+    z-index:1;
+    display:flex;
+    align-items:baseline;
+    gap:10px;
+    font-size:20px;
+    line-height:1.25;
+    font-weight:600;
+    margin-bottom:6px;
+    min-width:0;
+    padding-right:26px;
+  }
+  .label .ttl{
+    overflow:hidden;
+    text-overflow:ellipsis;
+    white-space:nowrap;
+    min-width:0
+  }
+  .card-date{
+    flex:0 0 auto;
+    font-size:12px;
+    font-weight:400;
+    opacity:.9;
+    letter-spacing:.02em;
+    white-space:nowrap;
+    font-variant-numeric:tabular-nums
+  }
+  .count{
+    position:relative;
+    z-index:1;
+    display:block;
+    font-size:clamp(32px,8vw,62px);
+    line-height:1.08;
+    font-weight:250;
+    letter-spacing:-.02em;
+    white-space:nowrap;
+    font-variant-numeric:tabular-nums;
+  }
+  .count .n{
+    display:inline-block;
+    min-width:3ch;
+    text-align:right;
+    font-variant-numeric:tabular-nums;
+  }
+  .count small{
+    font-size:.74em;
+    font-weight:300;
+    letter-spacing:-.01em;
+    opacity:.96
+  }
+  .item.past .count{
+    color:#ffd3e2
+  }
+  .item.soon .count{
+    color:#fff0f5;
+    text-shadow:
+      0 0 18px rgba(255,120,170,.65),
+      0 2px 8px rgba(0,0,0,.3)
+  }
+  .item.soon::after{
+    content:"";
+    position:absolute;
+    inset:-1px;
+    border-radius:22px;
+    pointer-events:none;
+    border:1px solid rgba(255,150,185,.55);
+    animation:pulse 1.6s ease-in-out infinite;
+  }
+  @keyframes pulse{
+    0%,100%{opacity:.25}
+    50%{opacity:.85}
+  }
+  .bar{
+    position:relative;
+    z-index:1;
+    margin-top:12px;
+    height:3px;
+    border-radius:3px;
+    background:rgba(255,255,255,.16);
+    overflow:hidden
+  }
+  .bar i{
+    display:block;
+    height:100%;
+    width:0;
+    border-radius:3px;
+    background:linear-gradient(
+      90deg,
+      rgba(255,255,255,.75),
+      var(--accent)
+    )
+  }
+  .bell-dot{
+    position:absolute;
+    right:18px;
+    top:18px;
+    z-index:1;
+    opacity:.85
+  }
+  .bell-dot svg{
+    width:15px;
+    height:15px
+  }
+  /* ============================================================
+     FAB
+  ============================================================ */
+  .fab{
+    position:fixed;
+    z-index:6;
+    right:max(20px,env(safe-area-inset-right,0px));
+    bottom:calc(22px + var(--safe-b));
+    width:72px;
+    height:72px;
+    border-radius:50%;
+    border:1px solid var(--glass-line);
+    background:var(--glass-bg);
+    box-shadow:
+      inset 0 1px 1px var(--glass-highlight),
+      0 14px 34px rgba(0,0,0,.28),
+      0 12px 34px var(--glass-shadow);
+
+
+    cursor:pointer;
+    transition:transform .18s cubic-bezier(.2,.9,.25,1);
+  }
+  .fab:active{
+    transform:scale(.92)
+  }
+  .fab:before,
+  .fab:after{
+    content:"";
+    position:absolute;
+    left:50%;
+    top:50%;
+    background:rgba(255,255,255,.95);
+    border-radius:2px;
+    transform:translate(-50%,-50%);
+    box-shadow:0 1px 4px rgba(0,0,0,.18);
+  }
+  .fab:before{
+    width:26px;
+    height:2px
+  }
+  .fab:after{
+    width:2px;
+    height:26px
+  }
+  /* ============================================================
+     設定パネル
+  ============================================================ */
+  .panel{
+    position:fixed;
+    z-index:8;
+    top:calc(72px + var(--safe-t));
+    right:16px;
+    width:min(320px,calc(100vw - 32px));
+    border-radius:22px;
+    padding:16px;
+    transform:translateY(-12px) scale(.96);
+    opacity:0;
+    pointer-events:none;
+    transform-origin:100% 0;
+    transition:.24s cubic-bezier(.2,.9,.25,1);
+    backdrop-filter:blur(22px) saturate(130%);
+    -webkit-backdrop-filter:blur(22px) saturate(130%);
+  }
+  .panel.show{
+    opacity:1;
+    transform:none;
+    pointer-events:auto
+  }
+  .prow{
+    display:flex;
+    align-items:center;
+    gap:14px;
+    padding:8px 6px
+  }
+  .prow .ic{
+    width:26px;
+    height:26px;
+    display:grid;
+    place-items:center;
+    opacity:.95;
+    flex:0 0 auto
+  }
+  .prow .sp{
+    flex:1;
+    min-width:0
+  }
+  button.prow{
+    -webkit-appearance:none;
+    appearance:none;
+    width:100%;
+    border:0;
+    background:transparent;
+    color:inherit;
+    font:inherit;
+    text-align:left;
+    cursor:pointer;
+    border-radius:14px;
+    transition:background .18s;
+  }
+  button.prow:active{
+    background:rgba(255,255,255,.10)
+  }
+  #sortLabel{
+    font-size:13px;
+    opacity:.88;
+    letter-spacing:.05em;
+    font-variant-numeric:tabular-nums
+  }
+  #sortBtn .chev{
+    transition:transform .26s cubic-bezier(.2,.9,.25,1);
+    opacity:.7
+  }
+  #sortBtn.desc .chev{
+    transform:rotate(180deg)
+  }
+  #sakuraToggle .sakura-status{
+    font-size:12px;
+    opacity:.62;
+    letter-spacing:.04em
+  }
+  #sakuraToggle.paused .sakura-status{
+    opacity:.9;
+    color:#ffd7e6
+  }
+  #sakuraToggle .sp{
+    font-weight:400;
+    letter-spacing:.02em
+  }
+  #sakuraToggle .sw{
+    margin-left:auto
+  }
+  #sakuraToggle .ic{
+    color:#fff
+  }
+  #sakuraToggle .ic svg{
+    display:block;
+    width:23px;
+    height:23px
+  }
+  .chips{
+    display:flex;
+    flex-wrap:wrap;
+    gap:6px;
+    margin:4px 6px 0;
+    transition:opacity .2s
+  }
+  .chips.off{
+    opacity:.34
+  }
+  .chip{
+    font-size:11px;
+    padding:4px 9px;
+    border-radius:999px;
+    border:1px solid rgba(255,255,255,.24);
+    background:rgba(255,255,255,.09);
+    font-variant-numeric:tabular-nums;
+    letter-spacing:.02em;
+  }
+  .chip.now{
+    background:rgba(255,135,178,.48);
+    border-color:rgba(255,190,214,.6)
+  }
+  .divider{
+    height:1px;
+    background:rgba(255,255,255,.15);
+    margin:12px 4px
+  }
+  .sw{
+    width:52px;
+    height:31px;
+    border-radius:16px;
+    flex:0 0 auto;
+    cursor:pointer;
+    background:rgba(255,255,255,.12);
+    border:1px solid rgba(255,255,255,.28);
+    position:relative;
+    transition:.24s cubic-bezier(.2,.9,.25,1);
+  }
+  .sw.on{
+    background:
+      linear-gradient(
+        90deg,
+        rgba(255,135,178,.75),
+        rgba(255,105,160,.88)
+      );
+    border-color:rgba(255,200,220,.55)
+  }
+  .sw i{
+    position:absolute;
+    top:2px;
+    left:2px;
+    width:25px;
+    height:25px;
+    border-radius:50%;
+    background:#fff;
+    box-shadow:0 2px 6px rgba(0,0,0,.28);
+    transition:.24s cubic-bezier(.2,.9,.25,1)
+  }
+  .sw.on i{
+    transform:translateX(21px)
+  }
+  .shake{
+    animation:shake .38s
+  }
+  @keyframes shake{
+    0%,100%{transform:translateX(0)}
+    20%{transform:translateX(-7px)}
+    40%{transform:translateX(6px)}
+    60%{transform:translateX(-4px)}
+    80%{transform:translateX(3px)}
+  }
+  /* ============================================================
+     シート
+  ============================================================ */
+  .scrim{
+    position:fixed;
+    inset:0;
+    z-index:9;
+    background:rgba(10,10,12,.18);
+    backdrop-filter:blur(3px);
+    -webkit-backdrop-filter:blur(3px);
+    opacity:0;
+    pointer-events:none;
+    transition:opacity .28s;
+  }
+  .scrim.show{
+    opacity:1;
+    pointer-events:auto
+  }
+  .sheet{
+    position:fixed;
+    z-index:10;
+    left:50%;
+    bottom:0;
+    width:min(100%,520px);
+    transform:translate(-50%,110%);
+    border-radius:30px 30px 0 0;
+    padding:10px 20px calc(20px + var(--safe-b));
+    transition:transform .34s cubic-bezier(.22,.9,.24,1);
+    will-change:transform;
+
+
+    background:
+      linear-gradient(
+        135deg,
+        var(--sheet-glass-1),
+        var(--sheet-glass-2) 55%,
+        rgba(255,255,255,.018)
+      );
+
+
+    box-shadow:
+      inset 0 1px 1px var(--glass-highlight),
+      inset 0 -1px 1px rgba(0,0,0,.08),
+      0 12px 34px var(--glass-shadow);
+  }
+  .sheet.show{
+    transform:translate(-50%,0)
+  }
+  .grip{
+    width:42px;
+    height:5px;
+    border-radius:3px;
+    background:rgba(255,255,255,.50);
+    margin:2px auto 12px;
+    cursor:grab;
+    touch-action:none
+  }
+  .tinput{
+    width:100%;
+    display:block;
+    -webkit-appearance:none;
+    appearance:none;
+    border:1px solid rgba(255,255,255,.22);
+    background:rgba(255,255,255,.075);
+    color:#fff;
+    font-size:18px;
+    font-weight:600;
+    padding:13px 16px;
+    border-radius:15px;
+    text-align:center;
+    letter-spacing:.02em;
+    font-family:inherit;
+    outline:none;
+  }
+  .tinput::placeholder{
+    color:rgba(255,255,255,.50);
+    font-weight:600;
+    font-size:15px;
+    letter-spacing:.3em;
+    text-indent:.3em
+  }
+  .tinput:focus{
+    border-color:rgba(255,160,195,.75);
+    background:rgba(255,255,255,.11)
+  }
+  .picker{
+    position:relative;
+    height:var(--view-h);
+    margin:16px 0 6px;
+    user-select:none;
+    -webkit-user-select:none
+  }
+  .band{
+    position:absolute;
+    left:-4px;
+    right:-4px;
+    top:50px;
+    height:50px;
+    border-radius:13px;
+    pointer-events:none;
+    background:rgba(255,255,255,.11);
+    border-top:1px solid rgba(255,255,255,.25);
+    border-bottom:1px solid rgba(255,255,255,.25);
+    box-shadow:inset 0 1px 0 rgba(255,255,255,.18);
+  }
+  .reels{
+    position:relative;
+    height:100%;
+    display:flex;
+    align-items:stretch;
+    justify-content:center;
+    gap:0;
+    -webkit-mask-image:
+      linear-gradient(
+        180deg,
+        transparent 0,
+        #000 24%,
+        #000 76%,
+        transparent 100%
+      );
+    mask-image:
+      linear-gradient(
+        180deg,
+        transparent 0,
+        #000 24%,
+        #000 76%,
+        transparent 100%
+      );
+  }
+  .reel{
+    position:relative;
+    height:100%;
+    overflow:hidden;
+    perspective:760px;
+    touch-action:none;
+    cursor:grab;
+  }
+  .reel:active{
+    cursor:grabbing
+  }
+  .reel .it{
+    position:absolute;
+    left:0;
+    right:0;
+    top:0;
+    height:var(--item-h);
+    display:grid;
+    place-items:center;
+    font-size:21px;
+    font-weight:400;
+    font-variant-numeric:tabular-nums;
+    letter-spacing:.01em;
+    will-change:transform,opacity;
+    backface-visibility:hidden;
+  }
+  .reel .it.sel{
+    font-weight:600;
+    text-shadow:0 0 14px rgba(255,255,255,.25)
+  }
+  .unit{
+    align-self:center;
+    font-size:12px;
+    opacity:.8;
+    padding:0 2px 0 1px;
+    transform:translateY(1px)
+  }
+  .colon{
+    align-self:center;
+    font-size:20px;
+    opacity:.85;
+    padding:0 2px;
+    transform:translateY(-1px)
+  }
+  .w-y{width:92px}
+  .w-m{width:56px}
+  .w-d{width:56px}
+  .w-h{width:58px}
+  .w-i{width:58px}
+  .sheet-actions{
+    display:flex;
+    align-items:center;
+    gap:12px;
+    margin-top:14px
+  }
+  .sheet-actions .spacer{
+    flex:1
+  }
+  .gbtn{
+    -webkit-appearance:none;
+    appearance:none;
+    cursor:pointer;
+    width:54px;
+    height:54px;
+    border-radius:50%;
+    border:1px solid var(--glass-line);
+    background:
+      linear-gradient(
+        145deg,
+        rgba(255,255,255,.16),
+        rgba(255,255,255,.055)
+      );
+    box-shadow:
+      inset 0 1px 1px var(--glass-highlight),
+      0 8px 20px rgba(0,0,0,.22);
+    color:#fff;
+    display:grid;
+    place-items:center;
+    transition:
+      transform .16s cubic-bezier(.2,.9,.25,1),
+      background .2s,
+      opacity .2s;
+  }
+  .gbtn:active{
+    transform:scale(.9)
+  }
+  .gbtn.ok{
+    background:
+      linear-gradient(
+        145deg,
+        rgba(255,150,190,.82),
+        rgba(255,95,150,.76)
+      );
+    border-color:rgba(255,205,225,.60)
+  }
+  .gbtn.bell.off{
+    opacity:.42
+  }
+  .gbtn svg{
+    width:23px;
+    height:23px
+  }
+  .sheet-hint{
+    text-align:center;
+    font-size:11px;
+    letter-spacing:.06em;
+    opacity:.62;
+    margin-top:12px;
+    font-variant-numeric:tabular-nums;
+  }
+  /* ============================================================
+     Responsive
+  ============================================================ */
+  @media (max-width:420px){
+    .app{
+      padding-left:14px;
+      padding-right:14px
+    }
+    .item{
+      padding:17px 17px 19px
+    }
+    .label{
+      font-size:18px;
+      gap:8px
+    }
+    .w-y{width:84px}
+    .w-m{width:50px}
+    .w-d{width:50px}
+    .w-h{width:52px}
+    .w-i{width:52px}
+    .fab{
+      width:64px;
+      height:64px
+    }
+  }
+  @media (min-width:760px){
+    .item{
+      padding:24px 26px 26px
+    }
+  }
+  @media (prefers-reduced-motion:reduce){
+    *{
+      animation-duration:.001ms!important
+    }
+  }
 </style>
-
 </head>
-
 <body>
-
-  <div class="bg" aria-hidden="true"></div>
-
-  <div class="sakura-layer" id="sakura" aria-hidden="true"></div>
-
-  <main class="app">
-
-    <header class="topbar">
-
-      <div class="brand">SAKURA COUNTDOWN</div>
-
-      <div class="now" id="now">
-
-        <span id="nowDate">---- / -- / --</span>
-
-        <span id="nowTime">--:--:--.--</span>
-
-      </div>
-
-      <button class="iconbtn menu" id="menuBtn" aria-label="menu">
-
-        <span class="hamburger">
-
-          <span></span>
-
-          <span></span>
-
-          <span></span>
-
-        </span>
-
-      </button>
-
-    </header>
-
-    <section class="list" id="list"></section>
-
-  </main>
-
-  <button class="fab" id="fab" aria-label="add"></button>
-
-  <!-- ============================================================
-
-       設定パネル
-
-  ============================================================ -->
-
-  <aside class="panel glass" id="panel">
-
-    <div class="prow">
-
-      <span class="ic">
-
-        <svg viewBox="0 0 24 24"
-
-             fill="none"
-
-             stroke="currentColor"
-
-             stroke-width="1.7"
-
-             stroke-linecap="round"
-
-             stroke-linejoin="round"
-
-             width="22"
-
-             height="22">
-
-          <path d="M18 8a6 6 0 1 0-12 0c0 7-3 9-3 9h18s-3-2-3-9"/>
-
-          <path d="M13.7 21a2 2 0 0 1-3.4 0"/>
-
-        </svg>
-
-      </span>
-
-      <span class="sp"></span>
-
-      <div class="sw"
-
-           id="swNotify"
-
-           role="switch"
-
-           aria-label="notifications">
-
-        <i></i>
-
-      </div>
-
-    </div>
-
-    <div class="chips off" id="chips"></div>
-
-    <div class="divider"></div>
-
-    <button class="prow"
-
-            id="sortBtn"
-
-            type="button"
-
-            aria-label="sort">
-
-      <span class="ic">
-
-        <svg viewBox="0 0 24 24"
-
-             fill="none"
-
-             stroke="currentColor"
-
-             stroke-width="1.7"
-
-             stroke-linecap="round"
-
-             stroke-linejoin="round"
-
-             width="22"
-
-             height="22">
-
-          <path d="M7 4v16M7 20l-3-3M7 20l3-3M17 20V4M17 4l-3 3M17 4l3 3"/>
-
-        </svg>
-
-      </span>
-
-      <span class="sp" id="sortLabel">0 → 999</span>
-
-      <svg class="chev"
-
-           viewBox="0 0 24 24"
-
-           fill="none"
-
-           stroke="currentColor"
-
-           stroke-width="1.8"
-
-           stroke-linecap="round"
-
-           stroke-linejoin="round"
-
-           width="18"
-
-           height="18">
-
-        <path d="M12 5v14M12 19l-5-5M12 19l5-5"/>
-
-      </svg>
-
-    </button>
-
-    <div class="divider"></div>
-
-    <!-- Sakura -->
-
-    <div class="prow"
-
-         id="sakuraToggle"
-
-         role="group"
-
-         aria-label="sakura">
-
-      <span class="ic"><span class="sakura-letter" aria-hidden="true">S</span></span>
-
-      <span class="sp">sakura</span>
-
-      <div class="sw on"
-
-           id="swSakura"
-
-           role="switch"
-
-           aria-checked="true"
-
-           aria-label="sakura">
-
-        <i></i>
-
-      </div>
-
-    </div>
-
-  </aside>
-
-  <!-- ============================================================
-
-       編集シート
-
-  ============================================================ -->
-
-  <div class="scrim" id="scrim"></div>
-
-  <section class="sheet glass"
-
-           id="sheet"
-
-           role="dialog"
-
-           aria-modal="true">
-
-    <div class="grip" id="grip"></div>
-
-    <input class="tinput"
-
-           id="title"
-
-           placeholder="TITLE"
-
-           maxlength="28"
-
-           autocomplete="off"
-
-           spellcheck="false">
-
-    <div class="picker">
-
-      <div class="band"></div>
-
-      <div class="reels">
-
-        <div class="reel w-y" id="rY"></div>
-
-        <div class="unit">年</div>
-
-        <div class="reel w-m" id="rM"></div>
-
-        <div class="unit">月</div>
-
-        <div class="reel w-d" id="rD"></div>
-
-        <div class="unit">日</div>
-
-        <div class="reel w-h" id="rH"></div>
-
-        <div class="colon">:</div>
-
-        <div class="reel w-i" id="rI"></div>
-
-      </div>
-
-    </div>
-
-    <div class="sheet-actions">
-
-      <button class="gbtn"
-
-              id="btnCancel"
-
-              aria-label="cancel">
-
-        <svg viewBox="0 0 24 24"
-
-             fill="none"
-
-             stroke="currentColor"
-
-             stroke-width="2.1"
-
-             stroke-linecap="round">
-
-          <path d="M6 6l12 12M18 6L6 18"/>
-
-        </svg>
-
-      </button>
-
-      <span class="spacer"></span>
-
-      <button class="gbtn bell"
-
-              id="btnBell"
-
-              aria-label="notify">
-
-        <svg viewBox="0 0 24 24"
-
-             fill="none"
-
-             stroke="currentColor"
-
-             stroke-width="1.8"
-
-             stroke-linecap="round"
-
-             stroke-linejoin="round">
-
-          <path d="M18 8a6 6 0 1 0-12 0c0 7-3 9-3 9h18s-3-2-3-9"/>
-
-          <path d="M13.7 21a2 2 0 0 1-3.4 0"/>
-
-        </svg>
-
-      </button>
-
-      <button class="gbtn ok"
-
-              id="btnOk"
-
-              aria-label="save">
-
-        <svg viewBox="0 0 24 24"
-
-             fill="none"
-
-             stroke="currentColor"
-
-             stroke-width="2.3"
-
-             stroke-linecap="round"
-
-             stroke-linejoin="round">
-
-          <path d="M4.5 12.5l5 5L19.5 7"/>
-
-        </svg>
-
-      </button>
-
-    </div>
-
-    <div class="sheet-hint" id="sheetHint"></div>
-
-  </section>
-
+  <div class="bg" aria-hidden="true"></div>
+  <div class="sakura-layer" id="sakura" aria-hidden="true"></div>
+  <main class="app">
+    <header class="topbar">
+      <div class="brand">SAKURA COUNTDOWN</div>
+      <div class="now" id="now">
+        <span id="nowDate">---- / -- / --</span>
+        <span id="nowTime">--:--:--.--</span>
+      </div>
+      <button class="iconbtn menu" id="menuBtn" aria-label="menu">
+        <span class="hamburger">
+          <span></span>
+          <span></span>
+          <span></span>
+        </span>
+      </button>
+    </header>
+    <section class="list" id="list"></section>
+  </main>
+  <button class="fab" id="fab" aria-label="add"></button>
+  <!-- ============================================================
+       設定パネル
+  ============================================================ -->
+  <aside class="panel glass" id="panel">
+    <div class="prow">
+      <span class="ic">
+        <svg viewBox="0 0 24 24"
+             fill="none"
+             stroke="currentColor"
+             stroke-width="1.7"
+             stroke-linecap="round"
+             stroke-linejoin="round"
+             width="22"
+             height="22">
+          <path d="M18 8a6 6 0 1 0-12 0c0 7-3 9-3 9h18s-3-2-3-9"/>
+          <path d="M13.7 21a2 2 0 0 1-3.4 0"/>
+        </svg>
+      </span>
+      <span class="sp"></span>
+      <div class="sw"
+           id="swNotify"
+           role="switch"
+           aria-label="notifications">
+        <i></i>
+      </div>
+    </div>
+    <div class="chips off" id="chips"></div>
+    <div class="divider"></div>
+    <button class="prow"
+            id="sortBtn"
+            type="button"
+            aria-label="sort">
+      <span class="ic">
+        <svg viewBox="0 0 24 24"
+             fill="none"
+             stroke="currentColor"
+             stroke-width="1.7"
+             stroke-linecap="round"
+             stroke-linejoin="round"
+             width="22"
+             height="22">
+          <path d="M7 4v16M7 20l-3-3M7 20l3-3M17 20V4M17 4l-3 3M17 4l3 3"/>
+        </svg>
+      </span>
+      <span class="sp" id="sortLabel">0 → 999</span>
+      <svg class="chev"
+           viewBox="0 0 24 24"
+           fill="none"
+           stroke="currentColor"
+           stroke-width="1.8"
+           stroke-linecap="round"
+           stroke-linejoin="round"
+           width="18"
+           height="18">
+        <path d="M12 5v14M12 19l-5-5M12 19l5-5"/>
+      </svg>
+    </button>
+    <div class="divider"></div>
+    <!-- Sakura -->
+    <div class="prow"
+         id="sakuraToggle"
+         role="group"
+         aria-label="sakura">
+      <span class="ic sakura-letter" aria-hidden="true">S</span>
+      <span class="sp">sakura</span>
+      <div class="sw on"
+           id="swSakura"
+           role="switch"
+           aria-checked="true"
+           aria-label="sakura">
+        <i></i>
+      </div>
+    </div>
+  </aside>
+  <!-- ============================================================
+       編集シート
+  ============================================================ -->
+  <div class="scrim" id="scrim"></div>
+  <section class="sheet glass"
+           id="sheet"
+           role="dialog"
+           aria-modal="true">
+    <div class="grip" id="grip"></div>
+    <input class="tinput"
+           id="title"
+           placeholder="TITLE"
+           maxlength="28"
+           autocomplete="off"
+           spellcheck="false">
+    <div class="picker">
+      <div class="band"></div>
+      <div class="reels">
+        <div class="reel w-y" id="rY"></div>
+        <div class="unit">年</div>
+        <div class="reel w-m" id="rM"></div>
+        <div class="unit">月</div>
+        <div class="reel w-d" id="rD"></div>
+        <div class="unit">日</div>
+        <div class="reel w-h" id="rH"></div>
+        <div class="colon">:</div>
+        <div class="reel w-i" id="rI"></div>
+      </div>
+    </div>
+    <div class="sheet-actions">
+      <button class="gbtn"
+              id="btnCancel"
+              aria-label="cancel">
+        <svg viewBox="0 0 24 24"
+             fill="none"
+             stroke="currentColor"
+             stroke-width="2.1"
+             stroke-linecap="round">
+          <path d="M6 6l12 12M18 6L6 18"/>
+        </svg>
+      </button>
+      <span class="spacer"></span>
+      <button class="gbtn bell"
+              id="btnBell"
+              aria-label="notify">
+        <svg viewBox="0 0 24 24"
+             fill="none"
+             stroke="currentColor"
+             stroke-width="1.8"
+             stroke-linecap="round"
+             stroke-linejoin="round">
+          <path d="M18 8a6 6 0 1 0-12 0c0 7-3 9-3 9h18s-3-2-3-9"/>
+          <path d="M13.7 21a2 2 0 0 1-3.4 0"/>
+        </svg>
+      </button>
+      <button class="gbtn ok"
+              id="btnOk"
+              aria-label="save">
+        <svg viewBox="0 0 24 24"
+             fill="none"
+             stroke="currentColor"
+             stroke-width="2.3"
+             stroke-linecap="round"
+             stroke-linejoin="round">
+          <path d="M4.5 12.5l5 5L19.5 7"/>
+        </svg>
+      </button>
+    </div>
+    <div class="sheet-hint" id="sheetHint"></div>
+  </section>
 <script>
-
 (function(){
-
-  'use strict';
-
-  /* ============================================================
-
-     Utility
-
-  ============================================================ */
-
-  var $ = function(s, r){
-
-    return (r || document).querySelector(s);
-
-  };
-
-  var clamp = function(v, a, b){
-
-    return v < a ? a : (v > b ? b : v);
-
-  };
-
-  var pad2 = function(n){
-
-    return (n < 10 ? '0' : '') + n;
-
-  };
-
-  var pad4 = function(n){
-
-    return ('000' + n).slice(-4);
-
-  };
-
-  var haptic = function(ms){
-
-    if (navigator.vibrate){
-
-      try{
-
-        navigator.vibrate(ms);
-
-      }catch(e){}
-
-    }
-
-  };
-
-  var K_ITEMS = 'sakura.countdown.items.v1';
-
-  var K_CFG   = 'sakura.countdown.cfg.v1';
-
-  var K_FIRED = 'sakura.countdown.fired.v1';
-
-  var NOTIFY_DAYS = [
-
-    100,50,30,10,9,8,7,6,5,4,3,2,1,0
-
-  ];
-
-  function loadJSON(key, def){
-
-    try{
-
-      var raw = localStorage.getItem(key);
-
-      return raw ? JSON.parse(raw) : def;
-
-    }catch(e){
-
-      return def;
-
-    }
-
-  }
-
-  function saveJSON(key, val){
-
-    try{
-
-      localStorage.setItem(key, JSON.stringify(val));
-
-    }catch(e){}
-
-  }
-
-  var items = loadJSON(K_ITEMS, null);
-
-  if (!items || !items.length){
-
-    var base = new Date();
-
-    items = [{
-
-      id:'seed-' + Date.now(),
-
-      title:'SAKURA',
-
-      ts:new Date(
-
-        base.getFullYear() + (base.getMonth() > 2 ? 1 : 0),
-
-        3,
-
-        5,
-
-        12,
-
-        0,
-
-        0,
-
-        0
-
-      ).getTime(),
-
-      notify:true,
-
-      created:Date.now()
-
-    }];
-
-  }
-
-  var cfg = loadJSON(K_CFG, {
-
-    notify:false,
-
-    sortDesc:false
-
-  });
-
-  if (typeof cfg.sortDesc !== 'boolean'){
-
-    cfg.sortDesc = false;
-
-  }
-
-  var fired = loadJSON(K_FIRED, {});
-
-  function persist(){
-
-    saveJSON(K_ITEMS, items);
-
-  }
-
-  function persistCfg(){
-
-    saveJSON(K_CFG, cfg);
-
-  }
-
-  function daysInMonth(y,m){
-
-    var d = new Date(2000,0,1);
-
-    d.setFullYear(y,m,0);
-
-    return d.getDate();
-
-  }
-
-  function makeTS(y,mo,da,h,mi){
-
-    var d = new Date(2000,0,1,0,0,0,0);
-
-    d.setFullYear(y,mo - 1,da);
-
-    d.setHours(h,mi,0,0);
-
-    return d.getTime();
-
-  }
-
-  function fmtCardDate(ts){
-
-    var d = new Date(ts);
-
-    return pad4(d.getFullYear()) +
-
-      ' / ' +
-
-      pad2(d.getMonth()+1) +
-
-      ' / ' +
-
-      pad2(d.getDate()) +
-
-      '  ' +
-
-      pad2(d.getHours()) +
-
-      ':' +
-
-      pad2(d.getMinutes());
-
-  }
-
-  function fmtDate(d){
-
-    return pad4(d.getFullYear()) +
-
-      ' / ' +
-
-      pad2(d.getMonth()+1) +
-
-      ' / ' +
-
-      pad2(d.getDate());
-
-  }
-
-  function fmtTime(d){
-
-    return pad2(d.getHours()) +
-
-      ':' +
-
-      pad2(d.getMinutes()) +
-
-      ':' +
-
-      pad2(d.getSeconds()) +
-
-      '.' +
-
-      pad2(Math.floor(d.getMilliseconds()/10));
-
-  }
-
-  function split(diff){
-
-    var past = diff < 0;
-
-    var t = Math.abs(diff);
-
-    var cs = Math.floor((t % 1000) / 10);
-
-    var s = Math.floor(t / 1000);
-
-    var sec = s % 60;
-
-    var min = Math.floor(s / 60) % 60;
-
-    var hr  = Math.floor(s / 3600) % 24;
-
-    var day = Math.floor(s / 86400);
-
-    return {
-
-      past:past,
-
-      day:day,
-
-      hr:hr,
-
-      min:min,
-
-      sec:sec,
-
-      cs:cs
-
-    };
-
-  }
-
-  function formatRest(o){
-
-    return pad2(o.hr) +
-
-      ':' +
-
-      pad2(o.min) +
-
-      ':' +
-
-      pad2(o.sec) +
-
-      '.' +
-
-      pad2(o.cs);
-
-  }
-
-  function dayDiff(ts){
-
-    var a = new Date();
-
-    a.setHours(0,0,0,0);
-
-    var b = new Date(ts);
-
-    b.setHours(0,0,0,0);
-
-    return Math.round((b-a)/86400000);
-
-  }
-
-  /* ============================================================
-
-     Reel
-
-  ============================================================ */
-
-  var ITEM_H = 50;
-
-  var VIEW_H = 150;
-
-  var CENTER_OFF = (VIEW_H - ITEM_H) / 2;
-
-  var MAX_VELOCITY   = 2.8;
-
-  var FRICTION       = 0.965;
-
-  var STOP_THRESHOLD = 0.025;
-
-  var FRAME = 1000 / 60;
-
-  function Reel(el,opt){
-
-    this.el = el;
-
-    this.count = opt.count;
-
-    this.fmt = opt.format;
-
-    this.onChange = opt.onChange || null;
-
-    this.pos = 0;
-
-    this.vel = 0;
-
-    this.raf = 0;
-
-    this.pool = [];
-
-    this.last = 0;
-
-    this.dragging = false;
-
-    this.hist = [];
-
-    this.wheelT = 0;
-
-    var self = this;
-
-    el.addEventListener('pointerdown',function(e){
-
-      self._down(e);
-
-    });
-
-    el.addEventListener('wheel',function(e){
-
-      self._wheel(e);
-
-    },{passive:false});
-
-    el.addEventListener('contextmenu',function(e){
-
-      e.preventDefault();
-
-    });
-
-    this.render();
-
-  }
-
-  Reel.prototype.max = function(){
-
-    return (this.count - 1) * ITEM_H;
-
-  };
-
-  Reel.prototype.index = function(){
-
-    return clamp(
-
-      Math.round(this.pos / ITEM_H),
-
-      0,
-
-      this.count - 1
-
-    );
-
-  };
-
-  Reel.prototype._node = function(i){
-
-    if (!this.pool[i]){
-
-      var d = document.createElement('div');
-
-      d.className = 'it';
-
-      this.el.appendChild(d);
-
-      this.pool[i] = d;
-
-    }
-
-    return this.pool[i];
-
-  };
-
-  Reel.prototype.render = function(){
-
-    var lo = Math.ceil(
-
-      (this.pos - CENTER_OFF - ITEM_H) / ITEM_H
-
-    );
-
-    var hi = Math.floor(
-
-      (this.pos - CENTER_OFF + VIEW_H) / ITEM_H
-
-    );
-
-    var p = 0;
-
-    var i,el,y,d,ad,sc,op,rot;
-
-    for (i=lo;i<=hi;i++){
-
-      if (i<0 || i>=this.count) continue;
-
-      el = this._node(p++);
-
-      y = CENTER_OFF + i * ITEM_H - this.pos;
-
-      d = (y - CENTER_OFF) / ITEM_H;
-
-      ad = Math.min(Math.abs(d),2.4);
-
-      sc = 1 - ad * .14;
-
-      op = Math.max(0,1 - ad * .40);
-
-      rot = clamp(d * 30,-72,72);
-
-      el.textContent = this.fmt(i);
-
-      el.style.display = '';
-
-      el.style.opacity = op.toFixed(3);
-
-      el.style.transform =
-
-        'translateY(' +
-
-        y.toFixed(2) +
-
-        'px) rotateX(' +
-
-        (-rot).toFixed(2) +
-
-        'deg) scale(' +
-
-        sc.toFixed(3) +
-
-        ')';
-
-      if (Math.abs(d)<.5){
-
-        el.classList.add('sel');
-
-      }else{
-
-        el.classList.remove('sel');
-
-      }
-
-    }
-
-    for (;p<this.pool.length;p++){
-
-      this.pool[p].style.display='none';
-
-    }
-
-  };
-
-  Reel.prototype._tick = function(){
-
-    var i = this.index();
-
-    if (i !== this.last){
-
-      this.last = i;
-
-      haptic(4);
-
-      if (this.onChange){
-
-        this.onChange(i,false);
-
-      }
-
-    }
-
-  };
-
-  Reel.prototype._commit = function(){
-
-    this.last = this.index();
-
-    if (this.onChange){
-
-      this.onChange(this.last,true);
-
-    }
-
-  };
-
-  Reel.prototype.stop = function(){
-
-    if (this.raf){
-
-      cancelAnimationFrame(this.raf);
-
-    }
-
-    this.raf = 0;
-
-    this.vel = 0;
-
-  };
-
-  Reel.prototype._setDrag = function(v){
-
-    var mx = this.max();
-
-    if (v<0){
-
-      v = v * .32;
-
-    }else if (v>mx){
-
-      v = mx + (v-mx)*.32;
-
-    }
-
-    this.pos = v;
-
-  };
-
-  Reel.prototype._down = function(e){
-
-    if (e.pointerType === 'mouse' && e.button !== 0){
-
-      return;
-
-    }
-
-    e.preventDefault();
-
-    this.stop();
-
-    this.dragging = true;
-
-    this.pid = e.pointerId;
-
-    this.startY = e.clientY;
-
-    this.startPos = this.pos;
-
-    this.moved = 0;
-
-    this.downT = performance.now();
-
-    this.hist = [{
-
-      t:this.downT,
-
-      y:e.clientY
-
-    }];
-
-    try{
-
-      this.el.setPointerCapture(e.pointerId);
-
-    }catch(err){}
-
-    var self = this;
-
-    this._mv = function(ev){
-
-      self._move(ev);
-
-    };
-
-    this._up = function(ev){
-
-      self._end(ev);
-
-    };
-
-    this.el.addEventListener(
-
-      'pointermove',
-
-      this._mv
-
-    );
-
-    this.el.addEventListener(
-
-      'pointerup',
-
-      this._up
-
-    );
-
-    this.el.addEventListener(
-
-      'pointercancel',
-
-      this._up
-
-    );
-
-  };
-
-  Reel.prototype._move = function(e){
-
-    if (!this.dragging) return;
-
-    var dy = e.clientY - this.startY;
-
-    if (Math.abs(dy) > this.moved){
-
-      this.moved = Math.abs(dy);
-
-    }
-
-    this._setDrag(this.startPos - dy);
-
-    var t = performance.now();
-
-    this.hist.push({
-
-      t:t,
-
-      y:e.clientY
-
-    });
-
-    while (
-
-      this.hist.length > 2 &&
-
-      t - this.hist[0].t > 80
-
-    ){
-
-      this.hist.shift();
-
-    }
-
-    this.render();
-
-    this._tick();
-
-  };
-
-  Reel.prototype._end = function(e){
-
-    if (!this.dragging) return;
-
-    this.dragging = false;
-
-    this.el.removeEventListener(
-
-      'pointermove',
-
-      this._mv
-
-    );
-
-    this.el.removeEventListener(
-
-      'pointerup',
-
-      this._up
-
-    );
-
-    this.el.removeEventListener(
-
-      'pointercancel',
-
-      this._up
-
-    );
-
-    try{
-
-      this.el.releasePointerCapture(this.pid);
-
-    }catch(err){}
-
-    var now = performance.now();
-
-    if (
-
-      this.moved < 6 &&
-
-      now - this.downT < 420
-
-    ){
-
-      var rect = this.el.getBoundingClientRect();
-
-      var local = e.clientY - rect.top;
-
-      var idx = Math.floor(
-
-        (local + this.pos - CENTER_OFF) / ITEM_H
-
-      );
-
-      idx = clamp(
-
-        idx,
-
-        0,
-
-        this.count - 1
-
-      );
-
-      this.animateTo(
-
-        idx * ITEM_H,
-
-        170
-
-      );
-
-      return;
-
-    }
-
-    var v = 0;
-
-    if (this.hist.length >= 2){
-
-      var a = this.hist[0];
-
-      var b = this.hist[this.hist.length-1];
-
-      var dt = b.t - a.t;
-
-      if (dt > 0){
-
-        v = -(b.y-a.y)/dt;
-
-      }
-
-    }
-
-    v = clamp(
-
-      v,
-
-      -MAX_VELOCITY,
-
-      MAX_VELOCITY
-
-    );
-
-    if (
-
-      this.pos < 0 ||
-
-      this.pos > this.max() ||
-
-      Math.abs(v) < STOP_THRESHOLD
-
-    ){
-
-      this.snap();
-
-    }else{
-
-      this.vel = v;
-
-      this._glide();
-
-    }
-
-  };
-
-  Reel.prototype._glide = function(){
-
-    var self = this;
-
-    var last = performance.now();
-
-    var step = function(now){
-
-      var dt = now - last;
-
-      last = now;
-
-      if (dt > 48) dt = 48;
-
-      if (dt <= 0) dt = 1;
-
-      self.pos += self.vel * dt;
-
-      self.vel *= Math.pow(
-
-        FRICTION,
-
-        dt / FRAME
-
-      );
-
-      var mx = self.max();
-
-      if (
-
-        self.pos < 0 ||
-
-        self.pos > mx
-
-      ){
-
-        self.pos = clamp(
-
-          self.pos,
-
-          0,
-
-          mx
-
-        );
-
-        self.vel = 0;
-
-        self.render();
-
-        self._tick();
-
-        self.snap();
-
-        return;
-
-      }
-
-      self.render();
-
-      self._tick();
-
-      if (
-
-        Math.abs(self.vel) <
-
-        STOP_THRESHOLD
-
-      ){
-
-        self.snap();
-
-        return;
-
-      }
-
-      self.raf =
-
-        requestAnimationFrame(step);
-
-    };
-
-    this.raf =
-
-      requestAnimationFrame(step);
-
-  };
-
-  Reel.prototype.snap = function(){
-
-    var target = clamp(
-
-      Math.round(this.pos / ITEM_H) * ITEM_H,
-
-      0,
-
-      this.max()
-
-    );
-
-    this.animateTo(target);
-
-  };
-
-  Reel.prototype.animateTo = function(target,dur){
-
-    if (this.raf){
-
-      cancelAnimationFrame(this.raf);
-
-    }
-
-    this.vel = 0;
-
-    var start = this.pos;
-
-    var dist = target - start;
-
-    if (Math.abs(dist) < .4){
-
-      this.pos = target;
-
-      this.render();
-
-      this._commit();
-
-      return;
-
-    }
-
-    var d =
-
-      dur ||
-
-      clamp(
-
-        90 + Math.abs(dist)*1.4,
-
-        90,
-
-        180
-
-      );
-
-    var t0 = performance.now();
-
-    var self = this;
-
-    var step = function(now){
-
-      var p = Math.min(
-
-        1,
-
-        (now-t0)/d
-
-      );
-
-      var e =
-
-        1 - Math.pow(1-p,3);
-
-      self.pos =
-
-        start + dist * e;
-
-      self.render();
-
-      self._tick();
-
-      if (p<1){
-
-        self.raf =
-
-          requestAnimationFrame(step);
-
-      }else{
-
-        self.pos = target;
-
-        self.render();
-
-        self._commit();
-
-        self.raf = 0;
-
-      }
-
-    };
-
-    this.raf =
-
-      requestAnimationFrame(step);
-
-  };
-
-  Reel.prototype._wheel = function(e){
-
-    e.preventDefault();
-
-    this.stop();
-
-    var d = e.deltaY;
-
-    if (e.deltaMode === 1){
-
-      d *= 16;
-
-    }else if (e.deltaMode === 2){
-
-      d *= VIEW_H;
-
-    }
-
-    this.pos = clamp(
-
-      this.pos + d,
-
-      0,
-
-      this.max()
-
-    );
-
-    this.render();
-
-    this._tick();
-
-    var self = this;
-
-    clearTimeout(this.wheelT);
-
-    this.wheelT = setTimeout(
-
-      function(){
-
-        self.snap();
-
-      },
-
-      110
-
-    );
-
-  };
-
-  Reel.prototype.setIndex = function(i,animate){
-
-    i = clamp(
-
-      i,
-
-      0,
-
-      this.count - 1
-
-    );
-
-    if (animate){
-
-      this.animateTo(
-
-        i * ITEM_H,
-
-        170
-
-      );
-
-    }else{
-
-      this.stop();
-
-      this.pos = i * ITEM_H;
-
-      this.render();
-
-      this._commit();
-
-    }
-
-  };
-
-  Reel.prototype.setCount = function(n){
-
-    var keep = this.index();
-
-    this.count = n;
-
-    if (keep > n-1){
-
-      this.pos = (n-1)*ITEM_H;
-
-    }
-
-    this.render();
-
-    this.last = this.index();
-
-  };
-
-  /* ============================================================
-
-     カードリスト
-
-  ============================================================ */
-
-  var listEl = $('#list');
-
-  var refs = [];
-
-  var animateNext = false;
-
-  var TRASH_SVG =
-
-    '<svg class="trash" viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">' +
-
-      '<path d="M4 7h16M10 11v6M14 11v6M6 7l1 13h10l1-13M9 7V4h6v3"/>' +
-
-    '</svg>';
-
-  var BELL_SVG =
-
-    '<svg viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round">' +
-
-      '<path d="M18 8a6 6 0 1 0-12 0c0 7-3 9-3 9h18s-3-2-3-9"/>' +
-
-      '<path d="M13.7 21a2 2 0 0 1-3.4 0"/>' +
-
-    '</svg>';
-
-  function render(){
-
-    listEl.innerHTML = '';
-
-    refs = [];
-
-    if (!items.length){
-
-      animateNext = false;
-
-      return;
-
-    }
-
-    items.forEach(function(it,i){
-
-      var row = document.createElement('div');
-
-      row.className = 'row';
-
-      row.dataset.id = it.id;
-
-      row.innerHTML =
-
-        '<div class="row-bg">' +
-
-          TRASH_SVG +
-
-        '</div>' +
-
-        '<article class="item glass">' +
-
-          '<div class="label">' +
-
-            '<span class="ttl"></span>' +
-
-            '<span class="card-date"></span>' +
-
-          '</div>' +
-
-          '<div class="count">' +
-
-            '<span class="n"></span>' +
-
-            '<small>日 <span class="rest"></span>.<span class="cs"></span></small>' +
-
-          '</div>' +
-
-          '<div class="bar">' +
-
-            '<i></i>' +
-
-          '</div>' +
-
-          '<span class="bell-dot">' +
-
-            BELL_SVG +
-
-          '</span>' +
-
-        '</article>';
-
-      var card =
-
-        row.querySelector('.item');
-
-      row.querySelector('.ttl').textContent =
-
-        it.title || '—';
-
-      row.querySelector('.card-date').textContent =
-
-        fmtCardDate(it.ts);
-
-      row.querySelector('.bell-dot').hidden =
-
-        !(it.notify && cfg.notify);
-
-      if (animateNext){
-
-        row.classList.add('pop');
-
-        row.style.animationDelay =
-
-          (i * 28) + 'ms';
-
-        row.addEventListener(
-
-          'animationend',
-
-          function(){
-
-            row.classList.remove('pop');
-
-            row.style.animationDelay = '';
-
-          },
-
-          {once:true}
-
-        );
-
-      }
-
-      listEl.appendChild(row);
-
-      refs.push({
-
-        it:it,
-
-        row:row,
-
-        card:card,
-
-        n:row.querySelector('.n'),
-
-        s:row.querySelector('small'),
-
-        rest:row.querySelector('.rest'),
-
-        cs:row.querySelector('.cs'),
-
-        bar:row.querySelector('.bar i'),
-
-        lastRestKey:'',
-
-        lastCsTxt:'',
-
-        lastPastState:-1,
-
-        lastSoonState:-1,
-
-        lastProgressTick:-1
-
-      });
-
-      bindGestures(
-
-        row,
-
-        card,
-
-        it
-
-      );
-
-    });
-
-    animateNext = false;
-
-  }
-
-  /* ============================================================
-
-     軽量化した時刻更新
-
-
-
-
-
-     以前：
-
-       requestAnimationFrame
-
-       ↓
-
-       全カード
-
-       ↓
-
-       split()
-
-       ↓
-
-       DOM更新判定
-
-     今回：
-
-       countdown = 100ms
-
-       progress  = 約30fps
-
-       current time = 100ms
-
-  ============================================================ */
-
-  var nowDateEl = $('#nowDate');
-
-  var nowTimeEl = $('#nowTime');
-
-  var lastDateKey = '';
-
-  var lastTimeKey = '';
-
-  function updateClock(){
-
-    var t = Date.now();
-
-    var nd = new Date(t);
-
-    var dateKey =
-
-      nd.getFullYear() +
-
-      '-' +
-
-      nd.getMonth() +
-
-      '-' +
-
-      nd.getDate();
-
-    var timeKey =
-
-      Math.floor(t / 100);
-
-    if (dateKey !== lastDateKey){
-
-      lastDateKey = dateKey;
-
-      nowDateEl.textContent =
-
-        fmtDate(nd);
-
-    }
-
-    if (timeKey !== lastTimeKey){
-
-      lastTimeKey = timeKey;
-
-      /*
-
-        100ms更新に変更。
-
-        表示は従来通り .00〜.99。
-
-        10msごとのDOM更新をやめることで負荷を削減。
-
-      */
-
-      nowTimeEl.textContent =
-
-        fmtTime(nd);
-
-    }
-
-  }
-
-  function updateCountdown(){
-
-    var t = Date.now();
-
-    for (
-
-      var i=0;
-
-      i<refs.length;
-
-      i++
-
-    ){
-
-      var r = refs[i];
-
-      var diff =
-
-        r.it.ts - t;
-
-      var o =
-
-        split(diff);
-
-      /*
-
-        日数
-
-      */
-
-      var nTxt =
-
-        (o.past ? '+' : '') +
-
-        o.day;
-
-      if (r.n.textContent !== nTxt){
-
-        r.n.textContent = nTxt;
-
-      }
-
-      /*
-
-        HH:MM:SS
-
-      */
-
-      var restKey =
-
-        (o.past ? 'p' : 'f') +
-
-        o.day +
-
-        ':' +
-
-        o.hr +
-
-        ':' +
-
-        o.min +
-
-        ':' +
-
-        o.sec;
-
-      if (
-
-        r.lastRestKey !== restKey
-
-      ){
-
-        r.lastRestKey =
-
-          restKey;
-
-        r.rest.textContent =
-
-          pad2(o.hr) +
-
-          ':' +
-
-          pad2(o.min) +
-
-          ':' +
-
-          pad2(o.sec);
-
-      }
-
-      /*
-
-        .00〜.99
-
-        10ms更新ではなく100ms更新。
-
-        表示自体は従来と同じ。
-
-      */
-
-      var csTxt =
-
-        pad2(o.cs);
-
-      if (
-
-        r.lastCsTxt !== csTxt
-
-      ){
-
-        r.lastCsTxt =
-
-          csTxt;
-
-        r.cs.textContent =
-
-          csTxt;
-
-      }
-
-      /*
-
-        過去状態
-
-      */
-
-      var pastState =
-
-        o.past ? 1 : 0;
-
-      if (
-
-        r.lastPastState !==
-
-        pastState
-
-      ){
-
-        r.lastPastState =
-
-          pastState;
-
-        r.card.classList.toggle(
-
-          'past',
-
-          !!pastState
-
-        );
-
-      }
-
-      /*
-
-        24時間以内
-
-      */
-
-      var soonState =
-
-        (!o.past &&
-
-         diff < 86400000)
-
-          ? 1
-
-          : 0;
-
-      if (
-
-        r.lastSoonState !==
-
-        soonState
-
-      ){
-
-        r.lastSoonState =
-
-          soonState;
-
-        r.card.classList.toggle(
-
-          'soon',
-
-          !!soonState
-
-        );
-
-      }
-
-    }
-
-  }
-
-  /*
-
-    初回を即時実行
-
-  */
-
-  updateClock();
-
-  updateCountdown();
-
-  /*
-
-    100ms周期。
-
-    10ms周期ではなくすることで
-
-    カード数増加時の負荷を大幅に抑える。
-
-  */
-
-  setInterval(function(){
-
-    updateClock();
-
-    updateCountdown();
-
-  },100);
-
-  /*
-
-    プログレスバーは画面内カードだけ約20fps。
-
-    カウントダウン処理とは分離。
-
-  */
-
-  var progressRunning = true;
-
-  function updateProgress(){
-
-    if (!progressRunning){
-
-      return;
-
-    }
-
-    var t = Date.now();
-
-    var progressTick =
-
-      Math.floor(t / 33);
-
-    for (
-
-      var i=0;
-
-      i<refs.length;
-
-      i++
-
-    ){
-
-      var r = refs[i];
-
-      if (
-
-        r.lastProgressTick ===
-
-        progressTick
-
-      ){
-
-        continue;
-
-      }
-
-      r.lastProgressTick =
-
-        progressTick;
-
-      var created =
-
-        r.it.created ||
-
-        (r.it.ts - 86400000);
-
-      var span =
-
-        r.it.ts - created;
-
-      var p =
-
-        span > 0
-
-          ? clamp(
-
-              (t-created)/span,
-
-              0,
-
-              1
-
-            )
-
-          : 1;
-
-      var width =
-
-        (p * 100).toFixed(1) +
-
-        '%';
-
-      if (
-
-        r.bar.style.width !==
-
-        width
-
-      ){
-
-        r.bar.style.width =
-
-          width;
-
-      }
-
-    }
-
-    requestAnimationFrame(
-
-      updateProgress
-
-    );
-
-  }
-
-  requestAnimationFrame(
-
-    updateProgress
-
-  );
-
-  /* ============================================================
-
-     ジェスチャー
-
-  ============================================================ */
-
-  var OPEN_X = -96;
-
-  var CONFIRM_X = -168;
-
-  var openRow = null;
-
-  var sheetOpen = false;
-
-  var blockTouch = function(e){
-
-    e.preventDefault();
-
-  };
-
-  function closeOpenRow(){
-
-    if (openRow){
-
-      var c =
-
-        openRow.querySelector('.item');
-
-      c.style.transition =
-
-        'transform .24s cubic-bezier(.2,.9,.25,1)';
-
-      c.style.transform =
-
-        'translateX(0)';
-
-      openRow.classList.remove('open');
-
-      openRow.classList.remove('armed');
-
-      openRow.style.removeProperty(
-
-        '--delete-width'
-
-      );
-
-      openRow = null;
-
-    }
-
-  }
-
-  function removeItem(id,rowEl){
-
-    var idx = -1;
-
-    for (
-
-      var i=0;
-
-      i<items.length;
-
-      i++
-
-    ){
-
-      if (items[i].id === id){
-
-        idx = i;
-
-        break;
-
-      }
-
-    }
-
-    if (idx < 0){
-
-      return;
-
-    }
-
-    if (
-
-      openRow &&
-
-      openRow.dataset.id === id
-
-    ){
-
-      openRow = null;
-
-    }
-
-    if (rowEl){
-
-      var h =
-
-        rowEl.offsetHeight;
-
-      rowEl.style.height =
-
-        h + 'px';
-
-      rowEl.classList.add(
-
-        'removing'
-
-      );
-
-      requestAnimationFrame(
-
-        function(){
-
-          rowEl.style.transform =
-
-            'translateX(-115%)';
-
-          rowEl.style.opacity =
-
-            '0';
-
-          rowEl.style.height =
-
-            '0px';
-
-          rowEl.style.marginBottom =
-
-            '0px';
-
-        }
-
-      );
-
-      haptic(14);
-
-      setTimeout(
-
-        function(){
-
-          items.splice(idx,1);
-
-          persist();
-
-          render();
-
-        },
-
-        240
-
-      );
-
-    }else{
-
-      items.splice(idx,1);
-
-      persist();
-
-      render();
-
-    }
-
-  }
-
-  function bindGestures(row,card,it){
-
-    var sx = 0;
-
-    var sy = 0;
-
-    var st = 0;
-
-    var mode = null;
-
-    var lp = null;
-
-    var pid = null;
-
-    var tx = 0;
-
-    var wasArmed = false;
-
-    var dragState = null;
-
-    row.querySelector(
-
-      '.row-bg'
-
-    ).addEventListener(
-
-      'click',
-
-      function(e){
-
-        e.stopPropagation();
-
-        if (openRow === row){
-
-          var c =
-
-            row.querySelector('.item');
-
-          c.style.transition =
-
-            'transform .2s cubic-bezier(.2,.9,.25,1)';
-
-          row.style.setProperty(
-
-            '--delete-width',
-
-            Math.abs(OPEN_X) + 'px'
-
-          );
-
-          c.style.transform =
-
-            'translateX(-115%)';
-
-          removeItem(
-
-            it.id,
-
-            row
-
-          );
-
-        }
-
-      }
-
-    );
-
-    card.addEventListener(
-
-      'pointerdown',
-
-      function(e){
-
-        if (sheetOpen) return;
-
-        if (
-
-          e.pointerType === 'mouse' &&
-
-          e.button !== 0
-
-        ){
-
-          return;
-
-        }
-
-        pid = e.pointerId;
-
-        sx = e.clientX;
-
-        sy = e.clientY;
-
-        st = performance.now();
-
-        mode = null;
-
-        wasArmed = false;
-
-        tx =
-
-          (openRow === row)
-
-            ? OPEN_X
-
-            : 0;
-
-        card.style.transition =
-
-          'none';
-
-        try{
-
-          card.setPointerCapture(pid);
-
-        }catch(err){}
-
-        card.addEventListener(
-
-          'pointermove',
-
-          onMove
-
-        );
-
-        card.addEventListener(
-
-          'pointerup',
-
-          onUp
-
-        );
-
-        card.addEventListener(
-
-          'pointercancel',
-
-          onUp
-
-        );
-
-        lp = setTimeout(
-
-          function(){
-
-            if (mode === null){
-
-              startDrag();
-
-            }
-
-          },
-
-          330
-
-        );
-
-      }
-
-    );
-
-    function startDrag(){
-
-      mode = 'drag';
-
-      closeOpenRow();
-
-      haptic(12);
-
-      listEl.classList.add(
-
-        'locked'
-
-      );
-
-      document.addEventListener(
-
-        'touchmove',
-
-        blockTouch,
-
-        {passive:false}
-
-      );
-
-      var rows =
-
-        Array.prototype.slice.call(
-
-          listEl.querySelectorAll('.row')
-
-        );
-
-      var rects =
-
-        rows.map(
-
-          function(r){
-
-            return r.getBoundingClientRect();
-
-          }
-
-        );
-
-      var from =
-
-        rows.indexOf(row);
-
-      var step =
-
-        rows.length > 1
-
-          ? (
-
-              from === 0
-
-                ? rects[1].top -
-
-                  rects[0].top
-
-                : rects[from].top -
-
-                  rects[from-1].top
-
-            )
-
-          : rects[from].height + 14;
-
-      dragState = {
-
-        rows:rows,
-
-        rects:rects,
-
-        from:from,
-
-        to:from,
-
-        step:step,
-
-        scroll0:listEl.scrollTop,
-
-        dy:0
-
-      };
-
-      row.classList.add(
-
-        'dragging'
-
-      );
-
-      rows.forEach(
-
-        function(r,i){
-
-          if (i !== from){
-
-            r.style.transition =
-
-              'transform .2s cubic-bezier(.2,.9,.25,1)';
-
-          }
-
-        }
-
-      );
-
-      row.style.transform =
-
-        'translateY(0px) scale(1.03)';
-
-    }
-
-    function applyDrag(clientY){
-
-      var d = dragState;
-
-      if (!d) return;
-
-      var dy =
-
-        clientY -
-
-        sy +
-
-        (listEl.scrollTop -
-
-         d.scroll0);
-
-      d.dy = dy;
-
-      row.style.transform =
-
-        'translateY(' +
-
-        dy +
-
-        'px) scale(1.03)';
-
-      var center =
-
-        d.rects[d.from].top +
-
-        d.rects[d.from].height/2 +
-
-        dy;
-
-      var to = d.from;
-
-      var i,c;
-
-      for (
-
-        i=0;
-
-        i<d.rows.length;
-
-        i++
-
-      ){
-
-        if (i === d.from) continue;
-
-        c =
-
-          d.rects[i].top +
-
-          d.rects[i].height/2;
-
-        if (
-
-          i < d.from &&
-
-          center < c
-
-        ){
-
-          to = Math.min(to,i);
-
-        }
-
-        if (
-
-          i > d.from &&
-
-          center > c
-
-        ){
-
-          to = Math.max(to,i);
-
-        }
-
-      }
-
-      if (to !== d.to){
-
-        haptic(6);
-
-        d.to = to;
-
-      }
-
-      d.rows.forEach(
-
-        function(r,i){
-
-          if (i === d.from) return;
-
-          var t = 0;
-
-          if (
-
-            d.from < d.to &&
-
-            i > d.from &&
-
-            i <= d.to
-
-          ){
-
-            t = -d.step;
-
-          }else if (
-
-            d.to < d.from &&
-
-            i >= d.to &&
-
-            i < d.from
-
-          ){
-
-            t = d.step;
-
-          }
-
-          r.style.transform =
-
-            'translateY(' +
-
-            t +
-
-            'px)';
-
-        }
-
-      );
-
-      var lr =
-
-        listEl.getBoundingClientRect();
-
-      if (
-
-        clientY <
-
-        lr.top + 72
-
-      ){
-
-        listEl.scrollTop -= 9;
-
-      }else if (
-
-        clientY >
-
-        lr.bottom - 72
-
-      ){
-
-        listEl.scrollTop += 9;
-
-      }
-
-    }
-
-    function endDrag(){
-
-      var d = dragState;
-
-      listEl.classList.remove(
-
-        'locked'
-
-      );
-
-      document.removeEventListener(
-
-        'touchmove',
-
-        blockTouch
-
-      );
-
-      if (!d) return;
-
-      d.rows.forEach(
-
-        function(r){
-
-          r.style.transition = '';
-
-          r.style.transform = '';
-
-        }
-
-      );
-
-      row.classList.remove(
-
-        'dragging'
-
-      );
-
-      if (d.to !== d.from){
-
-        var moved =
-
-          items.splice(
-
-            d.from,
-
-            1
-
-          )[0];
-
-        items.splice(
-
-          d.to,
-
-          0,
-
-          moved
-
-        );
-
-        persist();
-
-        haptic(10);
-
-      }
-
-      dragState = null;
-
-      render();
-
-    }
-
-    function onMove(e){
-
-      var dx =
-
-        e.clientX - sx;
-
-      var dy =
-
-        e.clientY - sy;
-
-      if (mode === 'drag'){
-
-        applyDrag(e.clientY);
-
-        return;
-
-      }
-
-      if (mode === null){
-
-        if (
-
-          Math.abs(dx) > 10 &&
-
-          Math.abs(dx) >
-
-          Math.abs(dy) * 1.2
-
-        ){
-
-          clearTimeout(lp);
-
-          mode = 'swipe';
-
-          if (
-
-            openRow &&
-
-            openRow !== row
-
-          ){
-
-            closeOpenRow();
-
-          }
-
-          row.classList.add(
-
-            'swiping'
-
-          );
-
-        }else if (
-
-          Math.abs(dy) > 9 ||
-
-          Math.abs(dx) > 14
-
-        ){
-
-          clearTimeout(lp);
-
-          mode = 'scroll';
-
-          cleanup();
-
-          return;
-
-        }
-
-      }
-
-      if (mode === 'swipe'){
-
-        var opened =
-
-          openRow === row;
-
-        var base =
-
-          opened
-
-            ? OPEN_X
-
-            : 0;
-
-        var v =
-
-          base + dx;
-
-        if (v > 0){
-
-          v *= .22;
-
-        }
-
-        tx = v;
-
-        card.style.transform =
-
-          'translateX(' +
-
-          v +
-
-          'px)';
-
-        row.style.setProperty(
-
-          '--delete-width',
-
-          Math.max(0,-v) + 'px'
-
-        );
-
-        var armed =
-
-          opened &&
-
-          v < CONFIRM_X;
-
-        if (armed !== wasArmed){
-
-          wasArmed = armed;
-
-          row.classList.toggle(
-
-            'armed',
-
-            armed
-
-          );
-
-          haptic(
-
-            armed ? 10 : 4
-
-          );
-
-        }
-
-      }
-
-    }
-
-    function cleanup(){
-
-      card.removeEventListener(
-
-        'pointermove',
-
-        onMove
-
-      );
-
-      card.removeEventListener(
-
-        'pointerup',
-
-        onUp
-
-      );
-
-      card.removeEventListener(
-
-        'pointercancel',
-
-        onUp
-
-      );
-
-      try{
-
-        card.releasePointerCapture(pid);
-
-      }catch(err){}
-
-    }
-
-    function onUp(e){
-
-      clearTimeout(lp);
-
-      cleanup();
-
-      if (mode === 'drag'){
-
-        endDrag();
-
-        return;
-
-      }
-
-      if (mode === 'swipe'){
-
-        var opened =
-
-          openRow === row;
-
-        row.classList.remove(
-
-          'swiping'
-
-        );
-
-        card.style.transition =
-
-          'transform .26s cubic-bezier(.2,.9,.25,1)';
-
-        if (
-
-          opened &&
-
-          tx < CONFIRM_X
-
-        ){
-
-          row.classList.remove(
-
-            'armed'
-
-          );
-
-          card.style.transform =
-
-            'translateX(-115%)';
-
-          row.style.setProperty(
-
-            '--delete-width',
-
-            '0px'
-
-          );
-
-          removeItem(
-
-            it.id,
-
-            row
-
-          );
-
-        }else if (
-
-          tx < OPEN_X * .45
-
-        ){
-
-          row.classList.remove(
-
-            'armed'
-
-          );
-
-          card.style.transform =
-
-            'translateX(' +
-
-            OPEN_X +
-
-            'px)';
-
-          row.style.setProperty(
-
-            '--delete-width',
-
-            Math.abs(OPEN_X) + 'px'
-
-          );
-
-          row.classList.add(
-
-            'open'
-
-          );
-
-          if (!opened){
-
-            haptic(8);
-
-          }
-
-          openRow = row;
-
-        }else{
-
-          row.classList.remove(
-
-            'armed'
-
-          );
-
-          card.style.transform =
-
-            'translateX(0)';
-
-          row.style.setProperty(
-
-            '--delete-width',
-
-            '0px'
-
-          );
-
-          row.classList.remove(
-
-            'open'
-
-          );
-
-          if (openRow === row){
-
-            openRow = null;
-
-          }
-
-        }
-
-        wasArmed = false;
-
-        return;
-
-      }
-
-      var dt =
-
-        performance.now() - st;
-
-      var moved =
-
-        Math.abs(e.clientX-sx) +
-
-        Math.abs(e.clientY-sy);
-
-      if (
-
-        mode === null &&
-
-        moved < 12 &&
-
-        dt < 520
-
-      ){
-
-        if (openRow){
-
-          closeOpenRow();
-
-          return;
-
-        }
-
-        openSheet(it);
-
-      }
-
-    }
-
-  }
-
-  listEl.addEventListener(
-
-    'scroll',
-
-    function(){
-
-      if (openRow){
-
-        closeOpenRow();
-
-      }
-
-    }
-
-  );
-
-  /* ============================================================
-
-     シート
-
-  ============================================================ */
-
-  var sheet = $('#sheet');
-
-  var scrim = $('#scrim');
-
-  var titleEl = $('#title');
-
-  var btnBell = $('#btnBell');
-
-  var hintEl = $('#sheetHint');
-
-  var editing = null;
-
-  var editNotify = true;
-
-  var rY =
-
-    new Reel(
-
-      $('#rY'),
-
-      {
-
-        count:3001,
-
-        format:function(i){
-
-          return String(i);
-
-        },
-
-        onChange:onYM
-
-      }
-
-    );
-
-  var rM =
-
-    new Reel(
-
-      $('#rM'),
-
-      {
-
-        count:12,
-
-        format:function(i){
-
-          return String(i+1);
-
-        },
-
-        onChange:onYM
-
-      }
-
-    );
-
-  var rD =
-
-    new Reel(
-
-      $('#rD'),
-
-      {
-
-        count:31,
-
-        format:function(i){
-
-          return String(i+1);
-
-        },
-
-        onChange:updateHint
-
-      }
-
-    );
-
-  var rH =
-
-    new Reel(
-
-      $('#rH'),
-
-      {
-
-        count:24,
-
-        format:function(i){
-
-          return pad2(i);
-
-        },
-
-        onChange:updateHint
-
-      }
-
-    );
-
-  var rI =
-
-    new Reel(
-
-      $('#rI'),
-
-      {
-
-        count:60,
-
-        format:function(i){
-
-          return pad2(i);
-
-        },
-
-        onChange:updateHint
-
-      }
-
-    );
-
-  function onYM(){
-
-    var n =
-
-      daysInMonth(
-
-        rY.index(),
-
-        rM.index()+1
-
-      );
-
-    if (rD.count !== n){
-
-      rD.setCount(n);
-
-    }
-
-    updateHint();
-
-  }
-
-  function currentTS(){
-
-    return makeTS(
-
-      rY.index(),
-
-      rM.index()+1,
-
-      rD.index()+1,
-
-      rH.index(),
-
-      rI.index()
-
-    );
-
-  }
-
-  function updateHint(){
-
-    var diff =
-
-      currentTS() - Date.now();
-
-    var o =
-
-      split(diff);
-
-    hintEl.textContent =
-
-      (o.past ? '+' : '−') +
-
-      o.day +
-
-      '日 ' +
-
-      formatRest(o);
-
-  }
-
-  function setPicker(ts){
-
-    var d =
-
-      new Date(ts);
-
-    rY.setIndex(
-
-      d.getFullYear(),
-
-      false
-
-    );
-
-    rM.setIndex(
-
-      d.getMonth(),
-
-      false
-
-    );
-
-    rD.setCount(
-
-      daysInMonth(
-
-        d.getFullYear(),
-
-        d.getMonth()+1
-
-      )
-
-    );
-
-    rD.setIndex(
-
-      d.getDate()-1,
-
-      false
-
-    );
-
-    rH.setIndex(
-
-      d.getHours(),
-
-      false
-
-    );
-
-    rI.setIndex(
-
-      d.getMinutes(),
-
-      false
-
-    );
-
-    updateHint();
-
-  }
-
-  function openSheet(it){
-
-    editing = it || null;
-
-    sheetOpen = true;
-
-    closeOpenRow();
-
-    closePanel();
-
-    titleEl.value =
-
-      it
-
-        ? (it.title || '')
-
-        : '';
-
-    editNotify =
-
-      it
-
-        ? !!it.notify
-
-        : true;
-
-    btnBell.classList.toggle(
-
-      'off',
-
-      !editNotify
-
-    );
-
-    var ts;
-
-    if (it){
-
-      ts = it.ts;
-
-    }else{
-
-      var d =
-
-        new Date(
-
-          Date.now() + 86400000
-
-        );
-
-      d.setHours(
-
-        23,
-
-        59,
-
-        0,
-
-        0
-
-      );
-
-      ts = d.getTime();
-
-    }
-
-    setPicker(ts);
-
-    scrim.classList.add(
-
-      'show'
-
-    );
-
-    sheet.classList.add(
-
-      'show'
-
-    );
-
-    sheet.style.transform = '';
-
-    haptic(8);
-
-  }
-
-  function closeSheet(){
-
-    sheetOpen = false;
-
-    scrim.classList.remove(
-
-      'show'
-
-    );
-
-    sheet.classList.remove(
-
-      'show'
-
-    );
-
-    sheet.style.transform = '';
-
-    titleEl.blur();
-
-  }
-
-  function saveSheet(){
-
-    var ts =
-
-      currentTS();
-
-    var t =
-
-      titleEl.value.trim();
-
-    if (editing){
-
-      editing.ts = ts;
-
-      editing.title =
-
-        t ||
-
-        editing.title ||
-
-        'COUNTDOWN';
-
-      editing.notify =
-
-        editNotify;
-
-    }else{
-
-      items.push({
-
-        id:
-
-          'c' +
-
-          Date.now() +
-
-          Math.random()
-
-            .toString(36)
-
-            .slice(2,6),
-
-        title:
-
-          t || 'COUNTDOWN',
-
-        ts:ts,
-
-        notify:
-
-          editNotify,
-
-        created:
-
-          Date.now()
-
-      });
-
-    }
-
-    persist();
-
-    render();
-
-    closeSheet();
-
-    haptic(10);
-
-  }
-
-  $('#fab').addEventListener(
-
-    'click',
-
-    function(){
-
-      openSheet(null);
-
-    }
-
-  );
-
-  $('#btnOk').addEventListener(
-
-    'click',
-
-    saveSheet
-
-  );
-
-  $('#btnCancel').addEventListener(
-
-    'click',
-
-    closeSheet
-
-  );
-
-  scrim.addEventListener(
-
-    'click',
-
-    closeSheet
-
-  );
-
-  btnBell.addEventListener(
-
-    'click',
-
-    function(){
-
-      editNotify =
-
-        !editNotify;
-
-      btnBell.classList.toggle(
-
-        'off',
-
-        !editNotify
-
-      );
-
-      haptic(6);
-
-    }
-
-  );
-
-  titleEl.addEventListener(
-
-    'keydown',
-
-    function(e){
-
-      if (e.key === 'Enter'){
-
-        e.preventDefault();
-
-        titleEl.blur();
-
-      }
-
-    }
-
-  );
-
-  document.addEventListener(
-
-    'keydown',
-
-    function(e){
-
-      if (!sheetOpen){
-
-        return;
-
-      }
-
-      if (e.key === 'Escape'){
-
-        closeSheet();
-
-      }
-
-    }
-
-  );
-
-  /* ============================================================
-
-     シートドラッグ
-
-  ============================================================ */
-
-  (function(){
-
-    var grip = $('#grip');
-
-    var gy = 0;
-
-    var dragging = false;
-
-    grip.addEventListener(
-
-      'pointerdown',
-
-      function(e){
-
-        dragging = true;
-
-        gy = e.clientY;
-
-        sheet.style.transition =
-
-          'none';
-
-        try{
-
-          grip.setPointerCapture(
-
-            e.pointerId
-
-          );
-
-        }catch(err){}
-
-      }
-
-    );
-
-    grip.addEventListener(
-
-      'pointermove',
-
-      function(e){
-
-        if (!dragging){
-
-          return;
-
-        }
-
-        var dy =
-
-          Math.max(
-
-            0,
-
-            e.clientY - gy
-
-          );
-
-        sheet.style.transform =
-
-          'translate(-50%,' +
-
-          dy +
-
-          'px)';
-
-      }
-
-    );
-
-    function end(e){
-
-      if (!dragging){
-
-        return;
-
-      }
-
-      dragging = false;
-
-      sheet.style.transition = '';
-
-      var dy =
-
-        Math.max(
-
-          0,
-
-          e.clientY - gy
-
-        );
-
-      if (dy > 110){
-
-        closeSheet();
-
-      }else{
-
-        sheet.style.transform =
-
-          'translate(-50%,0)';
-
-      }
-
-    }
-
-    grip.addEventListener(
-
-      'pointerup',
-
-      end
-
-    );
-
-    grip.addEventListener(
-
-      'pointercancel',
-
-      end
-
-    );
-
-  })();
-
-  /* ============================================================
-
-     設定パネル
-
-  ============================================================ */
-
-  var panel = $('#panel');
-
-  var menuBtn = $('#menuBtn');
-
-  var swNotify = $('#swNotify');
-
-  var chips = $('#chips');
-
-  var sortBtn = $('#sortBtn');
-
-  var sortLabel = $('#sortLabel');
-
-  var sakuraToggle =
-
-    $('#sakuraToggle');
-
-  var swSakura =
-
-    $('#swSakura');
-
-  var sakuraPaused = false;
-
-  (function(){
-
-    var html = '';
-
-    NOTIFY_DAYS.forEach(
-
-      function(d){
-
-        html +=
-
-          '<span class="chip' +
-
-          (d === 0 ? ' now' : '') +
-
-          '">' +
-
-          (d === 0 ? '当日' : d) +
-
-          '</span>';
-
-      }
-
-    );
-
-    chips.innerHTML = html;
-
-  })();
-
-  function syncNotifyUI(){
-
-    swNotify.classList.toggle(
-
-      'on',
-
-      !!cfg.notify
-
-    );
-
-    chips.classList.toggle(
-
-      'off',
-
-      !cfg.notify
-
-    );
-
-    for (
-
-      var i=0;
-
-      i<refs.length;
-
-      i++
-
-    ){
-
-      refs[i]
-
-        .row
-
-        .querySelector('.bell-dot')
-
-        .hidden =
-
-        !(
-
-          refs[i].it.notify &&
-
-          cfg.notify
-
-        );
-
-    }
-
-  }
-
-  function openPanel(){
-
-    panel.classList.add(
-
-      'show'
-
-    );
-
-    menuBtn.classList.add(
-
-      'open'
-
-    );
-
-  }
-
-  function closePanel(){
-
-    panel.classList.remove(
-
-      'show'
-
-    );
-
-    menuBtn.classList.remove(
-
-      'open'
-
-    );
-
-  }
-
-  menuBtn.addEventListener(
-
-    'click',
-
-    function(e){
-
-      e.stopPropagation();
-
-      closeOpenRow();
-
-      if (
-
-        panel.classList.contains(
-
-          'show'
-
-        )
-
-      ){
-
-        closePanel();
-
-      }else{
-
-        openPanel();
-
-      }
-
-    }
-
-  );
-
-  document.addEventListener(
-
-    'click',
-
-    function(e){
-
-      if (
-
-        panel.classList.contains(
-
-          'show'
-
-        ) &&
-
-        !panel.contains(e.target) &&
-
-        !menuBtn.contains(e.target)
-
-      ){
-
-        closePanel();
-
-      }
-
-    }
-
-  );
-
-  swNotify.addEventListener(
-
-    'click',
-
-    function(){
-
-      if (!cfg.notify){
-
-        if (
-
-          !('Notification' in window)
-
-        ){
-
-          shakePanel();
-
-          return;
-
-        }
-
-        Notification
-
-          .requestPermission()
-
-          .then(
-
-            function(p){
-
-              if (
-
-                p === 'granted'
-
-              ){
-
-                cfg.notify = true;
-
-                persistCfg();
-
-                syncNotifyUI();
-
-                haptic(10);
-
-                checkNotify();
-
-              }else{
-
-                shakePanel();
-
-              }
-
-            }
-
-          );
-
-      }else{
-
-        cfg.notify = false;
-
-        persistCfg();
-
-        syncNotifyUI();
-
-        haptic(6);
-
-      }
-
-    }
-
-  );
-
-  function shakePanel(){
-
-    panel.classList.add(
-
-      'shake'
-
-    );
-
-    setTimeout(
-
-      function(){
-
-        panel.classList.remove(
-
-          'shake'
-
-        );
-
-      },
-
-      400
-
-    );
-
-  }
-
-  /* ============================================================
-
-     Sakura
-
-
-
-
-
-     停止：
-
-       1. 新規生成停止
-
-       2. 既存花びらを消す
-
-       3. レイヤーを非表示
-
-     再開：
-
-       1. 40枚に戻す
-
-       2. play
-
-       3. レイヤー表示
-
-  ============================================================ */
-
-  function clearSakuraVisuals(){
-
-    var layer =
-
-      document.getElementById(
-
-        'sakura'
-
-      );
-
-    if (!layer){
-
-      return;
-
-    }
-
-    /*
-
-      sakura2.jsがcanvas型でもDOM型でも
-
-      残骸が表示されないようにする。
-
-    */
-
-    var nodes =
-
-      layer.querySelectorAll(
-
-        '.sakura, .petal, canvas'
-
-      );
-
-    for (
-
-      var i=0;
-
-      i<nodes.length;
-
-      i++
-
-    ){
-
-      /*
-
-        sakura2.jsが管理しているcanvasまで
-
-        removeするとplay()に影響する可能性があるため、
-
-        canvasは削除せず非表示にする。
-
-      */
-
-      if (
-
-        nodes[i].tagName === 'CANVAS'
-
-      ){
-
-        nodes[i].style.visibility =
-
-          'hidden';
-
-      }else{
-
-        if (
-
-          nodes[i].parentNode
-
-        ){
-
-          nodes[i]
-
-            .parentNode
-
-            .removeChild(
-
-              nodes[i]
-
-            );
-
-        }
-
-      }
-
-    }
-
-  }
-
-  function showSakuraVisuals(){
-
-    var layer =
-
-      document.getElementById(
-
-        'sakura'
-
-      );
-
-    if (!layer){
-
-      return;
-
-    }
-
-    var canvases =
-
-      layer.querySelectorAll(
-
-        'canvas'
-
-      );
-
-    for (
-
-      var i=0;
-
-      i<canvases.length;
-
-      i++
-
-    ){
-
-      canvases[i].style.visibility =
-
-        'visible';
-
-    }
-
-  }
-
-  function syncSakuraUI(){
-
-    swSakura.classList.toggle(
-
-      'on',
-
-      !sakuraPaused
-
-    );
-
-    swSakura.setAttribute(
-
-      'aria-checked',
-
-      sakuraPaused
-
-        ? 'false'
-
-        : 'true'
-
-    );
-
-    swSakura.setAttribute(
-
-      'aria-label',
-
-      sakuraPaused
-
-        ? 'sakura オフ'
-
-        : 'sakura オン'
-
-    );
-
-  }
-
-  swSakura.addEventListener(
-
-    'click',
-
-    function(e){
-
-      e.preventDefault();
-
-      e.stopPropagation();
-
-      if (
-
-        !window.sakuraPetals
-
-      ){
-
-        return;
-
-      }
-
-      if (sakuraPaused){
-
-        /*
-
-          再開時は40枚に戻す
-
-        */
-
-        try{
-
-          window.sakuraPetals.setCount(
-
-            40
-
-          );
-
-        }catch(err){}
-
-        try{
-
-          window.sakuraPetals.play();
-
-        }catch(err){}
-
-        showSakuraVisuals();
-
-        document
-
-          .getElementById('sakura')
-
-          .classList.remove(
-
-            'hidden'
-
-          );
-
-        sakuraPaused = false;
-
-      }else{
-
-        /*
-
-          まず生成を止める
-
-        */
-
-        try{
-
-          window.sakuraPetals.pause();
-
-        }catch(err){}
-
-        /*
-
-          既存の花びらを確実に除去
-
-        */
-
-        clearSakuraVisuals();
-
-        /*
-
-          レイヤー自体も非表示
-
-        */
-
-        document
-
-          .getElementById('sakura')
-
-          .classList.add(
-
-            'hidden'
-
-          );
-
-        /*
-
-          次回play時に40枚へ戻すため、
-
-          現在の生成数を0にしておく。
-
-        */
-
-        try{
-
-          window.sakuraPetals.setCount(
-
-            0
-
-          );
-
-        }catch(err){}
-
-        sakuraPaused = true;
-
-      }
-
-      syncSakuraUI();
-
-      haptic(8);
-
-    }
-
-  );
-
-  syncSakuraUI();
-
-  /* ============================================================
-
-     並び替え
-
-  ============================================================ */
-
-  function rank(it,now){
-
-    var d =
-
-      it.ts - now;
-
-    return d >= 0
-
-      ? d
-
-      : 4e15 + (-d);
-
-  }
-
-  function syncSortUI(){
-
-    sortBtn.classList.toggle(
-
-      'desc',
-
-      !!cfg.sortDesc
-
-    );
-
-    sortLabel.textContent =
-
-      cfg.sortDesc
-
-        ? '999 → 0'
-
-        : '0 → 999';
-
-  }
-
-  function doSort(){
-
-    var now =
-
-      Date.now();
-
-    items.sort(
-
-      function(a,b){
-
-        var r =
-
-          rank(a,now) -
-
-          rank(b,now);
-
-        if (r === 0){
-
-          r =
-
-            (a.created || 0) -
-
-            (b.created || 0);
-
-        }
-
-        return cfg.sortDesc
-
-          ? -r
-
-          : r;
-
-      }
-
-    );
-
-    persist();
-
-    closeOpenRow();
-
-    animateNext = true;
-
-    render();
-
-    syncNotifyUI();
-
-    haptic(10);
-
-  }
-
-  sortBtn.addEventListener(
-
-    'click',
-
-    function(e){
-
-      e.preventDefault();
-
-      e.stopPropagation();
-
-      doSort();
-
-      cfg.sortDesc =
-
-        !cfg.sortDesc;
-
-      persistCfg();
-
-      syncSortUI();
-
-    }
-
-  );
-
-  /* ============================================================
-
-     通知
-
-  ============================================================ */
-
-  function checkNotify(){
-
-    if (
-
-      !cfg.notify ||
-
-      !('Notification' in window) ||
-
-      Notification.permission !==
-
-      'granted'
-
-    ){
-
-      return;
-
-    }
-
-    var today =
-
-      new Date();
-
-    today.setHours(
-
-      0,0,0,0
-
-    );
-
-    var key0 =
-
-      today.getTime();
-
-    var changed = false;
-
-    items.forEach(
-
-      function(it){
-
-        if (!it.notify){
-
-          return;
-
-        }
-
-        if (
-
-          it.ts < Date.now()
-
-        ){
-
-          return;
-
-        }
-
-        var d =
-
-          dayDiff(it.ts);
-
-        if (
-
-          NOTIFY_DAYS.indexOf(d) < 0
-
-        ){
-
-          return;
-
-        }
-
-        var k =
-
-          it.id +
-
-          '|' +
-
-          d +
-
-          '|' +
-
-          key0;
-
-        if (fired[k]){
-
-          return;
-
-        }
-
-        fired[k] = 1;
-
-        changed = true;
-
-        try{
-
-          new Notification(
-
-            '🌸 ' +
-
-            (it.title ||
-
-             'COUNTDOWN'),
-
-            {
-
-              body:
-
-                d === 0
-
-                  ? '本日 ' +
-
-                    fmtCardDate(it.ts)
-
-                  : 'あと ' +
-
-                    d +
-
-                    ' 日  ' +
-
-                    fmtCardDate(it.ts),
-
-              tag:k
-
-            }
-
-          );
-
-        }catch(e){}
-
-      }
-
-    );
-
-    var keys =
-
-      Object.keys(fired);
-
-    if (keys.length > 400){
-
-      keys
-
-        .slice(
-
-          0,
-
-          keys.length - 200
-
-        )
-
-        .forEach(
-
-          function(k){
-
-            delete fired[k];
-
-          }
-
-        );
-
-      changed = true;
-
-    }
-
-    if (changed){
-
-      saveJSON(
-
-        K_FIRED,
-
-        fired
-
-      );
-
-    }
-
-  }
-
-  setInterval(
-
-    checkNotify,
-
-    30000
-
-  );
-
-  document.addEventListener(
-
-    'visibilitychange',
-
-    function(){
-
-      if (!document.hidden){
-
-        checkNotify();
-
-      }
-
-    }
-
-  );
-
-  /* ============================================================
-
-     起動
-
-  ============================================================ */
-
-  render();
-
-  syncNotifyUI();
-
-  syncSortUI();
-
-  checkNotify();
-
-  window.addEventListener(
-
-    'resize',
-
-    function(){
-
-      if (openRow){
-
-        closeOpenRow();
-
-      }
-
-    }
-
-  );
-
-  document.addEventListener(
-
-    'gesturestart',
-
-    function(e){
-
-      e.preventDefault();
-
-    }
-
-  );
-
-})();
-
-</script>
-
-<script src="./sakura2.js"></script>
-
-</body>
-
-</html  var nowDateEl = $('#nowDate');
-  var nowTimeEl = $('#nowTime');
-  var lastDateKey = '';
-  var lastTimeKey = '';
-  var visibleRefs = new Set();
-  var fractionRaf = 0;
-
-  var visibleObserver =
+  'use strict';
+  /* ============================================================
+     Utility
+  ============================================================ */
+  var $ = function(s, r){
+    return (r || document).querySelector(s);
+  };
+  var clamp = function(v, a, b){
+    return v < a ? a : (v > b ? b : v);
+  };
+  var pad2 = function(n){
+    return (n < 10 ? '0' : '') + n;
+  };
+  var pad4 = function(n){
+    return ('000' + n).slice(-4);
+  };
+  var haptic = function(ms){
+    if (navigator.vibrate){
+      try{
+        navigator.vibrate(ms);
+      }catch(e){}
+    }
+  };
+  var K_ITEMS = 'sakura.countdown.items.v1';
+  var K_CFG   = 'sakura.countdown.cfg.v1';
+  var K_FIRED = 'sakura.countdown.fired.v1';
+  var NOTIFY_DAYS = [
+    100,50,30,10,9,8,7,6,5,4,3,2,1,0
+  ];
+  function loadJSON(key, def){
+    try{
+      var raw = localStorage.getItem(key);
+      return raw ? JSON.parse(raw) : def;
+    }catch(e){
+      return def;
+    }
+  }
+  function saveJSON(key, val){
+    try{
+      localStorage.setItem(key, JSON.stringify(val));
+    }catch(e){}
+  }
+  var items = loadJSON(K_ITEMS, null);
+  if (!items || !items.length){
+    var base = new Date();
+    items = [{
+      id:'seed-' + Date.now(),
+      title:'SAKURA',
+      ts:new Date(
+        base.getFullYear() + (base.getMonth() > 2 ? 1 : 0),
+        3,
+        5,
+        12,
+        0,
+        0,
+        0
+      ).getTime(),
+      notify:true,
+      created:Date.now()
+    }];
+  }
+  var cfg = loadJSON(K_CFG, {
+    notify:false,
+    sortDesc:false
+  });
+  if (typeof cfg.sortDesc !== 'boolean'){
+    cfg.sortDesc = false;
+  }
+  var fired = loadJSON(K_FIRED, {});
+  function persist(){
+    saveJSON(K_ITEMS, items);
+  }
+  function persistCfg(){
+    saveJSON(K_CFG, cfg);
+  }
+  function daysInMonth(y,m){
+    var d = new Date(2000,0,1);
+    d.setFullYear(y,m,0);
+    return d.getDate();
+  }
+  function makeTS(y,mo,da,h,mi){
+    var d = new Date(2000,0,1,0,0,0,0);
+    d.setFullYear(y,mo - 1,da);
+    d.setHours(h,mi,0,0);
+    return d.getTime();
+  }
+  function fmtCardDate(ts){
+    var d = new Date(ts);
+    return pad4(d.getFullYear()) +
+      ' / ' +
+      pad2(d.getMonth()+1) +
+      ' / ' +
+      pad2(d.getDate()) +
+      '  ' +
+      pad2(d.getHours()) +
+      ':' +
+      pad2(d.getMinutes());
+  }
+  function fmtDate(d){
+    return pad4(d.getFullYear()) +
+      ' / ' +
+      pad2(d.getMonth()+1) +
+      ' / ' +
+      pad2(d.getDate());
+  }
+  function fmtTime(d){
+    return pad2(d.getHours()) +
+      ':' +
+      pad2(d.getMinutes()) +
+      ':' +
+      pad2(d.getSeconds()) +
+      '.' +
+      pad2(Math.floor(d.getMilliseconds()/10));
+  }
+  function split(diff){
+    var past = diff < 0;
+    var t = Math.abs(diff);
+    var cs = Math.floor((t % 1000) / 10);
+    var s = Math.floor(t / 1000);
+    var sec = s % 60;
+    var min = Math.floor(s / 60) % 60;
+    var hr  = Math.floor(s / 3600) % 24;
+    var day = Math.floor(s / 86400);
+    return {
+      past:past,
+      day:day,
+      hr:hr,
+      min:min,
+      sec:sec,
+      cs:cs
+    };
+  }
+  function formatRest(o){
+    return pad2(o.hr) +
+      ':' +
+      pad2(o.min) +
+      ':' +
+      pad2(o.sec) +
+      '.' +
+      pad2(o.cs);
+  }
+  function dayDiff(ts){
+    var a = new Date();
+    a.setHours(0,0,0,0);
+    var b = new Date(ts);
+    b.setHours(0,0,0,0);
+    return Math.round((b-a)/86400000);
+  }
+  /* ============================================================
+     Reel
+  ============================================================ */
+  var ITEM_H = 50;
+  var VIEW_H = 150;
+  var CENTER_OFF = (VIEW_H - ITEM_H) / 2;
+  var MAX_VELOCITY   = 2.8;
+  var FRICTION       = 0.965;
+  var STOP_THRESHOLD = 0.025;
+  var FRAME = 1000 / 60;
+  function Reel(el,opt){
+    this.el = el;
+    this.count = opt.count;
+    this.fmt = opt.format;
+    this.onChange = opt.onChange || null;
+    this.pos = 0;
+    this.vel = 0;
+    this.raf = 0;
+    this.pool = [];
+    this.last = 0;
+    this.dragging = false;
+    this.hist = [];
+    this.wheelT = 0;
+    var self = this;
+    el.addEventListener('pointerdown',function(e){
+      self._down(e);
+    });
+    el.addEventListener('wheel',function(e){
+      self._wheel(e);
+    },{passive:false});
+    el.addEventListener('contextmenu',function(e){
+      e.preventDefault();
+    });
+    this.render();
+  }
+  Reel.prototype.max = function(){
+    return (this.count - 1) * ITEM_H;
+  };
+  Reel.prototype.index = function(){
+    return clamp(
+      Math.round(this.pos / ITEM_H),
+      0,
+      this.count - 1
+    );
+  };
+  Reel.prototype._node = function(i){
+    if (!this.pool[i]){
+      var d = document.createElement('div');
+      d.className = 'it';
+      this.el.appendChild(d);
+      this.pool[i] = d;
+    }
+    return this.pool[i];
+  };
+  Reel.prototype.render = function(){
+    var lo = Math.ceil(
+      (this.pos - CENTER_OFF - ITEM_H) / ITEM_H
+    );
+    var hi = Math.floor(
+      (this.pos - CENTER_OFF + VIEW_H) / ITEM_H
+    );
+    var p = 0;
+    var i,el,y,d,ad,sc,op,rot;
+    for (i=lo;i<=hi;i++){
+      if (i<0 || i>=this.count) continue;
+      el = this._node(p++);
+      y = CENTER_OFF + i * ITEM_H - this.pos;
+      d = (y - CENTER_OFF) / ITEM_H;
+      ad = Math.min(Math.abs(d),2.4);
+      sc = 1 - ad * .14;
+      op = Math.max(0,1 - ad * .40);
+      rot = clamp(d * 30,-72,72);
+      el.textContent = this.fmt(i);
+      el.style.display = '';
+      el.style.opacity = op.toFixed(3);
+      el.style.transform =
+        'translateY(' +
+        y.toFixed(2) +
+        'px) rotateX(' +
+        (-rot).toFixed(2) +
+        'deg) scale(' +
+        sc.toFixed(3) +
+        ')';
+      if (Math.abs(d)<.5){
+        el.classList.add('sel');
+      }else{
+        el.classList.remove('sel');
+      }
+    }
+    for (;p<this.pool.length;p++){
+      this.pool[p].style.display='none';
+    }
+  };
+  Reel.prototype._tick = function(){
+    var i = this.index();
+    if (i !== this.last){
+      this.last = i;
+      haptic(4);
+      if (this.onChange){
+        this.onChange(i,false);
+      }
+    }
+  };
+  Reel.prototype._commit = function(){
+    this.last = this.index();
+    if (this.onChange){
+      this.onChange(this.last,true);
+    }
+  };
+  Reel.prototype.stop = function(){
+    if (this.raf){
+      cancelAnimationFrame(this.raf);
+    }
+    this.raf = 0;
+    this.vel = 0;
+  };
+  Reel.prototype._setDrag = function(v){
+    var mx = this.max();
+    if (v<0){
+      v = v * .32;
+    }else if (v>mx){
+      v = mx + (v-mx)*.32;
+    }
+    this.pos = v;
+  };
+  Reel.prototype._down = function(e){
+    if (e.pointerType === 'mouse' && e.button !== 0){
+      return;
+    }
+    e.preventDefault();
+    this.stop();
+    this.dragging = true;
+    this.pid = e.pointerId;
+    this.startY = e.clientY;
+    this.startPos = this.pos;
+    this.moved = 0;
+    this.downT = performance.now();
+    this.hist = [{
+      t:this.downT,
+      y:e.clientY
+    }];
+    try{
+      this.el.setPointerCapture(e.pointerId);
+    }catch(err){}
+    var self = this;
+    this._mv = function(ev){
+      self._move(ev);
+    };
+    this._up = function(ev){
+      self._end(ev);
+    };
+    this.el.addEventListener(
+      'pointermove',
+      this._mv
+    );
+    this.el.addEventListener(
+      'pointerup',
+      this._up
+    );
+    this.el.addEventListener(
+      'pointercancel',
+      this._up
+    );
+  };
+  Reel.prototype._move = function(e){
+    if (!this.dragging) return;
+    var dy = e.clientY - this.startY;
+    if (Math.abs(dy) > this.moved){
+      this.moved = Math.abs(dy);
+    }
+    this._setDrag(this.startPos - dy);
+    var t = performance.now();
+    this.hist.push({
+      t:t,
+      y:e.clientY
+    });
+    while (
+      this.hist.length > 2 &&
+      t - this.hist[0].t > 80
+    ){
+      this.hist.shift();
+    }
+    this.render();
+    this._tick();
+  };
+  Reel.prototype._end = function(e){
+    if (!this.dragging) return;
+    this.dragging = false;
+    this.el.removeEventListener(
+      'pointermove',
+      this._mv
+    );
+    this.el.removeEventListener(
+      'pointerup',
+      this._up
+    );
+    this.el.removeEventListener(
+      'pointercancel',
+      this._up
+    );
+    try{
+      this.el.releasePointerCapture(this.pid);
+    }catch(err){}
+    var now = performance.now();
+    if (
+      this.moved < 6 &&
+      now - this.downT < 420
+    ){
+      var rect = this.el.getBoundingClientRect();
+      var local = e.clientY - rect.top;
+      var idx = Math.floor(
+        (local + this.pos - CENTER_OFF) / ITEM_H
+      );
+      idx = clamp(
+        idx,
+        0,
+        this.count - 1
+      );
+      this.animateTo(
+        idx * ITEM_H,
+        170
+      );
+      return;
+    }
+    var v = 0;
+    if (this.hist.length >= 2){
+      var a = this.hist[0];
+      var b = this.hist[this.hist.length-1];
+      var dt = b.t - a.t;
+      if (dt > 0){
+        v = -(b.y-a.y)/dt;
+      }
+    }
+    v = clamp(
+      v,
+      -MAX_VELOCITY,
+      MAX_VELOCITY
+    );
+    if (
+      this.pos < 0 ||
+      this.pos > this.max() ||
+      Math.abs(v) < STOP_THRESHOLD
+    ){
+      this.snap();
+    }else{
+      this.vel = v;
+      this._glide();
+    }
+  };
+  Reel.prototype._glide = function(){
+    var self = this;
+    var last = performance.now();
+    var step = function(now){
+      var dt = now - last;
+      last = now;
+      if (dt > 48) dt = 48;
+      if (dt <= 0) dt = 1;
+      self.pos += self.vel * dt;
+      self.vel *= Math.pow(
+        FRICTION,
+        dt / FRAME
+      );
+      var mx = self.max();
+      if (
+        self.pos < 0 ||
+        self.pos > mx
+      ){
+        self.pos = clamp(
+          self.pos,
+          0,
+          mx
+        );
+        self.vel = 0;
+        self.render();
+        self._tick();
+        self.snap();
+        return;
+      }
+      self.render();
+      self._tick();
+      if (
+        Math.abs(self.vel) <
+        STOP_THRESHOLD
+      ){
+        self.snap();
+        return;
+      }
+      self.raf =
+        requestAnimationFrame(step);
+    };
+    this.raf =
+      requestAnimationFrame(step);
+  };
+  Reel.prototype.snap = function(){
+    var target = clamp(
+      Math.round(this.pos / ITEM_H) * ITEM_H,
+      0,
+      this.max()
+    );
+    this.animateTo(target);
+  };
+  Reel.prototype.animateTo = function(target,dur){
+    if (this.raf){
+      cancelAnimationFrame(this.raf);
+    }
+    this.vel = 0;
+    var start = this.pos;
+    var dist = target - start;
+    if (Math.abs(dist) < .4){
+      this.pos = target;
+      this.render();
+      this._commit();
+      return;
+    }
+    var d =
+      dur ||
+      clamp(
+        90 + Math.abs(dist)*1.4,
+        90,
+        180
+      );
+    var t0 = performance.now();
+    var self = this;
+    var step = function(now){
+      var p = Math.min(
+        1,
+        (now-t0)/d
+      );
+      var e =
+        1 - Math.pow(1-p,3);
+      self.pos =
+        start + dist * e;
+      self.render();
+      self._tick();
+      if (p<1){
+        self.raf =
+          requestAnimationFrame(step);
+      }else{
+        self.pos = target;
+        self.render();
+        self._commit();
+        self.raf = 0;
+      }
+    };
+    this.raf =
+      requestAnimationFrame(step);
+  };
+  Reel.prototype._wheel = function(e){
+    e.preventDefault();
+    this.stop();
+    var d = e.deltaY;
+    if (e.deltaMode === 1){
+      d *= 16;
+    }else if (e.deltaMode === 2){
+      d *= VIEW_H;
+    }
+    this.pos = clamp(
+      this.pos + d,
+      0,
+      this.max()
+    );
+    this.render();
+    this._tick();
+    var self = this;
+    clearTimeout(this.wheelT);
+    this.wheelT = setTimeout(
+      function(){
+        self.snap();
+      },
+      110
+    );
+  };
+  Reel.prototype.setIndex = function(i,animate){
+    i = clamp(
+      i,
+      0,
+      this.count - 1
+    );
+    if (animate){
+      this.animateTo(
+        i * ITEM_H,
+        170
+      );
+    }else{
+      this.stop();
+      this.pos = i * ITEM_H;
+      this.render();
+      this._commit();
+    }
+  };
+  Reel.prototype.setCount = function(n){
+    var keep = this.index();
+    this.count = n;
+    if (keep > n-1){
+      this.pos = (n-1)*ITEM_H;
+    }
+    this.render();
+    this.last = this.index();
+  };
+  /* ============================================================
+     カードリスト
+  ============================================================ */
+  var listEl = $('#list');
+  var refs = [];
+  /* 画面内カードだけ高頻度更新するための監視 */
+  var cardObserver =
     'IntersectionObserver' in window
       ? new IntersectionObserver(
           function(entries){
             entries.forEach(function(entry){
-              var ref = entry.target.__countdownRef;
-              if (!ref) return;
-              if (entry.isIntersecting){
-                visibleRefs.add(ref);
-              }else{
-                visibleRefs.delete(ref);
+              var el = entry.target;
+              for (var i=0;i<refs.length;i++){
+                if (refs[i].card === el){
+                  refs[i].visible = entry.isIntersecting;
+                  break;
+                }
               }
             });
           },
-          {root:listEl, rootMargin:'120px 0px'}
+          {
+            root:listEl,
+            rootMargin:'120px 0px',
+            threshold:0
+          }
         )
       : null;
+  var animateNext = false;
+  var TRASH_SVG =
+    '<svg class="trash" viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">' +
+      '<path d="M4 7h16M10 11v6M14 11v6M6 7l1 13h10l1-13M9 7V4h6v3"/>' +
+    '</svg>';
+  var BELL_SVG =
+    '<svg viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round">' +
+      '<path d="M18 8a6 6 0 1 0-12 0c0 7-3 9-3 9h18s-3-2-3-9"/>' +
+      '<path d="M13.7 21a2 2 0 0 1-3.4 0"/>' +
+    '</svg>';
+  function render(){
+    listEl.innerHTML = '';
+    refs = [];
+    if (!items.length){
+      animateNext = false;
+      return;
+    }
+    items.forEach(function(it,i){
+      var row = document.createElement('div');
+      row.className = 'row';
+      row.dataset.id = it.id;
+      row.innerHTML =
+        '<div class="row-bg">' +
+          TRASH_SVG +
+        '</div>' +
+        '<article class="item glass">' +
+          '<div class="label">' +
+            '<span class="ttl"></span>' +
+            '<span class="card-date"></span>' +
+          '</div>' +
+          '<div class="count">' +
+            '<span class="n"></span>' +
+            '<small>日 <span class="rest"></span>.<span class="cs"></span></small>' +
+          '</div>' +
+          '<div class="bar">' +
+            '<i></i>' +
+          '</div>' +
+          '<span class="bell-dot">' +
+            BELL_SVG +
+          '</span>' +
+        '</article>';
+      var card =
+        row.querySelector('.item');
+      row.querySelector('.ttl').textContent =
+        it.title || '—';
+      row.querySelector('.card-date').textContent =
+        fmtCardDate(it.ts);
+      row.querySelector('.bell-dot').hidden =
+        !(it.notify && cfg.notify);
+      if (animateNext){
+        row.classList.add('pop');
+        row.style.animationDelay =
+          (i * 28) + 'ms';
+        row.addEventListener(
+          'animationend',
+          function(){
+            row.classList.remove('pop');
+            row.style.animationDelay = '';
+          },
+          {once:true}
+        );
+      }
+      listEl.appendChild(row);
+      refs.push({
+        it:it,
+        row:row,
+        card:card,
+        n:row.querySelector('.n'),
+        s:row.querySelector('small'),
+        rest:row.querySelector('.rest'),
+        cs:row.querySelector('.cs'),
+        bar:row.querySelector('.bar i'),
+        lastRestKey:'',
+        lastCsTxt:'',
+        lastPastState:-1,
+        lastSoonState:-1,
+        lastProgressTick:-1,
+        visible:true
+      });
+      bindGestures(
+        row,
+        card,
+        it
+      );
+    });
+    animateNext = false;
+  }
+  /* ============================================================
+     軽量化した時刻更新
 
-  function updateClock(t){
+
+     以前：
+       requestAnimationFrame
+       ↓
+       全カード
+       ↓
+       split()
+       ↓
+       DOM更新判定
+     今回：
+       countdown = 100ms
+       progress  = 約30fps
+       current time = 100ms
+  ============================================================ */
+  var nowDateEl = $('#nowDate');
+  var nowTimeEl = $('#nowTime');
+  var lastDateKey = '';
+  var lastTimeKey = '';
+  function updateClock(){
+    var t = Date.now();
     var nd = new Date(t);
-
     var dateKey =
-      nd.getFullYear() + '-' +
-      nd.getMonth() + '-' +
+      nd.getFullYear() +
+      '-' +
+      nd.getMonth() +
+      '-' +
       nd.getDate();
-
-    var timeKey = Math.floor(t / 50);
-
+    var timeKey =
+      Math.floor(t / 100);
     if (dateKey !== lastDateKey){
       lastDateKey = dateKey;
-      nowDateEl.textContent = fmtDate(nd);
+      nowDateEl.textContent =
+        fmtDate(nd);
     }
-
     if (timeKey !== lastTimeKey){
       lastTimeKey = timeKey;
-      nowTimeEl.textContent = fmtTime(nd);
+      /*
+        100ms更新に変更。
+        表示は従来通り .00〜.99。
+        10msごとのDOM更新をやめることで負荷を削減。
+      */
+      nowTimeEl.textContent =
+        fmtTime(nd);
     }
   }
-
   function updateCountdown(){
     var t = Date.now();
-
-    for (var i=0;i<refs.length;i++){
+    for (
+      var i=0;
+      i<refs.length;
+      i++
+    ){
       var r = refs[i];
-      var diff = r.it.ts - t;
-      var o = split(diff);
-
-      var nTxt = (o.past ? '+' : '') + o.day;
+      /* 画面外カードは100ms更新も省略 */
+      if (!r.visible){
+        continue;
+      }
+      var diff =
+        r.it.ts - t;
+      var o =
+        split(diff);
+      /*
+        日数
+      */
+      var nTxt =
+        (o.past ? '+' : '') +
+        o.day;
       if (r.n.textContent !== nTxt){
         r.n.textContent = nTxt;
       }
-
+      /*
+        HH:MM:SS
+      */
       var restKey =
         (o.past ? 'p' : 'f') +
-        o.day + ':' + o.hr + ':' + o.min + ':' + o.sec;
-
-      if (r.lastRestKey !== restKey){
-        r.lastRestKey = restKey;
+        o.day +
+        ':' +
+        o.hr +
+        ':' +
+        o.min +
+        ':' +
+        o.sec;
+      if (
+        r.lastRestKey !== restKey
+      ){
+        r.lastRestKey =
+          restKey;
         r.rest.textContent =
-          pad2(o.hr) + ':' +
-          pad2(o.min) + ':' +
+          pad2(o.hr) +
+          ':' +
+          pad2(o.min) +
+          ':' +
           pad2(o.sec);
       }
-
-      var pastState = o.past ? 1 : 0;
-      if (r.lastPastState !== pastState){
-        r.lastPastState = pastState;
-        r.card.classList.toggle('past', !!pastState);
+      /*
+        過去状態
+      */
+      var pastState =
+        o.past ? 1 : 0;
+      if (
+        r.lastPastState !==
+        pastState
+      ){
+        r.lastPastState =
+          pastState;
+        r.card.classList.toggle(
+          'past',
+          !!pastState
+        );
       }
-
+      /*
+        24時間以内
+      */
       var soonState =
-        (!o.past && diff < 86400000) ? 1 : 0;
-
-      if (r.lastSoonState !== soonState){
-        r.lastSoonState = soonState;
-        r.card.classList.toggle('soon', !!soonState);
+        (!o.past &&
+         diff < 86400000)
+          ? 1
+          : 0;
+      if (
+        r.lastSoonState !==
+        soonState
+      ){
+        r.lastSoonState =
+          soonState;
+        r.card.classList.toggle(
+          'soon',
+          !!soonState
+        );
       }
     }
   }
-
   /*
-    .00〜.99 は requestAnimationFrame で更新。
-    ただし IntersectionObserver で画面内付近のカードだけを対象にする。
-    これで「滑らかさ」と「カード数が多いときの軽さ」を両立する。
+    初回を即時実行
   */
-  function updateFractions(t){
-    visibleRefs.forEach(function(r){
-      var csTxt = pad2(Math.floor((Math.abs(r.it.ts - t) % 1000) / 10));
-
-      if (r.lastCsTxt !== csTxt){
-        r.lastCsTxt = csTxt;
-        r.cs.textContent = csTxt;
+  updateClock();
+  updateCountdown();
+  /*
+    100ms周期。
+    10ms周期ではなくすることで
+    カード数増加時の負荷を大幅に抑える。
+  */
+  setInterval(function(){
+    updateClock();
+    updateCountdown();
+  },100);
+  /*
+    .00〜.99 は requestAnimationFrame で描画。
+    100ms周期の更新とは分離し、画面内カードだけ更新する。
+    これで表示のカクつきを減らしつつ、カード数増加時の負荷も抑える。
+  */
+  var centiLastTick = -1;
+  function updateCentiseconds(){
+    var t = Date.now();
+    var tick = Math.floor(t / 10);
+    if (tick !== centiLastTick){
+      centiLastTick = tick;
+      for (var i=0;i<refs.length;i++){
+        var r = refs[i];
+        if (!r.visible){
+          continue;
+        }
+        var diff = r.it.ts - t;
+        var cs = Math.floor(
+          (Math.abs(diff) % 1000) / 10
+        );
+        var txt = pad2(cs);
+        if (r.lastCsTxt !== txt){
+          r.lastCsTxt = txt;
+          r.cs.textContent = txt;
+        }
       }
-    });
-
-    fractionRaf = requestAnimationFrame(updateFractions);
+    }
+    requestAnimationFrame(updateCentiseconds);
   }
-
-  function startFractionLoop(){
-    if (window.matchMedia &&
-        window.matchMedia('(prefers-reduced-motion: reduce)').matches){
+  requestAnimationFrame(updateCentiseconds);
+  /*
+    プログレスバーは20fps。
+    カウントダウン処理とは分離。
+  */
+  var progressRunning = true;
+  function updateProgress(){
+    if (!progressRunning){
       return;
     }
-    if (!fractionRaf){
-      fractionRaf = requestAnimationFrame(updateFractions);
+    var t = Date.now();
+    var progressTick =
+      Math.floor(t / 50);
+    for (
+      var i=0;
+      i<refs.length;
+      i++
+    ){
+      var r = refs[i];
+      if (
+        r.lastProgressTick ===
+        progressTick
+      ){
+        continue;
+      }
+      r.lastProgressTick =
+        progressTick;
+      var created =
+        r.it.created ||
+        (r.it.ts - 86400000);
+      var span =
+        r.it.ts - created;
+      var p =
+        span > 0
+          ? clamp(
+              (t-created)/span,
+              0,
+              1
+            )
+          : 1;
+      var width =
+        (p * 100).toFixed(1) +
+        '%';
+      if (
+        r.bar.style.width !==
+        width
+      ){
+        r.bar.style.width =
+          width;
+      }
+    }
+    requestAnimationFrame(
+      updateProgress
+    );
+  }
+  requestAnimationFrame(
+    updateProgress
+  );
+  /* ============================================================
+     ジェスチャー
+  ============================================================ */
+  var OPEN_X = -96;
+  var CONFIRM_X = -168;
+  var openRow = null;
+  var sheetOpen = false;
+  var blockTouch = function(e){
+    e.preventDefault();
+  };
+  function closeOpenRow(){
+    if (openRow){
+      var c =
+        openRow.querySelector('.item');
+      c.style.transition =
+        'transform .24s cubic-bezier(.2,.9,.25,1)';
+      c.style.transform =
+        'translateX(0)';
+      openRow.classList.remove('open');
+      openRow.classList.remove('armed');
+      openRow.style.removeProperty(
+        '--delete-width'
+      );
+      openRow = null;
     }
   }
-
-  function stopFractionLoop(){
-    if (fractionRaf){
-      cancelAnimationFrame(fractionRaf);
-      fractionRaf = 0;
+  function removeItem(id,rowEl){
+    var idx = -1;
+    for (
+      var i=0;
+      i<items.length;
+      i++
+    ){
+      if (items[i].id === id){
+        idx = i;
+        break;
+      }
     }
-  }
-
-  updateClock(Date.now());
-  updateCountdown();
-  startFractionLoop();
-
-  /*
-    日・時・分・秒は1秒周期。
-    0.99部分だけは上のrAFで滑らかに更新する。
-  */
-  var countdownTimer = setInterval(function(){
-    if (document.hidden) return;
-    updateClock(Date.now());
-    updateCountdown();
-  },1000);
-
-  document.addEventListener('visibilitychange',function(){
-    if (document.hidden){
-      stopFractionLoop();
+    if (idx < 0){
+      return;
+    }
+    if (
+      openRow &&
+      openRow.dataset.id === id
+    ){
+      openRow = null;
+    }
+    if (rowEl){
+      var h =
+        rowEl.offsetHeight;
+      rowEl.style.height =
+        h + 'px';
+      rowEl.classList.add(
+        'removing'
+      );
+      requestAnimationFrame(
+        function(){
+          rowEl.style.transform =
+            'translateX(-115%)';
+          rowEl.style.opacity =
+            '0';
+          rowEl.style.height =
+            '0px';
+          rowEl.style.marginBottom =
+            '0px';
+        }
+      );
+      haptic(14);
+      setTimeout(
+        function(){
+          items.splice(idx,1);
+          persist();
+          render();
+        },
+        240
+      );
     }else{
-      updateClock(Date.now());
-      updateCountdown();
-      startFractionLoop();
+      items.splice(idx,1);
+      persist();
+      render();
     }
-  });
+  }
+  function bindGestures(row,card,it){
+    var sx = 0;
+    var sy = 0;
+    var st = 0;
+    var mode = null;
+    var lp = null;
+    var pid = null;
+    var tx = 0;
+    var wasArmed = false;
+    var dragState = null;
+    row.querySelector(
+      '.row-bg'
+    ).addEventListener(
+      'click',
+      function(e){
+        e.stopPropagation();
+        if (openRow === row){
+          var c =
+            row.querySelector('.item');
+          c.style.transition =
+            'transform .2s cubic-bezier(.2,.9,.25,1)';
+          row.style.setProperty(
+            '--delete-width',
+            Math.abs(OPEN_X) + 'px'
+          );
+          c.style.transform =
+            'translateX(-115%)';
+          removeItem(
+            it.id,
+            row
+          );
+        }
+      }
+    );
+    card.addEventListener(
+      'pointerdown',
+      function(e){
+        if (sheetOpen) return;
+        if (
+          e.pointerType === 'mouse' &&
+          e.button !== 0
+        ){
+          return;
+        }
+        pid = e.pointerId;
+        sx = e.clientX;
+        sy = e.clientY;
+        st = performance.now();
+        mode = null;
+        wasArmed = false;
+        tx =
+          (openRow === row)
+            ? OPEN_X
+            : 0;
+        card.style.transition =
+          'none';
+        try{
+          card.setPointerCapture(pid);
+        }catch(err){}
+        card.addEventListener(
+          'pointermove',
+          onMove
+        );
+        card.addEventListener(
+          'pointerup',
+          onUp
+        );
+        card.addEventListener(
+          'pointercancel',
+          onUp
+        );
+        lp = setTimeout(
+          function(){
+            if (mode === null){
+              startDrag();
+            }
+          },
+          330
+        );
+      }
+    );
+    function startDrag(){
+      mode = 'drag';
+      closeOpenRow();
+      haptic(12);
+      listEl.classList.add(
+        'locked'
+      );
+      document.addEventListener(
+        'touchmove',
+        blockTouch,
+        {passive:false}
+      );
+      var rows =
+        Array.prototype.slice.call(
+          listEl.querySelectorAll('.row')
+        );
+      var rects =
+        rows.map(
+          function(r){
+            return r.getBoundingClientRect();
+          }
+        );
+      var from =
+        rows.indexOf(row);
+      var step =
+        rows.length > 1
+          ? (
+              from === 0
+                ? rects[1].top -
+                  rects[0].top
+                : rects[from].top -
+                  rects[from-1].top
+            )
+          : rects[from].height + 14;
+      dragState = {
+        rows:rows,
+        rects:rects,
+        from:from,
+        to:from,
+        step:step,
+        scroll0:listEl.scrollTop,
+        dy:0
+      };
+      row.classList.add(
+        'dragging'
+      );
+      rows.forEach(
+        function(r,i){
+          if (i !== from){
+            r.style.transition =
+              'transform .2s cubic-bezier(.2,.9,.25,1)';
+          }
+        }
+      );
+      row.style.transform =
+        'translateY(0px) scale(1.03)';
+    }
+    function applyDrag(clientY){
+      var d = dragState;
+      if (!d) return;
+      var dy =
+        clientY -
+        sy +
+        (listEl.scrollTop -
+         d.scroll0);
+      d.dy = dy;
+      row.style.transform =
+        'translateY(' +
+        dy +
+        'px) scale(1.03)';
+      var center =
+        d.rects[d.from].top +
+        d.rects[d.from].height/2 +
+        dy;
+      var to = d.from;
+      var i,c;
+      for (
+        i=0;
+        i<d.rows.length;
+        i++
+      ){
+        if (i === d.from) continue;
+        c =
+          d.rects[i].top +
+          d.rects[i].height/2;
+        if (
+          i < d.from &&
+          center < c
+        ){
+          to = Math.min(to,i);
+        }
+        if (
+          i > d.from &&
+          center > c
+        ){
+          to = Math.max(to,i);
+        }
+      }
+      if (to !== d.to){
+        haptic(6);
+        d.to = to;
+      }
+      d.rows.forEach(
+        function(r,i){
+          if (i === d.from) return;
+          var t = 0;
+          if (
+            d.from < d.to &&
+            i > d.from &&
+            i <= d.to
+          ){
+            t = -d.step;
+          }else if (
+            d.to < d.from &&
+            i >= d.to &&
+            i < d.from
+          ){
+            t = d.step;
+          }
+          r.style.transform =
+            'translateY(' +
+            t +
+            'px)';
+        }
+      );
+      var lr =
+        listEl.getBoundingClientRect();
+      if (
+        clientY <
+        lr.top + 72
+      ){
+        listEl.scrollTop -= 9;
+      }else if (
+        clientY >
+        lr.bottom - 72
+      ){
+        listEl.scrollTop += 9;
+      }
+    }
+    function endDrag(){
+      var d = dragState;
+      listEl.classList.remove(
+        'locked'
+      );
+      document.removeEventListener(
+        'touchmove',
+        blockTouch
+      );
+      if (!d) return;
+      d.rows.forEach(
+        function(r){
+          r.style.transition = '';
+          r.style.transform = '';
+        }
+      );
+      row.classList.remove(
+        'dragging'
+      );
+      if (d.to !== d.from){
+        var moved =
+          items.splice(
+            d.from,
+            1
+          )[0];
+        items.splice(
+          d.to,
+          0,
+          moved
+        );
+        persist();
+        haptic(10);
+      }
+      dragState = null;
+      render();
+    }
+    function onMove(e){
+      var dx =
+        e.clientX - sx;
+      var dy =
+        e.clientY - sy;
+      if (mode === 'drag'){
+        applyDrag(e.clientY);
+        return;
+      }
+      if (mode === null){
+        if (
+          Math.abs(dx) > 10 &&
+          Math.abs(dx) >
+          Math.abs(dy) * 1.2
+        ){
+          clearTimeout(lp);
+          mode = 'swipe';
+          if (
+            openRow &&
+            openRow !== row
+          ){
+            closeOpenRow();
+          }
+          row.classList.add(
+            'swiping'
+          );
+        }else if (
+          Math.abs(dy) > 9 ||
+          Math.abs(dx) > 14
+        ){
+          clearTimeout(lp);
+          mode = 'scroll';
+          cleanup();
+          return;
+        }
+      }
+      if (mode === 'swipe'){
+        var opened =
+          openRow === row;
+        var base =
+          opened
+            ? OPEN_X
+            : 0;
+        var v =
+          base + dx;
+        if (v > 0){
+          v *= .22;
+        }
+        tx = v;
+        card.style.transform =
+          'translateX(' +
+          v +
+          'px)';
+        row.style.setProperty(
+          '--delete-width',
+          Math.max(0,-v) + 'px'
+        );
+        var armed =
+          opened &&
+          v < CONFIRM_X;
+        if (armed !== wasArmed){
+          wasArmed = armed;
+          row.classList.toggle(
+            'armed',
+            armed
+          );
+          haptic(
+            armed ? 10 : 4
+          );
+        }
+      }
+    }
+    function cleanup(){
+      card.removeEventListener(
+        'pointermove',
+        onMove
+      );
+      card.removeEventListener(
+        'pointerup',
+        onUp
+      );
+      card.removeEventListener(
+        'pointercancel',
+        onUp
+      );
+      try{
+        card.releasePointerCapture(pid);
+      }catch(err){}
+    }
+    function onUp(e){
+      clearTimeout(lp);
+      cleanup();
+      if (mode === 'drag'){
+        endDrag();
+        return;
+      }
+      if (mode === 'swipe'){
+        var opened =
+          openRow === row;
+        row.classList.remove(
+          'swiping'
+        );
+        card.style.transition =
+          'transform .26s cubic-bezier(.2,.9,.25,1)';
+        if (
+          opened &&
+          tx < CONFIRM_X
+        ){
+          row.classList.remove(
+            'armed'
+          );
+          card.style.transform =
+            'translateX(-115%)';
+          row.style.setProperty(
+            '--delete-width',
+            '0px'
+          );
+          removeItem(
+            it.id,
+            row
+          );
+        }else if (
+          tx < OPEN_X * .45
+        ){
+          row.classList.remove(
+            'armed'
+          );
+          card.style.transform =
+            'translateX(' +
+            OPEN_X +
+            'px)';
+          row.style.setProperty(
+            '--delete-width',
+            Math.abs(OPEN_X) + 'px'
+          );
+          row.classList.add(
+            'open'
+          );
+          if (!opened){
+            haptic(8);
+          }
+          openRow = row;
+        }else{
+          row.classList.remove(
+            'armed'
+          );
+          card.style.transform =
+            'translateX(0)';
+          row.style.setProperty(
+            '--delete-width',
+            '0px'
+          );
+          row.classList.remove(
+            'open'
+          );
+          if (openRow === row){
+            openRow = null;
+          }
+        }
+        wasArmed = false;
+        return;
+      }
+      var dt =
+        performance.now() - st;
+      var moved =
+        Math.abs(e.clientX-sx) +
+        Math.abs(e.clientY-sy);
+      if (
+        mode === null &&
+        moved < 12 &&
+        dt < 520
+      ){
+        if (openRow){
+          closeOpenRow();
+          return;
+        }
+        openSheet(it);
+      }
+    }
+  }
+  listEl.addEventListener(
+    'scroll',
+    function(){
+      if (openRow){
+        closeOpenRow();
+      }
+    }
+  );
+  /* ============================================================
+     シート
+  ============================================================ */
+  var sheet = $('#sheet');
+  var scrim = $('#scrim');
+  var titleEl = $('#title');
+  var btnBell = $('#btnBell');
+  var hintEl = $('#sheetHint');
+  var editing = null;
+  var editNotify = true;
+  var rY =
+    new Reel(
+      $('#rY'),
+      {
+        count:3001,
+        format:function(i){
+          return String(i);
+        },
+        onChange:onYM
+      }
+    );
+  var rM =
+    new Reel(
+      $('#rM'),
+      {
+        count:12,
+        format:function(i){
+          return String(i+1);
+        },
+        onChange:onYM
+      }
+    );
+  var rD =
+    new Reel(
+      $('#rD'),
+      {
+        count:31,
+        format:function(i){
+          return String(i+1);
+        },
+        onChange:updateHint
+      }
+    );
+  var rH =
+    new Reel(
+      $('#rH'),
+      {
+        count:24,
+        format:function(i){
+          return pad2(i);
+        },
+        onChange:updateHint
+      }
+    );
+  var rI =
+    new Reel(
+      $('#rI'),
+      {
+        count:60,
+        format:function(i){
+          return pad2(i);
+        },
+        onChange:updateHint
+      }
+    );
+  function onYM(){
+    var n =
+      daysInMonth(
+        rY.index(),
+        rM.index()+1
+      );
+    if (rD.count !== n){
+      rD.setCount(n);
+    }
+    updateHint();
+  }
+  function currentTS(){
+    return makeTS(
+      rY.index(),
+      rM.index()+1,
+      rD.index()+1,
+      rH.index(),
+      rI.index()
+    );
+  }
+  function updateHint(){
+    var diff =
+      currentTS() - Date.now();
+    var o =
+      split(diff);
+    hintEl.textContent =
+      (o.past ? '+' : '−') +
+      o.day +
+      '日 ' +
+      formatRest(o);
+  }
+  function setPicker(ts){
+    var d =
+      new Date(ts);
+    rY.setIndex(
+      d.getFullYear(),
+      false
+    );
+    rM.setIndex(
+      d.getMonth(),
+      false
+    );
+    rD.setCount(
+      daysInMonth(
+        d.getFullYear(),
+        d.getMonth()+1
+      )
+    );
+    rD.setIndex(
+      d.getDate()-1,
+      false
+    );
+    rH.setIndex(
+      d.getHours(),
+      false
+    );
+    rI.setIndex(
+      d.getMinutes(),
+      false
+    );
+    updateHint();
+  }
+  function openSheet(it){
+    editing = it || null;
+    sheetOpen = true;
+    closeOpenRow();
+    closePanel();
+    titleEl.value =
+      it
+        ? (it.title || '')
+        : '';
+    editNotify =
+      it
+        ? !!it.notify
+        : true;
+    btnBell.classList.toggle(
+      'off',
+      !editNotify
+    );
+    var ts;
+    if (it){
+      ts = it.ts;
+    }else{
+      var d =
+        new Date(
+          Date.now() + 86400000
+        );
+      d.setHours(
+        23,
+        59,
+        0,
+        0
+      );
+      ts = d.getTime();
+    }
+    setPicker(ts);
+    scrim.classList.add(
+      'show'
+    );
+    sheet.classList.add(
+      'show'
+    );
+    sheet.style.transform = '';
+    haptic(8);
+  }
+  function closeSheet(){
+    sheetOpen = false;
+    scrim.classList.remove(
+      'show'
+    );
+    sheet.classList.remove(
+      'show'
+    );
+    sheet.style.transform = '';
+    titleEl.blur();
+  }
+  function saveSheet(){
+    var ts =
+      currentTS();
+    var t =
+      titleEl.value.trim();
+    if (editing){
+      editing.ts = ts;
+      editing.title =
+        t ||
+        editing.title ||
+        'COUNTDOWN';
+      editing.notify =
+        editNotify;
+    }else{
+      items.push({
+        id:
+          'c' +
+          Date.now() +
+          Math.random()
+            .toString(36)
+            .slice(2,6),
+        title:
+          t || 'COUNTDOWN',
+        ts:ts,
+        notify:
+          editNotify,
+        created:
+          Date.now()
+      });
+    }
+    persist();
+    render();
+    closeSheet();
+    haptic(10);
+  }
+  $('#fab').addEventListener(
+    'click',
+    function(){
+      openSheet(null);
+    }
+  );
+  $('#btnOk').addEventListener(
+    'click',
+    saveSheet
+  );
+  $('#btnCancel').addEventListener(
+    'click',
+    closeSheet
+  );
+  scrim.addEventListener(
+    'click',
+    closeSheet
+  );
+  btnBell.addEventListener(
+    'click',
+    function(){
+      editNotify =
+        !editNotify;
+      btnBell.classList.toggle(
+        'off',
+        !editNotify
+      );
+      haptic(6);
+    }
+  );
+  titleEl.addEventListener(
+    'keydown',
+    function(e){
+      if (e.key === 'Enter'){
+        e.preventDefault();
+        titleEl.blur();
+      }
+    }
+  );
+  document.addEventListener(
+    'keydown',
+    function(e){
+      if (!sheetOpen){
+        return;
+      }
+      if (e.key === 'Escape'){
+        closeSheet();
+      }
+    }
+  );
+  /* ============================================================
+     シートドラッグ
+  ============================================================ */
+  (function(){
+    var grip = $('#grip');
+    var gy = 0;
+    var dragging = false;
+    grip.addEventListener(
+      'pointerdown',
+      function(e){
+        dragging = true;
+        gy = e.clientY;
+        sheet.style.transition =
+          'none';
+        try{
+          grip.setPointerCapture(
+            e.pointerId
+          );
+        }catch(err){}
+      }
+    );
+    grip.addEventListener(
+      'pointermove',
+      function(e){
+        if (!dragging){
+          return;
+        }
+        var dy =
+          Math.max(
+            0,
+            e.clientY - gy
+          );
+        sheet.style.transform =
+          'translate(-50%,' +
+          dy +
+          'px)';
+      }
+    );
+    function end(e){
+      if (!dragging){
+        return;
+      }
+      dragging = false;
+      sheet.style.transition = '';
+      var dy =
+        Math.max(
+          0,
+          e.clientY - gy
+        );
+      if (dy > 110){
+        closeSheet();
+      }else{
+        sheet.style.transform =
+          'translate(-50%,0)';
+      }
+    }
+    grip.addEventListener(
+      'pointerup',
+      end
+    );
+    grip.addEventListener(
+      'pointercancel',
+      end
+    );
+  })();
+  /* ============================================================
+     設定パネル
+  ============================================================ */
+  var panel = $('#panel');
+  var menuBtn = $('#menuBtn');
+  var swNotify = $('#swNotify');
+  var chips = $('#chips');
+  var sortBtn = $('#sortBtn');
+  var sortLabel = $('#sortLabel');
+  var sakuraToggle =
+    $('#sakuraToggle');
+  var swSakura =
+    $('#swSakura');
+  var sakuraPaused = false;
+  (function(){
+    var html = '';
+    NOTIFY_DAYS.forEach(
+      function(d){
+        html +=
+          '<span class="chip' +
+          (d === 0 ? ' now' : '') +
+          '">' +
+          (d === 0 ? '当日' : d) +
+          '</span>';
+      }
+    );
+    chips.innerHTML = html;
+  })();
+  function syncNotifyUI(){
+    swNotify.classList.toggle(
+      'on',
+      !!cfg.notify
+    );
+    chips.classList.toggle(
+      'off',
+      !cfg.notify
+    );
+    for (
+      var i=0;
+      i<refs.length;
+      i++
+    ){
+      refs[i]
+        .row
+        .querySelector('.bell-dot')
+        .hidden =
+        !(
+          refs[i].it.notify &&
+          cfg.notify
+        );
+    }
+  }
+  function openPanel(){
+    panel.classList.add(
+      'show'
+    );
+    menuBtn.classList.add(
+      'open'
+    );
+  }
+  function closePanel(){
+    panel.classList.remove(
+      'show'
+    );
+    menuBtn.classList.remove(
+      'open'
+    );
+  }
+  menuBtn.addEventListener(
+    'click',
+    function(e){
+      e.stopPropagation();
+      closeOpenRow();
+      if (
+        panel.classList.contains(
+          'show'
+        )
+      ){
+        closePanel();
+      }else{
+        openPanel();
+      }
+    }
+  );
+  document.addEventListener(
+    'click',
+    function(e){
+      if (
+        panel.classList.contains(
+          'show'
+        ) &&
+        !panel.contains(e.target) &&
+        !menuBtn.contains(e.target)
+      ){
+        closePanel();
+      }
+    }
+  );
+  swNotify.addEventListener(
+    'click',
+    function(){
+      if (!cfg.notify){
+        if (
+          !('Notification' in window)
+        ){
+          shakePanel();
+          return;
+        }
+        Notification
+          .requestPermission()
+          .then(
+            function(p){
+              if (
+                p === 'granted'
+              ){
+                cfg.notify = true;
+                persistCfg();
+                syncNotifyUI();
+                haptic(10);
+                checkNotify();
+              }else{
+                shakePanel();
+              }
+            }
+          );
+      }else{
+        cfg.notify = false;
+        persistCfg();
+        syncNotifyUI();
+        haptic(6);
+      }
+    }
+  );
+  function shakePanel(){
+    panel.classList.add(
+      'shake'
+    );
+    setTimeout(
+      function(){
+        panel.classList.remove(
+          'shake'
+        );
+      },
+      400
+    );
+  }
+  /* ============================================================
+     Sakura
 
-  >
+
+     停止：
+       1. 新規生成停止
+       2. 既存花びらを消す
+       3. レイヤーを非表示
+     再開：
+       1. 40枚に戻す
+       2. play
+       3. レイヤー表示
+  ============================================================ */
+  function clearSakuraVisuals(){
+    var layer =
+      document.getElementById(
+        'sakura'
+      );
+    if (!layer){
+      return;
+    }
+    /*
+      sakura2.jsがcanvas型でもDOM型でも
+      残骸が表示されないようにする。
+    */
+    var nodes =
+      layer.querySelectorAll(
+        '.sakura, .petal, canvas'
+      );
+    for (
+      var i=0;
+      i<nodes.length;
+      i++
+    ){
+      /*
+        sakura2.jsが管理しているcanvasまで
+        removeするとplay()に影響する可能性があるため、
+        canvasは削除せず非表示にする。
+      */
+      if (
+        nodes[i].tagName === 'CANVAS'
+      ){
+        nodes[i].style.visibility =
+          'hidden';
+      }else{
+        if (
+          nodes[i].parentNode
+        ){
+          nodes[i]
+            .parentNode
+            .removeChild(
+              nodes[i]
+            );
+        }
+      }
+    }
+  }
+  function showSakuraVisuals(){
+    var layer =
+      document.getElementById(
+        'sakura'
+      );
+    if (!layer){
+      return;
+    }
+    var canvases =
+      layer.querySelectorAll(
+        'canvas'
+      );
+    for (
+      var i=0;
+      i<canvases.length;
+      i++
+    ){
+      canvases[i].style.visibility =
+        'visible';
+    }
+  }
+  function syncSakuraUI(){
+    swSakura.classList.toggle(
+      'on',
+      !sakuraPaused
+    );
+    swSakura.setAttribute(
+      'aria-checked',
+      sakuraPaused
+        ? 'false'
+        : 'true'
+    );
+    swSakura.setAttribute(
+      'aria-label',
+      sakuraPaused
+        ? 'sakura オフ'
+        : 'sakura オン'
+    );
+  }
+  swSakura.addEventListener(
+    'click',
+    function(e){
+      e.preventDefault();
+      e.stopPropagation();
+      if (
+        !window.sakuraPetals
+      ){
+        return;
+      }
+      if (sakuraPaused){
+        /*
+          再開時は40枚に戻す
+        */
+        try{
+          window.sakuraPetals.setCount(
+            40
+          );
+        }catch(err){}
+        try{
+          window.sakuraPetals.play();
+        }catch(err){}
+        showSakuraVisuals();
+        document
+          .getElementById('sakura')
+          .classList.remove(
+            'hidden'
+          );
+        sakuraPaused = false;
+      }else{
+        /*
+          まず生成を止める
+        */
+        try{
+          window.sakuraPetals.pause();
+        }catch(err){}
+        /*
+          既存の花びらを確実に除去
+        */
+        clearSakuraVisuals();
+        /*
+          レイヤー自体も非表示
+        */
+        document
+          .getElementById('sakura')
+          .classList.add(
+            'hidden'
+          );
+        /*
+          次回play時に40枚へ戻すため、
+          現在の生成数を0にしておく。
+        */
+        try{
+          window.sakuraPetals.setCount(
+            0
+          );
+        }catch(err){}
+        sakuraPaused = true;
+      }
+      syncSakuraUI();
+      haptic(8);
+    }
+  );
+  syncSakuraUI();
+  /* ============================================================
+     並び替え
+  ============================================================ */
+  function rank(it,now){
+    var d =
+      it.ts - now;
+    return d >= 0
+      ? d
+      : 4e15 + (-d);
+  }
+  function syncSortUI(){
+    sortBtn.classList.toggle(
+      'desc',
+      !!cfg.sortDesc
+    );
+    sortLabel.textContent =
+      cfg.sortDesc
+        ? '999 → 0'
+        : '0 → 999';
+  }
+  function doSort(){
+    var now =
+      Date.now();
+    items.sort(
+      function(a,b){
+        var r =
+          rank(a,now) -
+          rank(b,now);
+        if (r === 0){
+          r =
+            (a.created || 0) -
+            (b.created || 0);
+        }
+        return cfg.sortDesc
+          ? -r
+          : r;
+      }
+    );
+    persist();
+    closeOpenRow();
+    animateNext = true;
+    render();
+    syncNotifyUI();
+    haptic(10);
+  }
+  sortBtn.addEventListener(
+    'click',
+    function(e){
+      e.preventDefault();
+      e.stopPropagation();
+      doSort();
+      cfg.sortDesc =
+        !cfg.sortDesc;
+      persistCfg();
+      syncSortUI();
+    }
+  );
+  /* ============================================================
+     通知
+  ============================================================ */
+  function checkNotify(){
+    if (
+      !cfg.notify ||
+      !('Notification' in window) ||
+      Notification.permission !==
+      'granted'
+    ){
+      return;
+    }
+    var today =
+      new Date();
+    today.setHours(
+      0,0,0,0
+    );
+    var key0 =
+      today.getTime();
+    var changed = false;
+    items.forEach(
+      function(it){
+        if (!it.notify){
+          return;
+        }
+        if (
+          it.ts < Date.now()
+        ){
+          return;
+        }
+        var d =
+          dayDiff(it.ts);
+        if (
+          NOTIFY_DAYS.indexOf(d) < 0
+        ){
+          return;
+        }
+        var k =
+          it.id +
+          '|' +
+          d +
+          '|' +
+          key0;
+        if (fired[k]){
+          return;
+        }
+        fired[k] = 1;
+        changed = true;
+        try{
+          new Notification(
+            '🌸 ' +
+            (it.title ||
+             'COUNTDOWN'),
+            {
+              body:
+                d === 0
+                  ? '本日 ' +
+                    fmtCardDate(it.ts)
+                  : 'あと ' +
+                    d +
+                    ' 日  ' +
+                    fmtCardDate(it.ts),
+              tag:k
+            }
+          );
+        }catch(e){}
+      }
+    );
+    var keys =
+      Object.keys(fired);
+    if (keys.length > 400){
+      keys
+        .slice(
+          0,
+          keys.length - 200
+        )
+        .forEach(
+          function(k){
+            delete fired[k];
+          }
+        );
+      changed = true;
+    }
+    if (changed){
+      saveJSON(
+        K_FIRED,
+        fired
+      );
+    }
+  }
+  setInterval(
+    checkNotify,
+    30000
+  );
+  document.addEventListener(
+    'visibilitychange',
+    function(){
+      if (!document.hidden){
+        checkNotify();
+      }
+    }
+  );
+  /* ============================================================
+     起動
+  ============================================================ */
+  render();
+  syncNotifyUI();
+  syncSortUI();
+  checkNotify();
+  window.addEventListener(
+    'resize',
+    function(){
+      if (openRow){
+        closeOpenRow();
+      }
+    }
+  );
+  document.addEventListener(
+    'gesturestart',
+    function(e){
+      e.preventDefault();
+    }
+  );
+})();
+</script>
+<script src="./sakura2.js"></script>
+</body>
+</html>
+
