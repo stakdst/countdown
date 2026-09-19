@@ -1,324 +1,183 @@
-
-```javascript
-/* sakura.js
- *
- * 軽量化・最適化版
- *
- * PC:
- *   デフォルト 36枚
- *
- * スマホ:
- *   デフォルト 24枚
- *
- * 任意:
+// File: sakura.js
+/* 任意:
  *   window.sakuraPetals.setCount(40);
  *   window.sakuraPetals.pause();
  *   window.sakuraPetals.play();
  *   window.sakuraPetals.destroy();
  */
-
 (() => {
   "use strict";
 
   const STYLE_ID = "sakura-petals-style";
   const CONTAINER_ID = "sakura-petals";
-
-  const DEFAULT_COUNT_DESKTOP = 36;
-  const DEFAULT_COUNT_MOBILE = 24;
-
-  const MOBILE_BREAKPOINT = 768;
+  const MOTION_QUERY = "(prefers-reduced-motion: reduce)";
 
   /*
-   * スマホ判定
+   * 花びらの絵は SVG 1 枚を全個体で共有する。
+   *
+   * clip-path + radial-gradient + box-shadow を
+   * 1 枚ごとに描画するより、
+   * 共有テクスチャ 1 枚のほうが圧倒的に軽い。
    */
-  const isMobile = () =>
-    window.matchMedia(
-      `(max-width: ${MOBILE_BREAKPOINT}px)`
-    ).matches;
+  const PETAL_SVG =
+    '<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 134">' +
+      '<radialGradient id="g" cx="30%" cy="23%" r="85%">' +
+        '<stop offset="0" stop-color="#ffffff"/>' +
+        '<stop offset=".37" stop-color="#ffeef3"/>' +
+        '<stop offset=".73" stop-color="#f1c6d5"/>' +
+        '<stop offset="1" stop-color="#d99eb6"/>' +
+      "</radialGradient>" +
+      '<path fill="url(#g)" d="M50 1C75 9 96 31 96 60c0 30-20 54-44 67' +
+        "-1-7-3-11-2-19-1 8-3 12-5 19C22 114 4 90 4 60 4 31 25 9 50 1Z\"/>" +
+    "</svg>";
 
-  /*
-   * デフォルト枚数
-   */
-  const getDefaultCount = () =>
-    isMobile()
-      ? DEFAULT_COUNT_MOBILE
-      : DEFAULT_COUNT_DESKTOP;
+  const PETAL_URL =
+    'url("data:image/svg+xml;charset=utf-8,' +
+    encodeURIComponent(PETAL_SVG) +
+    '")';
 
-  /*
-   * CSS
-   */
   const css = `
     #${CONTAINER_ID} {
       position: fixed;
-      z-index: 9999;
       inset: 0;
+      z-index: 9999;
       overflow: hidden;
       pointer-events: none;
-      perspective: 700px;
+      contain: strict;
+      --sakura-img: ${PETAL_URL};
     }
 
-    #${CONTAINER_ID} .sakura-petal-path {
+    /*
+     * 1 花びら = 1 要素。
+     *
+     * translate / transform は独立した
+     * アニメーション可能プロパティなので、
+     * 別々の duration を持つ 2 本の
+     * アニメーションを 1 要素に載せられる。
+     * どちらもコンポジタスレッドで処理される。
+     */
+    #${CONTAINER_ID} > i {
       position: absolute;
       left: 0;
       top: 0;
-
-      width: var(--sakura-size);
-      height: calc(var(--sakura-size) * 1.34);
-
-      opacity: var(--sakura-opacity);
-
+      width: var(--s);
+      height: calc(var(--s) * 1.34);
+      opacity: var(--o);
+      background: var(--sakura-img) 0 0 / 100% 100% no-repeat;
       animation:
-        sakura-wind
-        var(--sakura-duration)
-        linear
-        var(--sakura-delay)
-        infinite;
-
-      /*
-       * 移動アニメーションだけを
-       * 独立レイヤー化する。
-       */
-      will-change: transform;
-    }
-
-    #${CONTAINER_ID} .sakura-petal-sway {
-      width: 100%;
-      height: 100%;
-
-      animation:
-        sakura-sway
-        var(--sakura-sway-duration)
-        ease-in-out
-        var(--sakura-delay)
-        infinite
-        alternate;
-    }
-
-    #${CONTAINER_ID} .sakura-petal {
-      width: 100%;
-      height: 100%;
-
-      border-radius: 75% 28% 65% 35%;
-
-      clip-path: polygon(
-        48% 0%,
-        63% 12%,
-        81% 9%,
-        96% 33%,
-        97% 55%,
-        80% 80%,
-        42% 100%,
-        17% 88%,
-        3% 60%,
-        9% 30%,
-        27% 8%
-      );
-
-      background:
-        radial-gradient(
-          ellipse at 30% 23%,
-          rgba(255, 255, 255, 0.98),
-          rgba(255, 238, 243, 0.98) 37%,
-          #f1c6d5 73%,
-          #d99eb6 100%
-        );
-
-      box-shadow:
-        inset 1px 0 2px rgba(255, 255, 255, 0.8);
-
-      animation:
-        sakura-tumble
-        var(--sakura-rotation-duration)
-        linear
-        var(--sakura-delay)
-        infinite;
+        sakura-drift var(--d) linear var(--dl) infinite,
+        sakura-tumble var(--rd) linear var(--dl) infinite;
     }
 
     /*
-     * 奥行き表現。
+     * 風に流される移動。
      *
-     * blur() はGPU/描画負荷が比較的高いため、
-     * 元コードよりかなり弱くしている。
+     * 旧版の sway 要素を廃止し、
+     * 横揺れをこのキーフレームに合成した。
      */
-    #${CONTAINER_ID} .sakura-petal-path.near {
-      filter: blur(0.35px);
-    }
-
-    /*
-     * 遠景はblurを使用しない。
-     */
-    #${CONTAINER_ID} .sakura-petal-path.far {
-      filter: none;
-    }
-
-    /*
-     * 風に流される移動
-     */
-    @keyframes sakura-wind {
-      from {
-        transform:
-          translate3d(
-            var(--sakura-start-x),
-            var(--sakura-start-y),
-            0
-          );
-      }
-
-      to {
-        transform:
-          translate3d(
-            var(--sakura-end-x),
-            var(--sakura-end-y),
-            0
-          );
-      }
-    }
-
-    /*
-     * 横風による揺れ
-     */
-    @keyframes sakura-sway {
-      from {
-        transform:
-          translate3d(0, -23px, 0);
-      }
-
-      to {
-        transform:
-          translate3d(14px, 25px, 0);
-      }
-    }
-
-    /*
-     * PC向けの回転。
-     *
-     * rotateX / rotateY を使用して
-     * 立体的に見せる。
-     */
-    @keyframes sakura-tumble {
+    @keyframes sakura-drift {
       0% {
-        transform:
-          rotateZ(0deg)
-          rotateY(15deg)
-          rotateX(20deg);
+        translate: var(--x0) var(--y0);
+      }
+
+      25% {
+        translate:
+          calc(var(--x0) + var(--tx) * 0.25 + var(--sw))
+          calc(var(--y0) + var(--ty) * 0.25);
       }
 
       50% {
-        transform:
-          rotateZ(170deg)
-          rotateY(195deg)
-          rotateX(50deg);
+        translate:
+          calc(var(--x0) + var(--tx) * 0.5)
+          calc(var(--y0) + var(--ty) * 0.5 + var(--sh));
+      }
+
+      75% {
+        translate:
+          calc(var(--x0) + var(--tx) * 0.75 - var(--sw))
+          calc(var(--y0) + var(--ty) * 0.75);
       }
 
       100% {
-        transform:
-          rotateZ(360deg)
-          rotateY(375deg)
-          rotateX(20deg);
+        translate:
+          calc(var(--x0) + var(--tx))
+          calc(var(--y0) + var(--ty));
       }
     }
 
     /*
-     * 一時停止
+     * 花びらの回転。
+     *
+     * 軸を固定した rotate3d の角度補間なら
+     * キーフレームは 2 つで足りる。
+     * perspective は各要素に内包させ、
+     * 親側の 3D レンダリングコンテキストを作らない。
      */
-    #${CONTAINER_ID}.paused .sakura-petal-path,
-    #${CONTAINER_ID}.paused .sakura-petal-sway,
-    #${CONTAINER_ID}.paused .sakura-petal {
+    @keyframes sakura-tumble {
+      from {
+        transform: perspective(600px) rotate3d(1, 1.4, 0.2, 0deg);
+      }
+
+      to {
+        transform: perspective(600px) rotate3d(1, 1.4, 0.2, 360deg);
+      }
+    }
+
+    #${CONTAINER_ID}.paused > i {
       animation-play-state: paused;
-    }
-
-    /*
-     * ユーザーが「動きを減らす」を指定している場合
-     */
-    @media (prefers-reduced-motion: reduce) {
-      #${CONTAINER_ID} .sakura-petal-path,
-      #${CONTAINER_ID} .sakura-petal-sway,
-      #${CONTAINER_ID} .sakura-petal {
-        animation-play-state: paused !important;
-      }
-    }
-
-    /*
-     * --------------------------------------------------
-     * スマホ向け軽量化
-     * --------------------------------------------------
-     *
-     * rotateX / rotateY を廃止し、
-     * 2D回転だけにする。
-     *
-     * 立体感はサイズ・透明度・揺れで表現する。
-     */
-    @media (max-width: ${MOBILE_BREAKPOINT}px) {
-      #${CONTAINER_ID} {
-        perspective: none;
-      }
-
-      #${CONTAINER_ID} .sakura-petal-path.near {
-        filter: none;
-      }
-
-      @keyframes sakura-tumble {
-        0% {
-          transform:
-            rotate(0deg);
-        }
-
-        50% {
-          transform:
-            rotate(170deg);
-        }
-
-        100% {
-          transform:
-            rotate(360deg);
-        }
-      }
     }
   `;
 
+  const rand = (min, max) => min + Math.random() * (max - min);
+
   /*
-   * min〜maxの乱数
+   * 端末性能と画面サイズから枚数を決める
    */
-  const rand = (min, max) =>
-    min + Math.random() * (max - min);
+  const autoCount = () => {
+    const area = window.innerWidth * window.innerHeight;
+
+    let count = Math.round(area / 36000);
+
+    const cores = navigator.hardwareConcurrency || 8;
+    const memory = navigator.deviceMemory || 8;
+
+    if (cores <= 4 || memory <= 4) {
+      count = Math.round(count * 0.6);
+    }
+
+    return Math.min(40, Math.max(8, count));
+  };
 
   class SakuraPetals {
     constructor(options = {}) {
-      this.count = Number.isFinite(options.count)
+      this.fixedCount = Number.isFinite(options.count)
         ? Math.max(0, Math.floor(options.count))
-        : getDefaultCount();
+        : null;
 
-      this.zIndex =
-        options.zIndex ?? 9999;
+      this.count = this.fixedCount ?? autoCount();
+      this.zIndex = options.zIndex ?? 9999;
 
       this.container = null;
       this.style = null;
+      this.template = null;
+      this.userPaused = false;
+      this.resizeTimer = 0;
 
-      /*
-       * visibilitychange のイベント管理用
-       */
-      this.visibilityHandler = null;
+      this.motionQuery = window.matchMedia(MOTION_QUERY);
 
-      /*
-       * resize時の再生成を抑制するための
-       * 現在のモバイル状態
-       */
-      this.mobileState = isMobile();
+      this.onMotionChange = () => this.applyMotionPreference();
+      this.onVisibility = () => this.applyVisibility();
+      this.onResize = () => this.scheduleRecount();
 
       this.init();
     }
 
-    /*
-     * 初期化
-     */
     init() {
       if (!document.head || !document.body) {
         document.addEventListener(
           "DOMContentLoaded",
           () => this.init(),
-          {
-            once: true
-          }
+          { once: true }
         );
 
         return;
@@ -326,492 +185,227 @@
 
       this.injectStyle();
 
-      /*
-       * 既存コンテナがあれば削除
-       */
-      const existing =
-        document.getElementById(CONTAINER_ID);
+      document.getElementById(CONTAINER_ID)?.remove();
 
-      if (existing) {
-        existing.remove();
-      }
+      this.container = document.createElement("div");
+      this.container.id = CONTAINER_ID;
+      this.container.setAttribute("aria-hidden", "true");
+      this.container.style.zIndex = String(this.zIndex);
 
-      /*
-       * コンテナ生成
-       */
-      this.container =
-        document.createElement("div");
+      document.body.append(this.container);
 
-      this.container.id =
-        CONTAINER_ID;
-
-      this.container.setAttribute(
-        "aria-hidden",
-        "true"
+      this.motionQuery.addEventListener(
+        "change",
+        this.onMotionChange
       );
-
-      this.container.style.zIndex =
-        String(this.zIndex);
-
-      this.createPetals();
-
-      document.body.append(
-        this.container
-      );
-
-      this.bindVisibilityHandler();
-      this.bindResizeHandler();
-    }
-
-    /*
-     * CSSを1回だけ追加
-     */
-    injectStyle() {
-      const existingStyle =
-        document.getElementById(STYLE_ID);
-
-      if (existingStyle) {
-        this.style = existingStyle;
-        return;
-      }
-
-      this.style =
-        document.createElement("style");
-
-      this.style.id =
-        STYLE_ID;
-
-      this.style.textContent =
-        css;
-
-      document.head.append(
-        this.style
-      );
-    }
-
-    /*
-     * visibilitychange
-     *
-     * 別タブ・バックグラウンド時は停止し、
-     * 戻ってきたら再開する。
-     */
-    bindVisibilityHandler() {
-      if (this.visibilityHandler) {
-        return;
-      }
-
-      this.visibilityHandler = () => {
-        if (!this.container) {
-          return;
-        }
-
-        if (document.hidden) {
-          this.pause();
-        } else {
-          this.play();
-        }
-      };
 
       document.addEventListener(
         "visibilitychange",
-        this.visibilityHandler
+        this.onVisibility
       );
+
+      if (this.fixedCount === null) {
+        window.addEventListener(
+          "resize",
+          this.onResize,
+          { passive: true }
+        );
+      }
+
+      this.applyMotionPreference();
     }
 
-    /*
-     * 画面サイズが
-     * PC ↔ スマホ
-     * の境界を跨いだ場合だけ再生成する。
-     *
-     * 無駄なresizeイベントでは
-     * 再生成しない。
-     */
-    bindResizeHandler() {
-      if (this.resizeHandler) {
+    injectStyle() {
+      const existing = document.getElementById(STYLE_ID);
+
+      if (existing) {
+        this.style = existing;
+
         return;
       }
 
-      this.resizeHandler = () => {
-        const nextMobileState =
-          isMobile();
+      this.style = document.createElement("style");
+      this.style.id = STYLE_ID;
+      this.style.textContent = css;
 
-        if (
-          nextMobileState ===
-          this.mobileState
-        ) {
+      document.head.append(this.style);
+    }
+
+    /*
+     * 「動きを減らす」設定時は要素を作らない。
+     * 停止済みの要素も合成レイヤーとして
+     * メモリを食うため、生成自体を避ける。
+     */
+    applyMotionPreference() {
+      if (this.motionQuery.matches) {
+        this.container?.replaceChildren();
+
+        return;
+      }
+
+      this.render();
+    }
+
+    applyVisibility() {
+      if (document.hidden) {
+        this.container?.classList.add("paused");
+
+        return;
+      }
+
+      if (!this.userPaused) {
+        this.container?.classList.remove("paused");
+      }
+    }
+
+    scheduleRecount() {
+      window.clearTimeout(this.resizeTimer);
+
+      this.resizeTimer = window.setTimeout(() => {
+        const next = autoCount();
+
+        if (next === this.count) {
           return;
         }
 
-        this.mobileState =
-          nextMobileState;
+        this.count = next;
 
-        /*
-         * ユーザーが明示的に枚数を
-         * 設定していない場合だけ、
-         * デフォルト枚数を変更する。
-         */
-        if (!this.countManuallySet) {
-          this.count =
-            getDefaultCount();
-
-          this.rebuild();
-        }
-      };
-
-      window.addEventListener(
-        "resize",
-        this.resizeHandler,
-        {
-          passive: true
-        }
-      );
+        this.applyMotionPreference();
+      }, 400);
     }
 
-    /*
-     * 1枚分のパラメータ生成
-     */
-    createPetalParams(index) {
-      /*
-       * 奥行き
-       */
-      const depthRoll =
-        Math.random();
+    createPetalParams() {
+      const depthRoll = Math.random();
 
-      const depth =
-        depthRoll < 0.16
-          ? "near"
-          : depthRoll < 0.56
-            ? "far"
-            : "mid";
+      const near = depthRoll < 0.16;
+      const far = !near && depthRoll < 0.56;
 
-      /*
-       * 奥行きによって
-       * サイズ・透明度・速度を変える。
-       */
-      const size =
-        depth === "near"
-          ? rand(14, 20)
-          : depth === "far"
-            ? rand(4, 7)
-            : rand(7, 12);
+      const size = near
+        ? rand(14, 20)
+        : far
+          ? rand(4, 7)
+          : rand(7, 12);
 
-      const opacity =
-        depth === "near"
-          ? 0.8
-          : depth === "far"
-            ? 0.42
-            : 0.7;
+      /* blur の代わりに不透明度だけで奥行きを出す */
+      const opacity = near
+        ? 0.8
+        : far
+          ? 0.34
+          : 0.62;
 
-      /*
-       * 1秒あたりの移動量
-       */
-      const speed =
-        depth === "near"
-          ? rand(52, 70)
-          : depth === "far"
-            ? rand(19, 28)
-            : rand(34, 48);
+      const speed = near
+        ? rand(52, 70)
+        : far
+          ? rand(19, 28)
+          : rand(34, 48);
 
-      /*
-       * 移動距離
-       */
-      const travelX =
-        rand(135, 170);
+      const travelX = rand(135, 170);
+      const travelY = rand(115, 155);
 
-      const travelY =
-        rand(115, 155);
-
-      /*
-       * 出現位置
-       *
-       * 右辺と下辺に分散。
-       */
-      const fromRightEdge =
-        index % 2 === 0;
-
-      const startX =
-        fromRightEdge
-          ? rand(101, 118)
-          : rand(-12, 116);
-
-      const startY =
-        fromRightEdge
-          ? rand(-18, 116)
-          : rand(101, 118);
-
-      const distance =
-        Math.hypot(
-          travelX,
-          travelY
-        );
-
-      /*
-       * スマホでは少し動きを抑える。
-       *
-       * 移動距離そのものは維持するので、
-       * 画面全体を横断する見た目は維持。
-       */
-      const durationMultiplier =
-        isMobile()
-          ? 1.08
-          : 1;
+      const fromRightEdge = Math.random() < 0.5;
 
       return {
-        depth,
         size,
         opacity,
-
-        startX,
-        startY,
-
-        endX:
-          startX - travelX,
-
-        endY:
-          startY - travelY,
-
-        duration:
-          (distance / speed) *
-          durationMultiplier,
-
-        swayDuration:
-          rand(1.0, 2.2),
-
-        rotationDuration:
-          rand(1.5, 3.1)
+        x0: fromRightEdge ? rand(101, 118) : rand(-12, 116),
+        y0: fromRightEdge ? rand(-18, 116) : rand(101, 118),
+        tx: -travelX,
+        ty: -travelY,
+        sway: rand(1.0, 2.4),
+        bob: rand(0.8, 2.0),
+        duration: Math.hypot(travelX, travelY) / speed,
+        rotation: rand(1.3, 3.1)
       };
     }
 
-    /*
-     * 花びら生成
-     */
-    createPetals() {
+    render() {
       if (!this.container) {
         return;
       }
 
-      const fragment =
-        document.createDocumentFragment();
-
-      for (
-        let index = 0;
-        index < this.count;
-        index += 1
-      ) {
-        const params =
-          this.createPetalParams(
-            index
-          );
-
-        /*
-         * 移動
-         */
-        const path =
-          document.createElement("div");
-
-        /*
-         * 揺れ
-         */
-        const sway =
-          document.createElement("div");
-
-        /*
-         * 花びら本体
-         */
-        const petal =
-          document.createElement("div");
-
-        path.className =
-          `sakura-petal-path ${params.depth}`;
-
-        sway.className =
-          "sakura-petal-sway";
-
-        petal.className =
-          "sakura-petal";
-
-        /*
-         * CSS変数
-         */
-        path.style.setProperty(
-          "--sakura-size",
-          `${params.size.toFixed(2)}px`
-        );
-
-        path.style.setProperty(
-          "--sakura-start-x",
-          `${params.startX.toFixed(2)}vw`
-        );
-
-        path.style.setProperty(
-          "--sakura-start-y",
-          `${params.startY.toFixed(2)}vh`
-        );
-
-        path.style.setProperty(
-          "--sakura-end-x",
-          `${params.endX.toFixed(2)}vw`
-        );
-
-        path.style.setProperty(
-          "--sakura-end-y",
-          `${params.endY.toFixed(2)}vh`
-        );
-
-        path.style.setProperty(
-          "--sakura-duration",
-          `${params.duration.toFixed(2)}s`
-        );
-
-        /*
-         * 負のdelayによって
-         * 初期状態から画面全域に散らす。
-         */
-        path.style.setProperty(
-          "--sakura-delay",
-          `${(
-            -Math.random() *
-            params.duration
-          ).toFixed(2)}s`
-        );
-
-        path.style.setProperty(
-          "--sakura-sway-duration",
-          `${params.swayDuration.toFixed(2)}s`
-        );
-
-        path.style.setProperty(
-          "--sakura-rotation-duration",
-          `${params.rotationDuration.toFixed(2)}s`
-        );
-
-        path.style.setProperty(
-          "--sakura-opacity",
-          String(params.opacity)
-        );
-
-        /*
-         * DOM構造
-         *
-         * path
-         *   └ sway
-         *       └ petal
-         */
-        sway.append(petal);
-        path.append(sway);
-        fragment.append(path);
+      if (!this.template) {
+        this.template = document.createElement("i");
       }
 
-      this.container.append(
-        fragment
-      );
-    }
+      const fragment = document.createDocumentFragment();
 
-    /*
-     * 全花びらを再生成
-     */
-    rebuild() {
-      if (!this.container) {
-        return;
+      for (let i = 0; i < this.count; i += 1) {
+        const p = this.createPetalParams();
+        const petal = this.template.cloneNode(false);
+
+        /*
+         * setProperty を 10 回呼ぶ代わりに
+         * cssText へ 1 回だけ代入する。
+         */
+        petal.style.cssText =
+          `--s:${p.size.toFixed(1)}px;` +
+          `--o:${p.opacity};` +
+          `--x0:${p.x0.toFixed(1)}vw;` +
+          `--y0:${p.y0.toFixed(1)}vh;` +
+          `--tx:${p.tx.toFixed(1)}vw;` +
+          `--ty:${p.ty.toFixed(1)}vh;` +
+          `--sw:${p.sway.toFixed(2)}vw;` +
+          `--sh:${p.bob.toFixed(2)}vh;` +
+          `--d:${p.duration.toFixed(2)}s;` +
+          `--rd:${p.rotation.toFixed(2)}s;` +
+          `--dl:${(-Math.random() * p.duration).toFixed(2)}s;`;
+
+        fragment.append(petal);
       }
 
-      this.container.replaceChildren();
-
-      this.createPetals();
+      this.container.replaceChildren(fragment);
     }
 
-    /*
-     * 花びらの枚数変更
-     */
     setCount(count) {
       if (!Number.isFinite(count)) {
         return;
       }
 
-      this.count =
-        Math.max(
-          0,
-          Math.floor(count)
-        );
+      this.fixedCount = Math.max(0, Math.floor(count));
+      this.count = this.fixedCount;
 
-      /*
-       * 明示的に枚数を指定したことを記録。
-       *
-       * 以降、PC/スマホ切り替え時に
-       * 自動枚数変更しない。
-       */
-      this.countManuallySet = true;
+      window.removeEventListener("resize", this.onResize);
 
-      this.rebuild();
+      this.applyMotionPreference();
     }
 
-    /*
-     * 一時停止
-     */
     pause() {
-      this.container?.classList.add(
-        "paused"
-      );
+      this.userPaused = true;
+
+      this.container?.classList.add("paused");
     }
 
-    /*
-     * 再生
-     */
     play() {
-      /*
-       * バックグラウンド中は再生しない。
-       */
-      if (document.hidden) {
-        return;
-      }
+      this.userPaused = false;
 
-      this.container?.classList.remove(
-        "paused"
-      );
+      if (!document.hidden) {
+        this.container?.classList.remove("paused");
+      }
     }
 
-    /*
-     * 削除
-     */
     destroy() {
-      /*
-       * visibilityイベント解除
-       */
-      if (this.visibilityHandler) {
-        document.removeEventListener(
-          "visibilitychange",
-          this.visibilityHandler
-        );
+      window.clearTimeout(this.resizeTimer);
 
-        this.visibilityHandler = null;
-      }
+      this.motionQuery.removeEventListener(
+        "change",
+        this.onMotionChange
+      );
 
-      /*
-       * resizeイベント解除
-       */
-      if (this.resizeHandler) {
-        window.removeEventListener(
-          "resize",
-          this.resizeHandler
-        );
+      document.removeEventListener(
+        "visibilitychange",
+        this.onVisibility
+      );
 
-        this.resizeHandler = null;
-      }
+      window.removeEventListener("resize", this.onResize);
 
-      /*
-       * DOM削除
-       */
       this.container?.remove();
+      this.style?.remove();
 
       this.container = null;
+      this.style = null;
+      this.template = null;
     }
   }
 
-  /*
-   * 自動起動
-   */
-  window.sakuraPetals =
-    new SakuraPetals();
-
+  window.sakuraPetals = new SakuraPetals();
 })();
-```
