@@ -588,6 +588,22 @@
   #sakuraToggle .ic{
     color:#fff
   }
+  #sakuraToggle .ic.sakura-letter{
+    width:26px;
+    height:26px;
+    border:1.5px solid currentColor;
+    border-radius:50%;
+    display:inline-flex;
+    align-items:center;
+    justify-content:center;
+    box-sizing:border-box;
+    font-size:15px;
+    line-height:1;
+    font-weight:600;
+    letter-spacing:0;
+    font-family:inherit;
+    text-align:center;
+  }
   #sakuraToggle .ic svg{
     display:block;
     width:23px;
@@ -949,7 +965,7 @@
       <div class="brand">SAKURA COUNTDOWN</div>
       <div class="now" id="now">
         <span id="nowDate">---- / -- / --</span>
-        <span id="nowTime">--:--:--.--</span>
+        <span id="nowTime"><span id="nowHms">--:--:--</span><span class="clock-dot">.</span><span id="nowCs">--</span></span>
       </div>
       <button class="iconbtn menu" id="menuBtn" aria-label="menu">
         <span class="hamburger">
@@ -1787,9 +1803,11 @@
        current time = 100ms
   ============================================================ */
   var nowDateEl = $('#nowDate');
-  var nowTimeEl = $('#nowTime');
+  var nowHmsEl = $('#nowHms');
+  var nowCsEl = $('#nowCs');
   var lastDateKey = '';
-  var lastTimeKey = '';
+  var lastHmsKey = '';
+  var lastHeaderCs = '';
   function updateClock(){
     var t = Date.now();
     var nd = new Date(t);
@@ -1799,23 +1817,40 @@
       nd.getMonth() +
       '-' +
       nd.getDate();
-    var timeKey =
-      Math.floor(t / 100);
+    var hmsKey =
+      nd.getHours() +
+      ':' +
+      nd.getMinutes() +
+      ':' +
+      nd.getSeconds();
     if (dateKey !== lastDateKey){
       lastDateKey = dateKey;
       nowDateEl.textContent =
         fmtDate(nd);
     }
-    if (timeKey !== lastTimeKey){
-      lastTimeKey = timeKey;
-      /*
-        100ms更新に変更。
-        表示は従来通り .00〜.99。
-        10msごとのDOM更新をやめることで負荷を削減。
-      */
-      nowTimeEl.textContent =
-        fmtTime(nd);
+    if (hmsKey !== lastHmsKey){
+      lastHmsKey = hmsKey;
+      nowHmsEl.textContent =
+        pad2(nd.getHours()) +
+        ':' +
+        pad2(nd.getMinutes()) +
+        ':' +
+        pad2(nd.getSeconds());
     }
+  }
+  /*
+    ヘッダーの .00〜.99 は1つだけを
+    requestAnimationFrameで更新。
+    100ms周期から分離して、表示を滑らかにする。
+  */
+  function updateHeaderCentiseconds(){
+    var t = Date.now();
+    var cs = pad2(Math.floor((t % 1000) / 10));
+    if (cs !== lastHeaderCs){
+      lastHeaderCs = cs;
+      nowCsEl.textContent = cs;
+    }
+    requestAnimationFrame(updateHeaderCentiseconds);
   }
   function updateCountdown(){
     var t = Date.now();
@@ -1908,10 +1943,10 @@
   */
   updateClock();
   updateCountdown();
+  requestAnimationFrame(updateHeaderCentiseconds);
   /*
-    100ms周期。
-    10ms周期ではなくすることで
-    カード数増加時の負荷を大幅に抑える。
+    カードの一般的なカウントダウンだけ100ms周期。
+    ヘッダーの.00〜.99は別のrequestAnimationFrameで更新。
   */
   setInterval(function(){
     updateClock();
@@ -3349,7 +3384,9 @@
   );
 })();
 </script>
-<script src="./sakura2.js"></script>
+<script src="./sakura.js"></script>
 </body>
 </html>
+
+
 
