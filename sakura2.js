@@ -1,5 +1,5 @@
-// File: sakura.js
-/* 任意:
+/* sakura.js
+ * 任意:
  *   window.sakuraPetals.setCount(40);
  *   window.sakuraPetals.pause();
  *   window.sakuraPetals.play();
@@ -10,164 +10,248 @@
 
   const STYLE_ID = "sakura-petals-style";
   const CONTAINER_ID = "sakura-petals";
-  const MOTION_QUERY = "(prefers-reduced-motion: reduce)";
+  const DEFAULT_COUNT = 36;
+
+  /* ------------------------------------------------------------------
+   * 花びらスプライト（SVG data URI）
+   *
+   * clip-path / radial-gradient / box-shadow / filter:blur() を
+   * すべて1枚の画像に統合します。
+   *
+   * 全要素が同一の data URI を共有するため、
+   * ブラウザはデコード済みビットマップを使い回します。
+   * ------------------------------------------------------------------ */
 
   /*
-   * 花びらの絵は SVG 1 枚を全個体で共有する。
-   *
-   * clip-path + radial-gradient + box-shadow を
-   * 1 枚ごとに描画するより、
-   * 共有テクスチャ 1 枚のほうが圧倒的に軽い。
+   * ぼかしのはみ出し分を含めた描画領域。
+   * 116 : 156 ≒ 1 : 1.345（元の 1 : 1.34 とほぼ同一）
    */
-  const PETAL_SVG =
-    '<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 134">' +
-      '<radialGradient id="g" cx="30%" cy="23%" r="85%">' +
-        '<stop offset="0" stop-color="#ffffff"/>' +
-        '<stop offset=".37" stop-color="#ffeef3"/>' +
-        '<stop offset=".73" stop-color="#f1c6d5"/>' +
-        '<stop offset="1" stop-color="#d99eb6"/>' +
-      "</radialGradient>" +
-      '<path fill="url(#g)" d="M50 1C75 9 96 31 96 60c0 30-20 54-44 67' +
-        "-1-7-3-11-2-19-1 8-3 12-5 19C22 114 4 90 4 60 4 31 25 9 50 1Z\"/>" +
-    "</svg>";
+  const SVG_VIEW_BOX = "-8 -11 116 156";
 
-  const PETAL_URL =
-    'url("data:image/svg+xml;charset=utf-8,' +
-    encodeURIComponent(PETAL_SVG) +
-    '")';
+  /*
+   * 花びら本体の輪郭。
+   * 先端（上）に桜特有の切れ込み、基部（下）は細くすぼまる形。
+   */
+  const PETAL_PATH =
+    "M50 131 C24 114 7 88 7 59 C7 34 22 13 39 6 " +
+    "C44 9 48 15 50 21 C52 15 56 9 61 6 " +
+    "C78 13 93 34 93 59 C93 88 76 114 50 131 Z";
+
+  /*
+   * 左縁のハイライト。
+   * 元の box-shadow: inset 1px 0 2px rgba(255,255,255,0.8) の代替。
+   */
+  const HIGHLIGHT_PATH =
+    "M39 10 C23 19 11 37 11 59 C11 84 25 107 46 124";
+
+  const buildPetalSvg = (blur = 0) => {
+    const filterDef = blur
+      ? `<filter id="s" x="-25%" y="-25%" width="150%" height="150%"` +
+        ` color-interpolation-filters="sRGB">` +
+        `<feGaussianBlur stdDeviation="${blur}"/>` +
+        `</filter>`
+      : "";
+
+    const filterRef = blur ? ` filter="url(#s)"` : "";
+
+    return `<svg xmlns="http://www.w3.org/2000/svg" viewBox="${SVG_VIEW_BOX}">` +
+      `<defs>` +
+        `<radialGradient id="g" cx="0.3" cy="0.23" r="0.92">` +
+          `<stop offset="0" stop-color="#ffffff"/>` +
+          `<stop offset="0.37" stop-color="#ffeef3"/>` +
+          `<stop offset="0.73" stop-color="#f1c6d5"/>` +
+          `<stop offset="1" stop-color="#d99eb6"/>` +
+        `</radialGradient>` +
+        filterDef +
+      `</defs>` +
+      `<g${filterRef}>` +
+        `<path d="${PETAL_PATH}" fill="url(#g)"/>` +
+        `<path d="${HIGHLIGHT_PATH}" fill="none" stroke="#ffffff"` +
+          ` stroke-opacity="0.72" stroke-width="2.6"` +
+          ` stroke-linecap="round"/>` +
+      `</g>` +
+    `</svg>`;
+  };
+
+  /*
+   * data URI 化。
+   * encodeURIComponent を使うことで
+   * #, <, >, " のエスケープ漏れを防ぎます。
+   */
+  const toDataUri = (svg) =>
+    `url("data:image/svg+xml,${encodeURIComponent(svg)}")`;
+
+  /* くっきり版（mid 用） */
+  const SPRITE_SHARP = toDataUri(buildPetalSvg());
+
+  /* ぼかし版（near / far 用 ― CSS filter の代替） */
+  const SPRITE_SOFT = toDataUri(buildPetalSvg(4.5));
 
   const css = `
     #${CONTAINER_ID} {
       position: fixed;
-      inset: 0;
       z-index: 9999;
+      inset: 0;
       overflow: hidden;
       pointer-events: none;
-      contain: strict;
-      --sakura-img: ${PETAL_URL};
+      perspective: 700px;
+
+      /* 既定スプライト（mid が継承して使用） */
+      --sakura-sprite: ${SPRITE_SHARP};
     }
 
-    /*
-     * 1 花びら = 1 要素。
-     *
-     * translate / transform は独立した
-     * アニメーション可能プロパティなので、
-     * 別々の duration を持つ 2 本の
-     * アニメーションを 1 要素に載せられる。
-     * どちらもコンポジタスレッドで処理される。
-     */
-    #${CONTAINER_ID} > i {
+    #${CONTAINER_ID} .sakura-petal-path {
       position: absolute;
       left: 0;
       top: 0;
-      width: var(--s);
-      height: calc(var(--s) * 1.34);
-      opacity: var(--o);
-      background: var(--sakura-img) 0 0 / 100% 100% no-repeat;
+      width: var(--sakura-size);
+      height: calc(var(--sakura-size) * 1.345);
+      opacity: var(--sakura-opacity);
       animation:
-        sakura-drift var(--d) linear var(--dl) infinite,
-        sakura-tumble var(--rd) linear var(--dl) infinite;
+        sakura-wind var(--sakura-duration) linear var(--sakura-delay) infinite;
+      will-change: transform;
+    }
+
+    #${CONTAINER_ID} .sakura-petal-sway {
+      width: 100%;
+      height: 100%;
+      animation:
+        sakura-sway var(--sakura-sway-duration) ease-in-out
+        var(--sakura-delay) infinite alternate;
+    }
+
+    /*
+     * 形状・グラデーション・ハイライトはすべて
+     * 背景画像に焼き込み済みのため、
+     * ここでは描画系プロパティを一切持ちません。
+     */
+    #${CONTAINER_ID} .sakura-petal {
+      width: 100%;
+      height: 100%;
+      background-image: var(--sakura-sprite);
+      background-repeat: no-repeat;
+      background-size: 100% 100%;
+      animation:
+        sakura-tumble var(--sakura-rotation-duration)
+        linear var(--sakura-delay) infinite;
+    }
+
+    /*
+     * 被写界深度。
+     *
+     * CSS の filter: blur() は合成レイヤーを強制するため使用せず、
+     * ぼかし済みスプライトへの差し替えで表現します。
+     *
+     * SVG フィルタは要素サイズに比例するため、
+     * near は約 0.70px、far は約 0.21px 相当のぼけになります。
+     */
+    #${CONTAINER_ID} .sakura-petal-path.near,
+    #${CONTAINER_ID} .sakura-petal-path.far {
+      --sakura-sprite: ${SPRITE_SOFT};
     }
 
     /*
      * 風に流される移動。
      *
-     * 旧版の sway 要素を廃止し、
-     * 横揺れをこのキーフレームに合成した。
+     * 開始点（--sakura-start-x / --sakura-start-y）と
+     * 終了点（--sakura-end-x / --sakura-end-y）を
+     * 花びらごとにJS側で与えるため、
+     * 画面右上・左下を含む全域を通過します。
      */
-    @keyframes sakura-drift {
-      0% {
-        translate: var(--x0) var(--y0);
+    @keyframes sakura-wind {
+      from {
+        transform:
+          translate3d(
+            var(--sakura-start-x),
+            var(--sakura-start-y),
+            0
+          );
       }
 
-      25% {
-        translate:
-          calc(var(--x0) + var(--tx) * 0.25 + var(--sw))
-          calc(var(--y0) + var(--ty) * 0.25);
-      }
-
-      50% {
-        translate:
-          calc(var(--x0) + var(--tx) * 0.5)
-          calc(var(--y0) + var(--ty) * 0.5 + var(--sh));
-      }
-
-      75% {
-        translate:
-          calc(var(--x0) + var(--tx) * 0.75 - var(--sw))
-          calc(var(--y0) + var(--ty) * 0.75);
-      }
-
-      100% {
-        translate:
-          calc(var(--x0) + var(--tx))
-          calc(var(--y0) + var(--ty));
+      to {
+        transform:
+          translate3d(
+            var(--sakura-end-x),
+            var(--sakura-end-y),
+            0
+          );
       }
     }
 
     /*
-     * 花びらの回転。
-     *
-     * 軸を固定した rotate3d の角度補間なら
-     * キーフレームは 2 つで足りる。
-     * perspective は各要素に内包させ、
-     * 親側の 3D レンダリングコンテキストを作らない。
+     * 横風による自然な揺れ
      */
-    @keyframes sakura-tumble {
+    @keyframes sakura-sway {
       from {
-        transform: perspective(600px) rotate3d(1, 1.4, 0.2, 0deg);
+        transform: translate3d(0, -23px, 0);
       }
 
       to {
-        transform: perspective(600px) rotate3d(1, 1.4, 0.2, 360deg);
+        transform: translate3d(14px, 25px, 0);
       }
     }
 
-    #${CONTAINER_ID}.paused > i {
+    /*
+     * 花びらの回転
+     */
+    @keyframes sakura-tumble {
+      0% {
+        transform:
+          rotateZ(0deg)
+          rotateY(15deg)
+          rotateX(20deg);
+      }
+
+      50% {
+        transform:
+          rotateZ(170deg)
+          rotateY(195deg)
+          rotateX(50deg);
+      }
+
+      100% {
+        transform:
+          rotateZ(360deg)
+          rotateY(375deg)
+          rotateX(20deg);
+      }
+    }
+
+    /*
+     * 一時停止
+     */
+    #${CONTAINER_ID}.paused .sakura-petal-path,
+    #${CONTAINER_ID}.paused .sakura-petal-sway,
+    #${CONTAINER_ID}.paused .sakura-petal {
       animation-play-state: paused;
+    }
+
+    /*
+     * ユーザーが「動きを減らす」を指定している場合
+     */
+    @media (prefers-reduced-motion: reduce) {
+      #${CONTAINER_ID} .sakura-petal-path,
+      #${CONTAINER_ID} .sakura-petal-sway,
+      #${CONTAINER_ID} .sakura-petal {
+        animation-play-state: paused !important;
+      }
     }
   `;
 
-  const rand = (min, max) => min + Math.random() * (max - min);
-
   /*
-   * 端末性能と画面サイズから枚数を決める
+   * min〜maxの乱数
    */
-  const autoCount = () => {
-    const area = window.innerWidth * window.innerHeight;
-
-    let count = Math.round(area / 36000);
-
-    const cores = navigator.hardwareConcurrency || 8;
-    const memory = navigator.deviceMemory || 8;
-
-    if (cores <= 4 || memory <= 4) {
-      count = Math.round(count * 0.6);
-    }
-
-    return Math.min(40, Math.max(8, count));
-  };
+  const rand = (min, max) => min + Math.random() * (max - min);
 
   class SakuraPetals {
     constructor(options = {}) {
-      this.fixedCount = Number.isFinite(options.count)
+      this.count = Number.isFinite(options.count)
         ? Math.max(0, Math.floor(options.count))
-        : null;
+        : DEFAULT_COUNT;
 
-      this.count = this.fixedCount ?? autoCount();
       this.zIndex = options.zIndex ?? 9999;
-
       this.container = null;
       this.style = null;
-      this.template = null;
-      this.userPaused = false;
-      this.resizeTimer = 0;
-
-      this.motionQuery = window.matchMedia(MOTION_QUERY);
-
-      this.onMotionChange = () => this.applyMotionPreference();
-      this.onVisibility = () => this.applyVisibility();
-      this.onResize = () => this.scheduleRecount();
 
       this.init();
     }
@@ -177,7 +261,9 @@
         document.addEventListener(
           "DOMContentLoaded",
           () => this.init(),
-          { once: true }
+          {
+            once: true
+          }
         );
 
         return;
@@ -185,227 +271,309 @@
 
       this.injectStyle();
 
-      document.getElementById(CONTAINER_ID)?.remove();
+      const existing = document.getElementById(CONTAINER_ID);
 
-      this.container = document.createElement("div");
-      this.container.id = CONTAINER_ID;
-      this.container.setAttribute("aria-hidden", "true");
-      this.container.style.zIndex = String(this.zIndex);
-
-      document.body.append(this.container);
-
-      this.motionQuery.addEventListener(
-        "change",
-        this.onMotionChange
-      );
-
-      document.addEventListener(
-        "visibilitychange",
-        this.onVisibility
-      );
-
-      if (this.fixedCount === null) {
-        window.addEventListener(
-          "resize",
-          this.onResize,
-          { passive: true }
-        );
+      if (existing) {
+        existing.remove();
       }
 
-      this.applyMotionPreference();
+      this.container = document.createElement("div");
+
+      this.container.id = CONTAINER_ID;
+
+      this.container.setAttribute(
+        "aria-hidden",
+        "true"
+      );
+
+      this.container.style.zIndex =
+        String(this.zIndex);
+
+      this.createPetals();
+
+      document.body.append(
+        this.container
+      );
     }
 
     injectStyle() {
-      const existing = document.getElementById(STYLE_ID);
-
-      if (existing) {
-        this.style = existing;
+      if (document.getElementById(STYLE_ID)) {
+        this.style =
+          document.getElementById(STYLE_ID);
 
         return;
       }
 
-      this.style = document.createElement("style");
+      this.style =
+        document.createElement("style");
+
       this.style.id = STYLE_ID;
+
       this.style.textContent = css;
 
-      document.head.append(this.style);
+      document.head.append(
+        this.style
+      );
     }
 
     /*
-     * 「動きを減らす」設定時は要素を作らない。
-     * 停止済みの要素も合成レイヤーとして
-     * メモリを食うため、生成自体を避ける。
+     * 1枚分のパラメータを生成
+     *
+     * 風は「右下 → 左上」方向ですが、
+     * 出現位置を右辺・下辺の両方に分散させることで、
+     * 画面右上と左下も花びらが通過します。
      */
-    applyMotionPreference() {
-      if (this.motionQuery.matches) {
-        this.container?.replaceChildren();
-
-        return;
-      }
-
-      this.render();
-    }
-
-    applyVisibility() {
-      if (document.hidden) {
-        this.container?.classList.add("paused");
-
-        return;
-      }
-
-      if (!this.userPaused) {
-        this.container?.classList.remove("paused");
-      }
-    }
-
-    scheduleRecount() {
-      window.clearTimeout(this.resizeTimer);
-
-      this.resizeTimer = window.setTimeout(() => {
-        const next = autoCount();
-
-        if (next === this.count) {
-          return;
-        }
-
-        this.count = next;
-
-        this.applyMotionPreference();
-      }, 400);
-    }
-
-    createPetalParams() {
+    createPetalParams(index) {
+      /*
+       * 奥行き（大きさ・速度・透明度）
+       */
       const depthRoll = Math.random();
 
-      const near = depthRoll < 0.16;
-      const far = !near && depthRoll < 0.56;
+      const depth =
+        depthRoll < 0.16
+          ? "near"
+          : depthRoll < 0.56
+            ? "far"
+            : "mid";
 
-      const size = near
-        ? rand(14, 20)
-        : far
-          ? rand(4, 7)
-          : rand(7, 12);
+      const size =
+        depth === "near"
+          ? rand(14, 20)
+          : depth === "far"
+            ? rand(4, 7)
+            : rand(7, 12);
 
-      /* blur の代わりに不透明度だけで奥行きを出す */
-      const opacity = near
-        ? 0.8
-        : far
-          ? 0.34
-          : 0.62;
+      const opacity =
+        depth === "near"
+          ? 0.8
+          : depth === "far"
+            ? 0.42
+            : 0.7;
 
-      const speed = near
-        ? rand(52, 70)
-        : far
-          ? rand(19, 28)
-          : rand(34, 48);
+      /*
+       * 1秒あたりの移動量（画面幅換算）
+       */
+      const speed =
+        depth === "near"
+          ? rand(52, 70)
+          : depth === "far"
+            ? rand(19, 28)
+            : rand(34, 48);
 
+      /*
+       * 移動ベクトル（左上方向）
+       *
+       * 画面を必ず横断しきる距離を確保します。
+       */
       const travelX = rand(135, 170);
       const travelY = rand(115, 155);
 
-      const fromRightEdge = Math.random() < 0.5;
+      /*
+       * 出現位置
+       *
+       * index の偶奇で右辺／下辺に振り分け、
+       * さらに座標を乱数で散らします。
+       *
+       * ・右辺出現 → 画面右上〜右下をカバー
+       * ・下辺出現 → 画面左下〜右下をカバー
+       */
+      const fromRightEdge = index % 2 === 0;
+
+      const startX = fromRightEdge
+        ? rand(101, 118)
+        : rand(-12, 116);
+
+      const startY = fromRightEdge
+        ? rand(-18, 116)
+        : rand(101, 118);
+
+      const distance =
+        Math.hypot(travelX, travelY);
 
       return {
+        depth,
         size,
         opacity,
-        x0: fromRightEdge ? rand(101, 118) : rand(-12, 116),
-        y0: fromRightEdge ? rand(-18, 116) : rand(101, 118),
-        tx: -travelX,
-        ty: -travelY,
-        sway: rand(1.0, 2.4),
-        bob: rand(0.8, 2.0),
-        duration: Math.hypot(travelX, travelY) / speed,
-        rotation: rand(1.3, 3.1)
+        startX,
+        startY,
+        endX: startX - travelX,
+        endY: startY - travelY,
+        duration: distance / speed,
+        swayDuration: rand(0.9, 2.2),
+        rotationDuration: rand(1.3, 3.1)
       };
     }
 
-    render() {
+    createPetals() {
       if (!this.container) {
         return;
       }
 
-      if (!this.template) {
-        this.template = document.createElement("i");
-      }
+      const fragment =
+        document.createDocumentFragment();
 
-      const fragment = document.createDocumentFragment();
+      for (
+        let index = 0;
+        index < this.count;
+        index += 1
+      ) {
+        const params =
+          this.createPetalParams(index);
 
-      for (let i = 0; i < this.count; i += 1) {
-        const p = this.createPetalParams();
-        const petal = this.template.cloneNode(false);
+        const path =
+          document.createElement("div");
+
+        const sway =
+          document.createElement("div");
+
+        const petal =
+          document.createElement("div");
+
+        path.className =
+          `sakura-petal-path ${params.depth}`;
+
+        sway.className =
+          "sakura-petal-sway";
+
+        petal.className =
+          "sakura-petal";
 
         /*
-         * setProperty を 10 回呼ぶ代わりに
-         * cssText へ 1 回だけ代入する。
+         * サイズを 0.5px 刻みに丸めます。
+         *
+         * 同一サイズの花びらが増えるほど
+         * ラスタライズ結果が再利用されやすくなります。
          */
-        petal.style.cssText =
-          `--s:${p.size.toFixed(1)}px;` +
-          `--o:${p.opacity};` +
-          `--x0:${p.x0.toFixed(1)}vw;` +
-          `--y0:${p.y0.toFixed(1)}vh;` +
-          `--tx:${p.tx.toFixed(1)}vw;` +
-          `--ty:${p.ty.toFixed(1)}vh;` +
-          `--sw:${p.sway.toFixed(2)}vw;` +
-          `--sh:${p.bob.toFixed(2)}vh;` +
-          `--d:${p.duration.toFixed(2)}s;` +
-          `--rd:${p.rotation.toFixed(2)}s;` +
-          `--dl:${(-Math.random() * p.duration).toFixed(2)}s;`;
+        const quantizedSize =
+          Math.round(params.size * 2) / 2;
 
-        fragment.append(petal);
+        path.style.setProperty(
+          "--sakura-size",
+          `${quantizedSize.toFixed(2)}px`
+        );
+
+        path.style.setProperty(
+          "--sakura-start-x",
+          `${params.startX.toFixed(2)}vw`
+        );
+
+        path.style.setProperty(
+          "--sakura-start-y",
+          `${params.startY.toFixed(2)}vh`
+        );
+
+        path.style.setProperty(
+          "--sakura-end-x",
+          `${params.endX.toFixed(2)}vw`
+        );
+
+        path.style.setProperty(
+          "--sakura-end-y",
+          `${params.endY.toFixed(2)}vh`
+        );
+
+        path.style.setProperty(
+          "--sakura-duration",
+          `${params.duration.toFixed(2)}s`
+        );
+
+        /*
+         * 負のディレイを移動時間の範囲内でばらつかせ、
+         * 初期表示の時点から画面全域に
+         * 花びらが散っている状態にします。
+         */
+        path.style.setProperty(
+          "--sakura-delay",
+          `${(-Math.random() * params.duration).toFixed(2)}s`
+        );
+
+        path.style.setProperty(
+          "--sakura-sway-duration",
+          `${params.swayDuration.toFixed(2)}s`
+        );
+
+        path.style.setProperty(
+          "--sakura-rotation-duration",
+          `${params.rotationDuration.toFixed(2)}s`
+        );
+
+        path.style.setProperty(
+          "--sakura-opacity",
+          String(params.opacity)
+        );
+
+        sway.append(petal);
+
+        path.append(sway);
+
+        fragment.append(path);
       }
 
-      this.container.replaceChildren(fragment);
+      this.container.append(
+        fragment
+      );
     }
 
+    /*
+     * 花びらの枚数を変更
+     */
     setCount(count) {
       if (!Number.isFinite(count)) {
         return;
       }
 
-      this.fixedCount = Math.max(0, Math.floor(count));
-      this.count = this.fixedCount;
+      this.count =
+        Math.max(
+          0,
+          Math.floor(count)
+        );
 
-      window.removeEventListener("resize", this.onResize);
+      if (this.container) {
+        this.container.replaceChildren();
 
-      this.applyMotionPreference();
-    }
-
-    pause() {
-      this.userPaused = true;
-
-      this.container?.classList.add("paused");
-    }
-
-    play() {
-      this.userPaused = false;
-
-      if (!document.hidden) {
-        this.container?.classList.remove("paused");
+        this.createPetals();
       }
     }
 
+    /*
+     * 一時停止
+     */
+    pause() {
+      this.container?.classList.add(
+        "paused"
+      );
+    }
+
+    /*
+     * 再生
+     */
+    play() {
+      this.container?.classList.remove(
+        "paused"
+      );
+    }
+
+    /*
+     * 花びらを削除
+     */
     destroy() {
-      window.clearTimeout(this.resizeTimer);
-
-      this.motionQuery.removeEventListener(
-        "change",
-        this.onMotionChange
-      );
-
-      document.removeEventListener(
-        "visibilitychange",
-        this.onVisibility
-      );
-
-      window.removeEventListener("resize", this.onResize);
-
       this.container?.remove();
-      this.style?.remove();
 
       this.container = null;
-      this.style = null;
-      this.template = null;
     }
   }
 
-  window.sakuraPetals = new SakuraPetals();
+  /*
+   * 自動起動
+   *
+   * ページ側から以下で操作できます:
+   *
+   * window.sakuraPetals.pause();
+   * window.sakuraPetals.play();
+   * window.sakuraPetals.setCount(40);
+   * window.sakuraPetals.destroy();
+   */
+  window.sakuraPetals =
+    new SakuraPetals();
+
 })();
