@@ -22,7 +22,6 @@
       );
     --glass-highlight:rgba(255,255,255,.26);
     --glass-shadow:rgba(0,0,0,.22);
-
 /* == 透明感を個別調整 == */
     --card-glass-1:rgba(255,255,255,.40);
     --card-glass-2:rgba(255,255,255,.20);
@@ -37,7 +36,6 @@
     --safe-t:env(safe-area-inset-top,0px);
     --safe-b:env(safe-area-inset-bottom,0px);
   }
-
   /* カードと同じ文字影を追加画面にも適用 */
   .item .ttl,
   .item .card-date,
@@ -52,7 +50,6 @@
   .sheet .gbtn{
     text-shadow:0 2px 5px rgba(0,0,0,.68), 0 1px 2px rgba(0,0,0,.48);
   }
-
   *{
     box-sizing:border-box;
     -webkit-tap-highlight-color:transparent
@@ -1876,7 +1873,6 @@
   }
   updateClock();
   updateCountdown();
-
   /*
     時計・0.99・プログレスバーを1本のRAFに統合。
     0.99は従来どおり10ms単位で更新し、フレームレートは落とさない。
@@ -1887,10 +1883,8 @@
   var headerLastTick = -1;
   var progressRunning = true;
   var lastSecondTick = -1;
-
   function updateAnimationFrame(){
     var t = Date.now();
-
     /* ヘッダーの百分の一秒 */
     var headerTick = Math.floor(t / 10);
     if (headerTick !== headerLastTick){
@@ -1901,7 +1895,6 @@
         nowCsEl.textContent = headerCs;
       }
     }
-
     /* カードの0.99部分。10ms単位の更新を維持 */
     if (headerTick !== centiLastTick){
       centiLastTick = headerTick;
@@ -1921,7 +1914,6 @@
         }
       }
     }
-
     /* プログレスバーは従来どおり20fps */
     var progressTick = Math.floor(t / 50);
     if (progressRunning && progressTick !== progressLastTick){
@@ -1956,12 +1948,9 @@
         }
       }
     }
-
     requestAnimationFrame(updateAnimationFrame);
   }
-
   requestAnimationFrame(updateAnimationFrame);
-
   setInterval(function(){
     updateClock();
     updateCountdown();
