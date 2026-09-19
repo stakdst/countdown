@@ -19,6 +19,8 @@
   }
   *{box-sizing:border-box;-webkit-tap-highlight-color:transparent}
   html,body{margin:0;width:100%;height:100%;min-height:100%;overflow:hidden}
+  html{height:100%;min-height:100dvh;background:#000}
+  body{min-height:100dvh}
   body{
     font-family:-apple-system,BlinkMacSystemFont,"SF Pro JP","Hiragino Sans","Noto Sans JP","Yu Gothic",Meiryo,sans-serif;
     color:var(--text);
@@ -30,7 +32,7 @@
   /* ===== 背景（用意済みの background.PNG のみ） ===== */
   .bg{
     position:fixed;inset:0;z-index:0;
-    width:100%;height:100dvh;min-height:100svh;
+    width:100%;height:100%;min-height:100dvh;
     background-color:#000;
     background-image:url("background.PNG");
     background-position:65% center;
@@ -45,7 +47,7 @@
   .app{
     position:relative;z-index:2;
     width:min(100%,780px);
-    height:100dvh;min-height:100svh;
+    height:100%;min-height:100dvh;
     margin:auto;
     padding:calc(10px + var(--safe-t)) 18px 0;
     display:flex;
@@ -158,11 +160,11 @@
   }
   /* 削除色がカード内部に透けて赤く見えないようにする */
   .item{
-    /* 文字の視認性を上げるため、カードを薄く曇らせる。
-       背景をやや不透明にして、削除用の赤がカード内へ透けにくくする。 */
-    backdrop-filter:blur(9px) saturate(112%);
-    -webkit-backdrop-filter:blur(9px) saturate(112%);
-    background:linear-gradient(135deg,rgba(18,18,22,.38),rgba(18,18,22,.28) 48%,rgba(18,18,22,.24));
+    /* 白く曇らせる。背景をかなり不透明にして文字を見やすくし、
+       削除用の赤がカードへ透けにくいようにする。 */
+    backdrop-filter:blur(12px) saturate(105%);
+    -webkit-backdrop-filter:blur(12px) saturate(105%);
+    background:linear-gradient(135deg,rgba(255,255,255,.90),rgba(255,255,255,.84) 48%,rgba(255,255,255,.78));
   }
   .row-bg .trash{width:26px;height:26px;opacity:.96;transition:transform .18s cubic-bezier(.2,.9,.25,1)}
   .row.armed .row-bg .trash{transform:scale(1.22)}
@@ -276,6 +278,8 @@
   #sortLabel{font-size:13px;opacity:.88;letter-spacing:.05em;font-variant-numeric:tabular-nums}
   #sortBtn .chev{transition:transform .26s cubic-bezier(.2,.9,.25,1);opacity:.7}
   #sortBtn.desc .chev{transform:rotate(180deg)}
+  #sakuraToggle .sakura-status{font-size:12px;opacity:.62;letter-spacing:.04em}
+  #sakuraToggle.paused .sakura-status{opacity:.9;color:#ffd7e6}
   .chips{display:flex;flex-wrap:wrap;gap:6px;margin:4px 6px 0;transition:opacity .2s}
   .chips.off{opacity:.34}
   .chip{
@@ -439,6 +443,20 @@
       <svg class="chev" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" width="18" height="18">
         <path d="M12 5v14M12 19l-5-5M12 19l5-5"/>
       </svg>
+    </button>
+    <div class="divider"></div>
+    <button class="prow" id="sakuraToggle" type="button" aria-label="sakura.js">
+      <span class="ic">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" width="22" height="22">
+          <path d="M12 3c2.1 2.2 2.7 4.4 1.5 6.1-1.1 1.5-3.1 1.5-4.1.1C8.3 7.5 9.2 5.2 12 3Z"/>
+          <path d="M12 9.2c3.2-1.1 6.2-.1 6.8 2.1.6 2.2-1.6 4.1-4.2 3.7-2.2-.3-3.1-2.7-2.6-5.8Z"/>
+          <path d="M11.7 9.1c-2.6-1.6-5.7-1.4-6.6.6-.9 2 .7 4.4 3.2 4.5 2.2.1 3.6-2 3.4-5.1Z"/>
+          <path d="M12 12.5c-2.1 2.4-2.1 5.4 0 6.5 2.1 1.1 4.4-.5 4.7-2.8.3-2-1.5-3.5-4.7-3.7Z"/>
+          <path d="M12 12.5c.2 2.8-.9 5.1-3 5.4-2.2.3-3.8-1.7-3.2-3.8.5-1.9 2.5-2.6 6.2-1.6Z"/>
+        </svg>
+      </span>
+      <span class="sp">sakura.js を停止</span>
+      <span class="sakura-status" id="sakuraStatus">動作中</span>
     </button>
   </aside>
 
@@ -1294,6 +1312,8 @@
   ============================================================ */
   var panel = $('#panel'), menuBtn = $('#menuBtn'), swNotify = $('#swNotify'), chips = $('#chips');
   var sortBtn = $('#sortBtn'), sortLabel = $('#sortLabel');
+  var sakuraToggle = $('#sakuraToggle'), sakuraStatus = $('#sakuraStatus');
+  var sakuraPaused = false;
 
   (function(){
     var html = '';
@@ -1337,6 +1357,28 @@
     panel.classList.add('shake');
     setTimeout(function(){ panel.classList.remove('shake'); }, 400);
   }
+
+  function syncSakuraUI(){
+    sakuraToggle.classList.toggle('paused', sakuraPaused);
+    sakuraStatus.textContent = sakuraPaused ? '停止中・タップで再開' : '動作中';
+    sakuraToggle.setAttribute('aria-label', sakuraPaused ? 'sakura.js を再開' : 'sakura.js を停止');
+  }
+
+  sakuraToggle.addEventListener('click', function(e){
+    e.preventDefault();
+    e.stopPropagation();
+    if (!window.sakuraPetals) return;
+    if (sakuraPaused) {
+      try { window.sakuraPetals.play(); } catch(err) {}
+      sakuraPaused = false;
+    } else {
+      try { window.sakuraPetals.pause(); } catch(err) {}
+      sakuraPaused = true;
+    }
+    syncSakuraUI();
+    haptic(8);
+  });
+  syncSakuraUI();
 
   /* --- 並び替え（昇順 / 降順トグル） --- */
   function rank(it, now){
