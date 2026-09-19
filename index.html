@@ -1,351 +1,4172 @@
-<!doctype html>
+<!DOCTYPE html>
 <html lang="ja">
 <head>
-<meta charset="utf-8">
-<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover,user-scalable=no">
-<meta name="theme-color" content="#8fb7d9">
+<meta charset="UTF-8">
+<meta
+  name="viewport"
+  content="width=device-width, initial-scale=1, viewport-fit=cover, user-scalable=no"
+>
+<meta name="theme-color" content="#7fa8d8">
 <meta name="apple-mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+
 <title>SAKURA COUNTDOWN</title>
+
 <style>
-:root{
-  --glass:rgba(255,255,255,.16);
-  --glass-strong:rgba(255,255,255,.23);
-  --line:rgba(255,255,255,.35);
-  --text:#fff;
-  --muted:rgba(255,255,255,.78);
-  --shadow:0 12px 36px rgba(20,50,80,.18);
-  --radius:22px;
+/* =========================================================
+   SAKURA COUNTDOWN
+   ========================================================= */
+
+:root {
+  --glass: rgba(255,255,255,.15);
+  --glass-strong: rgba(255,255,255,.23);
+  --glass-border: rgba(255,255,255,.35);
+  --glass-shadow: rgba(0,0,0,.12);
+
+  --text: rgba(255,255,255,.96);
+  --text-soft: rgba(255,255,255,.74);
+
+  --accent: #ff9fbc;
+  --accent-strong: #ff7fa5;
+
+  --danger: #ff687f;
+
+  --radius-xl: 30px;
+  --radius-lg: 24px;
+
+  --safe-top: env(safe-area-inset-top);
+  --safe-bottom: env(safe-area-inset-bottom);
 }
-*{box-sizing:border-box}
-html,body{margin:0;width:100%;height:100%;overflow:hidden;font-family:-apple-system,BlinkMacSystemFont,"SF Pro Display","Hiragino Kaku Gothic ProN","Yu Gothic",sans-serif;color:var(--text);background:#79a9d1}
-button,input{font:inherit}
-button{border:0;background:none;color:inherit}
-body{
+
+* {
+  box-sizing: border-box;
+  -webkit-tap-highlight-color: transparent;
+}
+
+html,
+body {
+  margin: 0;
+  width: 100%;
+  min-height: 100%;
+  overflow: hidden;
+  font-family:
+    -apple-system,
+    BlinkMacSystemFont,
+    "SF Pro Display",
+    "SF Pro Text",
+    "Hiragino Kaku Gothic ProN",
+    "Hiragino Sans",
+    "Yu Gothic",
+    sans-serif;
+  color: var(--text);
+  background: #789bc4;
+}
+
+body {
+  min-height: 100svh;
+  overscroll-behavior: none;
+}
+
+/* ---------------------------------------------------------
+   BACKGROUND
+   --------------------------------------------------------- */
+
+.background {
+  position: fixed;
+  inset: 0;
+  z-index: 0;
+
+  background-image:
+    linear-gradient(
+      rgba(40, 80, 130, .05),
+      rgba(20, 40, 70, .10)
+    ),
+    url("background.PNG");
+
+  background-size: cover;
+  background-position: center;
+  background-repeat: no-repeat;
+
+  transform: scale(1.015);
+}
+
+.background::after {
+  content: "";
+  position: absolute;
+  inset: 0;
+
   background:
-    linear-gradient(180deg,rgba(40,100,155,.05),rgba(255,170,120,.08)),
-    url("background.PNG") center/cover fixed no-repeat;
-}
-body:before{
-  content:"";position:fixed;inset:0;pointer-events:none;
-  background:linear-gradient(180deg,rgba(30,80,130,.08),rgba(255,255,255,.02) 45%,rgba(20,40,80,.08));
-  backdrop-filter:saturate(1.12);
-}
-#petals{position:fixed;inset:0;pointer-events:none;z-index:20;overflow:hidden}
-.petal{position:absolute;top:-8vh;width:12px;height:18px;border-radius:70% 25% 70% 25%;background:rgba(255,190,210,.75);filter:blur(.1px);animation:fall linear infinite}
-@keyframes fall{to{transform:translate3d(var(--dx),115vh,0) rotate(650deg)}}
+    linear-gradient(
+      180deg,
+      rgba(10,40,80,.08),
+      rgba(10,30,60,.02) 45%,
+      rgba(10,30,60,.12)
+    );
 
-.app{position:relative;z-index:2;height:100%;display:flex;flex-direction:column;max-width:900px;margin:auto}
-.topbar{height:76px;display:flex;align-items:center;justify-content:space-between;padding:16px max(18px,env(safe-area-inset-left)) 8px;flex:none}
-.brand{font-size:14px;letter-spacing:.18em;font-weight:700;text-shadow:0 1px 8px #315a7a}
-.top-actions{display:flex;gap:8px}
-.icon-btn{width:42px;height:42px;border-radius:50%;background:rgba(255,255,255,.12);backdrop-filter:blur(14px);border:1px solid rgba(255,255,255,.18);font-size:22px;cursor:pointer}
-.list{overflow:auto;flex:1;padding:4px 16px 120px;scrollbar-width:none}
-.list::-webkit-scrollbar{display:none}
-.card{
-  position:relative;display:flex;align-items:center;gap:14px;min-height:145px;margin:10px 0;
-  padding:18px 18px 18px 20px;border:1px solid var(--line);border-radius:var(--radius);
-  background:linear-gradient(135deg,rgba(255,255,255,.22),rgba(255,255,255,.09));
-  box-shadow:var(--shadow),inset 0 1px 0 rgba(255,255,255,.2);
-  backdrop-filter:blur(18px) saturate(1.25);-webkit-backdrop-filter:blur(18px) saturate(1.25);
-  touch-action:pan-y;user-select:none;cursor:pointer;transition:transform .28s cubic-bezier(.2,.8,.2,1),opacity .2s;
-  overflow:hidden;
+  pointer-events: none;
 }
-.card:after{content:"";position:absolute;inset:0;pointer-events:none;background:linear-gradient(110deg,rgba(255,255,255,.15),transparent 35%)}
-.card.dragging{transition:none;z-index:5}
-.card.removing{transform:translateX(-120%);opacity:0}
-.card-main{min-width:0;flex:1}
-.card-title{font-size:16px;font-weight:700;letter-spacing:.04em;margin-bottom:5px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
-.card-sub{font-size:12px;color:var(--muted);margin-bottom:8px}
-.count{font-variant-numeric:tabular-nums;letter-spacing:.01em;font-size:clamp(25px,6vw,42px);line-height:1.05;white-space:nowrap;font-weight:500;text-shadow:0 2px 12px rgba(0,0,0,.16)}
-.count .ms{font-size:1em}
-.card.done .count{color:#fff}
-.card.done .card-sub{color:rgba(255,255,255,.9)}
-.drag-grip{width:26px;display:flex;justify-content:center;opacity:.55;cursor:grab}
-.drag-grip span{display:grid;grid-template-columns:repeat(2,4px);gap:4px}
-.drag-grip i{width:4px;height:4px;border-radius:50%;background:#fff}
-.fab{position:fixed;right:max(22px,env(safe-area-inset-right));bottom:max(24px,env(safe-area-inset-bottom));z-index:30;width:62px;height:62px;border-radius:50%;font-size:34px;font-weight:200;background:rgba(255,175,195,.72);border:1px solid rgba(255,255,255,.5);box-shadow:0 10px 30px rgba(60,40,70,.2);backdrop-filter:blur(14px);cursor:pointer}
-.empty{text-align:center;margin:22vh auto 0;color:rgba(255,255,255,.85);font-size:15px}
-.empty small{display:block;margin-top:8px;color:rgba(255,255,255,.65)}
 
-.sheet-backdrop{position:fixed;inset:0;z-index:50;background:rgba(20,40,60,.22);backdrop-filter:blur(5px);opacity:0;pointer-events:none;transition:.25s}
-.sheet-backdrop.open{opacity:1;pointer-events:auto}
-.sheet{position:absolute;left:50%;bottom:0;transform:translate(-50%,100%);width:min(720px,100%);max-height:92vh;overflow:auto;border-radius:28px 28px 0 0;padding:20px 20px max(28px,env(safe-area-inset-bottom));background:rgba(245,250,255,.25);border:1px solid rgba(255,255,255,.4);box-shadow:0 -18px 60px rgba(20,50,80,.25);backdrop-filter:blur(28px) saturate(1.25);transition:transform .4s cubic-bezier(.2,.85,.2,1)}
-.sheet-backdrop.open .sheet{transform:translate(-50%,0)}
-.sheet-head{display:flex;align-items:center;justify-content:space-between;margin-bottom:12px}
-.sheet h2{font-size:18px;margin:0}
-.close{width:38px;height:38px;border-radius:50%;background:rgba(255,255,255,.18);font-size:22px}
-.field{margin:13px 0}
-.label{font-size:12px;color:rgba(255,255,255,.8);margin:0 0 7px 3px}
-.name-input{width:100%;height:50px;border-radius:16px;border:1px solid rgba(255,255,255,.32);background:rgba(255,255,255,.14);outline:0;color:#fff;padding:0 16px}
-.name-input::placeholder{color:rgba(255,255,255,.58)}
-.date-preview{text-align:center;font-size:17px;font-variant-numeric:tabular-nums;margin:8px 0 0}
-.pickers{display:grid;grid-template-columns:1.5fr 1fr 1fr 1fr;gap:7px;margin:8px 0}
-.picker-wrap{position:relative;height:150px;border-radius:18px;overflow:hidden;background:rgba(255,255,255,.12);border:1px solid rgba(255,255,255,.24)}
-.picker-wrap:before,.picker-wrap:after{content:"";position:absolute;left:0;right:0;height:50px;z-index:3;pointer-events:none}
-.picker-wrap:before{top:0;background:linear-gradient(rgba(40,80,120,.36),transparent)}
-.picker-wrap:after{bottom:0;background:linear-gradient(transparent,rgba(40,80,120,.36))}
-.selection{position:absolute;left:6px;right:6px;top:50px;height:50px;border-radius:12px;border:1px solid rgba(255,255,255,.42);background:rgba(255,255,255,.12);pointer-events:none;z-index:2}
-.reel{height:150px;overflow:hidden;position:relative;touch-action:none}
-.reel-inner{position:absolute;left:0;right:0;top:0;will-change:transform}
-.reel-item{height:50px;display:flex;align-items:center;justify-content:center;font-size:20px;font-variant-numeric:tabular-nums;opacity:.62;transition:font-size .08s,opacity .08s;white-space:nowrap}
-.reel-item.selected{font-size:27px;opacity:1;font-weight:600}
-.actions{display:flex;gap:9px;margin-top:18px}
-.action{flex:1;height:52px;border-radius:17px;background:rgba(255,255,255,.18);border:1px solid rgba(255,255,255,.32);font-weight:650}
-.action.primary{background:rgba(255,255,255,.76);color:#54728b}
-.notice-row{display:flex;align-items:center;justify-content:space-between;padding:12px 3px}
-.toggle{width:52px;height:31px;border-radius:20px;background:rgba(255,255,255,.2);border:1px solid rgba(255,255,255,.25);padding:3px;transition:.2s}
-.toggle span{display:block;width:23px;height:23px;border-radius:50%;background:#fff;box-shadow:0 2px 8px #567;transition:.2s}
-.toggle.on{background:rgba(90,190,150,.65)}
-.toggle.on span{transform:translateX(21px)}
-.notify-days{display:flex;flex-wrap:wrap;gap:7px}
-.day-chip{padding:8px 11px;border-radius:14px;background:rgba(255,255,255,.12);border:1px solid rgba(255,255,255,.22);font-size:12px;opacity:.7}
-.day-chip.on{background:rgba(255,255,255,.48);opacity:1}
+/* ---------------------------------------------------------
+   APP
+   --------------------------------------------------------- */
 
-@media(min-width:700px){
-  .list{padding-left:30px;padding-right:30px}
-  .card{min-height:155px;padding-left:24px}
+.app {
+  position: relative;
+  z-index: 2;
+
+  width: 100%;
+  height: 100svh;
+
+  display: flex;
+  flex-direction: column;
+
+  padding:
+    calc(12px + var(--safe-top))
+    clamp(12px, 3vw, 42px)
+    calc(12px + var(--safe-bottom));
+
+  overflow: hidden;
+}
+
+/* ---------------------------------------------------------
+   HEADER
+   --------------------------------------------------------- */
+
+.header {
+  width: 100%;
+  max-width: 980px;
+  margin: 0 auto;
+
+  display: grid;
+  grid-template-columns: 52px 1fr 52px;
+  align-items: center;
+
+  flex-shrink: 0;
+
+  min-height: 64px;
+}
+
+.brand {
+  text-align: center;
+  pointer-events: none;
+}
+
+.brand-title {
+  font-size: clamp(16px, 2vw, 20px);
+  font-weight: 650;
+  letter-spacing: .12em;
+  text-shadow: 0 1px 10px rgba(0,0,0,.16);
+}
+
+.brand-date {
+  margin-top: 3px;
+  font-size: 11px;
+  opacity: .75;
+  letter-spacing: .04em;
+}
+
+.icon-button {
+  width: 46px;
+  height: 46px;
+
+  border: 0;
+  border-radius: 50%;
+
+  display: grid;
+  place-items: center;
+
+  color: white;
+  background: rgba(255,255,255,.08);
+
+  cursor: pointer;
+
+  transition:
+    transform .2s ease,
+    background .2s ease;
+}
+
+.icon-button:active {
+  transform: scale(.88);
+  background: rgba(255,255,255,.20);
+}
+
+.icon {
+  width: 23px;
+  height: 23px;
+  stroke: currentColor;
+  fill: none;
+  stroke-width: 1.7;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+}
+
+/* ---------------------------------------------------------
+   LIST
+   --------------------------------------------------------- */
+
+.list {
+  width: 100%;
+  max-width: 980px;
+
+  margin: 0 auto;
+
+  flex: 1;
+
+  overflow-y: auto;
+  overflow-x: hidden;
+
+  padding:
+    12px
+    8px
+    130px;
+
+  scrollbar-width: none;
+
+  overscroll-behavior: contain;
+}
+
+.list::-webkit-scrollbar {
+  display: none;
+}
+
+/* ---------------------------------------------------------
+   CARD
+   --------------------------------------------------------- */
+
+.card {
+  position: relative;
+
+  width: 100%;
+
+  margin: 0 auto 10px;
+
+  border-radius: var(--radius-lg);
+
+  background:
+    linear-gradient(
+      135deg,
+      rgba(255,255,255,.20),
+      rgba(255,255,255,.075)
+    );
+
+  border: 1px solid var(--glass-border);
+
+  box-shadow:
+    0 12px 40px rgba(0,0,0,.10),
+    inset 0 1px 0 rgba(255,255,255,.25);
+
+  backdrop-filter: blur(18px) saturate(135%);
+  -webkit-backdrop-filter: blur(18px) saturate(135%);
+
+  overflow: hidden;
+
+  user-select: none;
+  -webkit-user-select: none;
+
+  touch-action: pan-y;
+
+  transition:
+    transform .28s cubic-bezier(.2,.8,.2,1),
+    opacity .22s ease,
+    margin .28s ease,
+    height .28s ease;
+}
+
+.card::before {
+  content: "";
+
+  position: absolute;
+  inset: 0;
+
+  background:
+    linear-gradient(
+      120deg,
+      rgba(255,255,255,.12),
+      transparent 35%,
+      transparent 70%,
+      rgba(255,255,255,.07)
+    );
+
+  pointer-events: none;
+}
+
+.card-inner {
+  position: relative;
+  z-index: 2;
+
+  padding: 18px 20px 17px;
+}
+
+.card-top {
+  display: flex;
+  align-items: center;
+  gap: 9px;
+}
+
+.card-dot {
+  width: 9px;
+  height: 9px;
+
+  border-radius: 50%;
+
+  background: var(--card-color, #ff9fbc);
+
+  box-shadow:
+    0 0 10px var(--card-color, #ff9fbc);
+}
+
+.card-name {
+  min-width: 0;
+
+  font-size: 15px;
+  font-weight: 650;
+
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+
+  text-shadow: 0 1px 5px rgba(0,0,0,.15);
+}
+
+.card-sub {
+  margin-top: 3px;
+
+  font-size: 11px;
+
+  color: var(--text-soft);
+}
+
+.countdown {
+  margin-top: 5px;
+
+  display: flex;
+  align-items: baseline;
+  flex-wrap: nowrap;
+
+  white-space: nowrap;
+
+  letter-spacing: -.025em;
+
+  text-shadow: 0 2px 14px rgba(0,0,0,.16);
+}
+
+.count-days {
+  font-size: clamp(43px, 7vw, 61px);
+  font-weight: 350;
+  line-height: .98;
+}
+
+.count-days-unit {
+  margin-left: 3px;
+  margin-right: 11px;
+
+  font-size: 16px;
+  font-weight: 500;
+}
+
+.count-time {
+  font-size: clamp(24px, 4vw, 36px);
+  font-weight: 350;
+  line-height: 1;
+  letter-spacing: -.045em;
+}
+
+.count-ms {
+  font-size: clamp(18px, 3vw, 27px);
+  font-weight: 350;
+  letter-spacing: -.03em;
+}
+
+.target-date {
+  margin-top: 11px;
+
+  display: flex;
+  align-items: center;
+  gap: 7px;
+
+  color: rgba(255,255,255,.78);
+
+  font-size: 12px;
+}
+
+.calendar-icon {
+  width: 16px;
+  height: 16px;
+
+  stroke: currentColor;
+  fill: none;
+  stroke-width: 1.6;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+}
+
+.swipe-delete {
+  position: absolute;
+  inset: 0 auto 0 0;
+
+  width: 90px;
+
+  display: flex;
+  align-items: center;
+  justify-content: center;
+
+  background: rgba(255,75,100,.75);
+
+  opacity: 0;
+
+  pointer-events: none;
+
+  transition: opacity .2s;
+}
+
+.card.swiping .swipe-delete {
+  opacity: 1;
+}
+
+.card-content {
+  position: relative;
+  z-index: 2;
+  background: transparent;
+}
+
+/* ---------------------------------------------------------
+   COMPLETED
+   --------------------------------------------------------- */
+
+.card.completed {
+  background:
+    linear-gradient(
+      135deg,
+      rgba(255,255,255,.17),
+      rgba(255,255,255,.06)
+    );
+}
+
+.card.completed .count-days,
+.card.completed .count-time,
+.card.completed .count-ms {
+  opacity: .95;
+}
+
+.completed-label {
+  display: inline-flex;
+
+  margin-left: 8px;
+
+  padding: 3px 8px;
+
+  border-radius: 999px;
+
+  background: rgba(255,255,255,.14);
+
+  font-size: 10px;
+  letter-spacing: .04em;
+}
+
+/* ---------------------------------------------------------
+   EMPTY
+   --------------------------------------------------------- */
+
+.empty {
+  min-height: 50vh;
+
+  display: grid;
+  place-items: center;
+
+  text-align: center;
+
+  color: rgba(255,255,255,.75);
+}
+
+.empty-symbol {
+  width: 54px;
+  height: 54px;
+
+  margin: 0 auto 14px;
+
+  border-radius: 50%;
+
+  border: 1px solid rgba(255,255,255,.42);
+
+  display: grid;
+  place-items: center;
+
+  font-size: 29px;
+  font-weight: 200;
+}
+
+.empty-text {
+  font-size: 13px;
+}
+
+/* ---------------------------------------------------------
+   FAB
+   --------------------------------------------------------- */
+
+.fab {
+  position: fixed;
+  z-index: 10;
+
+  right: max(22px, calc(22px + var(--safe-bottom)));
+  bottom: max(22px, calc(22px + var(--safe-bottom)));
+
+  width: 68px;
+  height: 68px;
+
+  border: 1px solid rgba(255,255,255,.42);
+  border-radius: 50%;
+
+  color: white;
+
+  background:
+    linear-gradient(
+      145deg,
+      rgba(255,190,207,.88),
+      rgba(235,137,170,.76)
+    );
+
+  box-shadow:
+    0 12px 30px rgba(60,40,50,.20),
+    inset 0 1px 0 rgba(255,255,255,.45);
+
+  backdrop-filter: blur(15px);
+  -webkit-backdrop-filter: blur(15px);
+
+  cursor: pointer;
+
+  transition:
+    transform .2s ease,
+    box-shadow .2s ease;
+}
+
+.fab:active {
+  transform: scale(.88);
+}
+
+.plus {
+  width: 30px;
+  height: 30px;
+
+  stroke: currentColor;
+  fill: none;
+  stroke-width: 1.7;
+  stroke-linecap: round;
+}
+
+/* ---------------------------------------------------------
+   MODAL
+   --------------------------------------------------------- */
+
+.overlay {
+  position: fixed;
+  z-index: 100;
+
+  inset: 0;
+
+  display: flex;
+  align-items: flex-end;
+  justify-content: center;
+
+  padding:
+    12px
+    12px
+    max(12px, var(--safe-bottom));
+
+  background: rgba(10,25,45,.20);
+
+  backdrop-filter: blur(7px);
+  -webkit-backdrop-filter: blur(7px);
+
+  opacity: 0;
+  visibility: hidden;
+
+  transition:
+    opacity .28s ease,
+    visibility .28s ease;
+}
+
+.overlay.open {
+  opacity: 1;
+  visibility: visible;
+}
+
+.sheet {
+  width: min(680px, 100%);
+
+  max-height: calc(100svh - 30px);
+
+  overflow-y: auto;
+
+  border-radius: 30px;
+
+  padding:
+    16px
+    18px
+    max(20px, var(--safe-bottom));
+
+  background:
+    linear-gradient(
+      145deg,
+      rgba(255,255,255,.28),
+      rgba(255,255,255,.13)
+    );
+
+  border: 1px solid rgba(255,255,255,.42);
+
+  box-shadow:
+    0 25px 80px rgba(0,0,0,.24),
+    inset 0 1px 0 rgba(255,255,255,.35);
+
+  backdrop-filter: blur(28px) saturate(150%);
+  -webkit-backdrop-filter: blur(28px) saturate(150%);
+
+  transform: translateY(25px) scale(.98);
+
+  transition:
+    transform .38s cubic-bezier(.2,.8,.2,1);
+}
+
+.overlay.open .sheet {
+  transform: translateY(0) scale(1);
+}
+
+.sheet-handle {
+  width: 38px;
+  height: 4px;
+
+  margin: 0 auto 15px;
+
+  border-radius: 999px;
+
+  background: rgba(255,255,255,.55);
+}
+
+.sheet-title {
+  font-size: 20px;
+  font-weight: 650;
+
+  text-align: center;
+
+  margin-bottom: 18px;
+}
+
+.field {
+  margin-bottom: 16px;
+}
+
+.label {
+  margin: 0 4px 7px;
+
+  font-size: 11px;
+  color: rgba(255,255,255,.72);
+}
+
+.input {
+  width: 100%;
+
+  height: 48px;
+
+  border: 1px solid rgba(255,255,255,.28);
+  border-radius: 15px;
+
+  outline: none;
+
+  color: white;
+
+  background: rgba(255,255,255,.10);
+
+  padding: 0 15px;
+
+  font-size: 16px;
+
+  backdrop-filter: blur(10px);
+  -webkit-backdrop-filter: blur(10px);
+}
+
+.input::placeholder {
+  color: rgba(255,255,255,.48);
+}
+
+/* ---------------------------------------------------------
+   REELS
+   --------------------------------------------------------- */
+
+.reel-section {
+  margin-top: 7px;
+}
+
+.reel-title {
+  margin: 0 4px 7px;
+
+  font-size: 11px;
+
+  color: rgba(255,255,255,.72);
+}
+
+.date-reels {
+  display: grid;
+  grid-template-columns: 1.6fr .9fr .9fr;
+  gap: 7px;
+}
+
+.time-reels {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 7px;
+}
+
+.reel {
+  position: relative;
+
+  height: 150px;
+
+  overflow: hidden;
+
+  border-radius: 18px;
+
+  background: rgba(255,255,255,.08);
+
+  border: 1px solid rgba(255,255,255,.22);
+
+  touch-action: none;
+
+  user-select: none;
+  -webkit-user-select: none;
+}
+
+.reel::before,
+.reel::after {
+  content: "";
+
+  position: absolute;
+  z-index: 4;
+
+  left: 0;
+  right: 0;
+
+  height: 52px;
+
+  pointer-events: none;
+}
+
+.reel::before {
+  top: 0;
+
+  background:
+    linear-gradient(
+      rgba(255,255,255,.12),
+      rgba(255,255,255,0)
+    );
+}
+
+.reel::after {
+  bottom: 0;
+
+  background:
+    linear-gradient(
+      rgba(255,255,255,0),
+      rgba(255,255,255,.12)
+    );
+}
+
+.reel-selection {
+  position: absolute;
+  z-index: 5;
+
+  left: 6px;
+  right: 6px;
+
+  top: 50px;
+
+  height: 50px;
+
+  border-top: 1px solid rgba(255,255,255,.42);
+  border-bottom: 1px solid rgba(255,255,255,.42);
+
+  border-radius: 10px;
+
+  pointer-events: none;
+}
+
+.reel-track {
+  position: absolute;
+
+  top: 0;
+  left: 0;
+  right: 0;
+
+  will-change: transform;
+}
+
+.reel-item {
+  height: 50px;
+
+  display: flex;
+  align-items: center;
+  justify-content: center;
+
+  font-size: 20px;
+
+  color: rgba(255,255,255,.54);
+
+  transition:
+    transform .12s ease,
+    color .12s ease,
+    opacity .12s ease;
+}
+
+.reel-item.selected {
+  color: white;
+
+  font-size: 27px;
+  font-weight: 550;
+
+  text-shadow:
+    0 1px 12px rgba(0,0,0,.20);
+
+  transform: scale(1.08);
+}
+
+/* ---------------------------------------------------------
+   COLOR SELECTOR
+   --------------------------------------------------------- */
+
+.colors {
+  display: flex;
+  gap: 12px;
+  flex-wrap: wrap;
+}
+
+.color {
+  width: 30px;
+  height: 30px;
+
+  border-radius: 50%;
+
+  border: 2px solid rgba(255,255,255,.30);
+
+  cursor: pointer;
+
+  transition: transform .18s ease;
+}
+
+.color.active {
+  transform: scale(1.22);
+
+  border-color: white;
+
+  box-shadow:
+    0 0 0 3px rgba(255,255,255,.16),
+    0 0 15px currentColor;
+}
+
+/* ---------------------------------------------------------
+   NOTIFICATION
+   --------------------------------------------------------- */
+
+.notification-head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+
+  margin-bottom: 10px;
+}
+
+.toggle {
+  position: relative;
+
+  width: 52px;
+  height: 31px;
+
+  border: 0;
+  border-radius: 999px;
+
+  background: rgba(255,255,255,.18);
+
+  cursor: pointer;
+
+  transition: background .2s ease;
+}
+
+.toggle::after {
+  content: "";
+
+  position: absolute;
+
+  width: 25px;
+  height: 25px;
+
+  top: 3px;
+  left: 3px;
+
+  border-radius: 50%;
+
+  background: white;
+
+  box-shadow: 0 2px 8px rgba(0,0,0,.16);
+
+  transition: transform .25s cubic-bezier(.2,.8,.2,1);
+}
+
+.toggle.active {
+  background: rgba(255,145,175,.8);
+}
+
+.toggle.active::after {
+  transform: translateX(21px);
+}
+
+.notification-options {
+  display: grid;
+  grid-template-columns: repeat(6, 1fr);
+
+  gap: 5px;
+}
+
+.notification-option {
+  min-height: 38px;
+
+  border: 1px solid rgba(255,255,255,.22);
+  border-radius: 11px;
+
+  background: rgba(255,255,255,.07);
+
+  color: rgba(255,255,255,.70);
+
+  font-size: 10px;
+
+  cursor: pointer;
+}
+
+.notification-option.active {
+  color: white;
+
+  background: rgba(255,255,255,.20);
+
+  border-color: rgba(255,255,255,.48);
+}
+
+/* ---------------------------------------------------------
+   BUTTONS
+   --------------------------------------------------------- */
+
+.actions {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+
+  gap: 9px;
+
+  margin-top: 18px;
+}
+
+.button {
+  height: 50px;
+
+  border: 1px solid rgba(255,255,255,.28);
+
+  border-radius: 16px;
+
+  background: rgba(255,255,255,.10);
+
+  color: white;
+
+  font-size: 15px;
+  font-weight: 550;
+
+  cursor: pointer;
+}
+
+.button.primary {
+  background:
+    linear-gradient(
+      135deg,
+      rgba(255,179,201,.88),
+      rgba(237,132,166,.78)
+    );
+
+  border-color: rgba(255,255,255,.40);
+}
+
+.button:active {
+  transform: scale(.98);
+}
+
+/* ---------------------------------------------------------
+   SETTINGS
+   --------------------------------------------------------- */
+
+.settings-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+
+  padding: 15px 3px;
+
+  border-bottom: 1px solid rgba(255,255,255,.14);
+}
+
+.settings-row:last-child {
+  border-bottom: 0;
+}
+
+.settings-name {
+  font-size: 14px;
+}
+
+.settings-description {
+  margin-top: 3px;
+
+  font-size: 10px;
+
+  color: rgba(255,255,255,.55);
+}
+
+/* ---------------------------------------------------------
+   SORTING
+   --------------------------------------------------------- */
+
+.sort-mode {
+  display: flex;
+  gap: 8px;
+
+  margin-bottom: 12px;
+}
+
+.sort-button {
+  flex: 1;
+
+  height: 42px;
+
+  border: 1px solid rgba(255,255,255,.22);
+
+  border-radius: 13px;
+
+  background: rgba(255,255,255,.07);
+
+  color: rgba(255,255,255,.72);
+
+  cursor: pointer;
+}
+
+.sort-button.active {
+  color: white;
+  background: rgba(255,255,255,.19);
+}
+
+/* ---------------------------------------------------------
+   DRAGGING
+   --------------------------------------------------------- */
+
+.card.dragging {
+  z-index: 50;
+
+  transform:
+    scale(1.025)
+    rotate(.35deg);
+
+  box-shadow:
+    0 22px 60px rgba(0,0,0,.24),
+    inset 0 1px 0 rgba(255,255,255,.38);
+
+  transition: none;
+}
+
+.card.drag-placeholder {
+  opacity: .35;
+}
+
+.list.drag-active {
+  overflow-y: hidden;
+}
+
+/* ---------------------------------------------------------
+   RESPONSIVE
+   --------------------------------------------------------- */
+
+@media (min-width: 700px) {
+  .app {
+    padding-left: 30px;
+    padding-right: 30px;
+  }
+
+  .list {
+    padding-left: 30px;
+    padding-right: 30px;
+  }
+
+  .card {
+    border-radius: 25px;
+  }
+
+  .card-inner {
+    padding-left: 26px;
+    padding-right: 26px;
+  }
+}
+
+@media (min-width: 1000px) {
+  .card {
+    margin-bottom: 13px;
+  }
+
+  .count-days {
+    font-size: 58px;
+  }
+}
+
+/* Small iPhone */
+@media (max-width: 390px) {
+  .card-inner {
+    padding: 15px 15px 14px;
+  }
+
+  .count-days {
+    font-size: 39px;
+  }
+
+  .count-time {
+    font-size: 23px;
+  }
+
+  .count-ms {
+    font-size: 17px;
+  }
+
+  .notification-options {
+    grid-template-columns: repeat(4, 1fr);
+  }
+}
+
+/* Landscape */
+@media (orientation: landscape) and (max-height: 600px) {
+  .header {
+    min-height: 50px;
+  }
+
+  .list {
+    padding-bottom: 90px;
+  }
+
+  .fab {
+    width: 56px;
+    height: 56px;
+  }
+}
+
+/* ---------------------------------------------------------
+   REDUCED MOTION
+   --------------------------------------------------------- */
+
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    animation-duration: .001ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: .001ms !important;
+  }
 }
 </style>
 </head>
-<body>
-<div id="petals"></div>
-<div class="app">
-  <header class="topbar">
-    <div class="brand">SAKURA COUNTDOWN</div>
-    <div class="top-actions">
-      <button class="icon-btn" id="notifyBtn" aria-label="通知">♢</button>
-      <button class="icon-btn" id="menuBtn" aria-label="メニュー">☰</button>
-    </div>
-  </header>
-  <main class="list" id="list"></main>
-</div>
-<button class="fab" id="addBtn" aria-label="追加">＋</button>
 
-<div class="sheet-backdrop" id="backdrop">
-  <section class="sheet" role="dialog" aria-modal="true">
-    <div class="sheet-head"><h2 id="sheetTitle">カウントダウンを追加</h2><button class="close" id="closeBtn">×</button></div>
+<body>
+
+<div class="background"></div>
+
+<!-- =======================================================
+     APP
+     ======================================================= -->
+
+<div class="app">
+
+  <header class="header">
+
+    <button
+      class="icon-button"
+      id="settingsButton"
+      aria-label="設定"
+    >
+      <svg class="icon" viewBox="0 0 24 24">
+        <circle cx="12" cy="12" r="3"></circle>
+        <path d="M19.4 15a1.7 1.7 0 0 0 .34 1.88l.06.06-1.42 1.42-.06-.06a1.7 1.7 0 0 0-1.88-.34 1.7 1.7 0 0 0-1.04 1.56V21h-2v-.08a1.7 1.7 0 0 0-1.04-1.56 1.7 1.7 0 0 0-1.88.34l-.06.06-1.42-1.42.06-.06A1.7 1.7 0 0 0 9.4 15a1.7 1.7 0 0 0-1.56-1.04H7v-2h.84A1.7 1.7 0 0 0 9.4 10a1.7 1.7 0 0 0-.34-1.88L9 8.06l1.42-1.42.06.06a1.7 1.7 0 0 0 1.88.34A1.7 1.7 0 0 0 13.4 5.5V5h2v.5a1.7 1.7 0 0 0 1.04 1.54 1.7 1.7 0 0 0 1.88-.34l.06-.06 1.42 1.42-.06.06A1.7 1.7 0 0 0 19.4 10c.24.62.84 1.04 1.5 1.04H21v2h-.1A1.7 1.7 0 0 0 19.4 15z"></path>
+      </svg>
+    </button>
+
+    <div class="brand">
+      <div class="brand-title">SAKURA COUNTDOWN</div>
+      <div class="brand-date" id="currentDate"></div>
+    </div>
+
+    <button
+      class="icon-button"
+      id="menuButton"
+      aria-label="並び替え"
+    >
+      <svg class="icon" viewBox="0 0 24 24">
+        <circle cx="6" cy="6" r="1.2"></circle>
+        <circle cx="12" cy="6" r="1.2"></circle>
+        <circle cx="18" cy="6" r="1.2"></circle>
+        <circle cx="6" cy="12" r="1.2"></circle>
+        <circle cx="12" cy="12" r="1.2"></circle>
+        <circle cx="18" cy="12" r="1.2"></circle>
+        <circle cx="6" cy="18" r="1.2"></circle>
+        <circle cx="12" cy="18" r="1.2"></circle>
+        <circle cx="18" cy="18" r="1.2"></circle>
+      </svg>
+    </button>
+
+  </header>
+
+  <main
+    class="list"
+    id="list"
+  ></main>
+
+</div>
+
+<!-- =======================================================
+     ADD / EDIT SHEET
+     ======================================================= -->
+
+<div
+  class="overlay"
+  id="editorOverlay"
+  aria-hidden="true"
+>
+  <section class="sheet">
+
+    <div class="sheet-handle"></div>
+
+    <div
+      class="sheet-title"
+      id="editorTitle"
+    >
+      新しいカウントダウン
+    </div>
+
     <div class="field">
-      <div class="label">名前</div>
-      <input class="name-input" id="nameInput" maxlength="40" placeholder="例：東京旅行">
+      <input
+        class="input"
+        id="nameInput"
+        maxlength="40"
+        placeholder="名前を入力"
+        autocomplete="off"
+      >
     </div>
-    <div class="date-preview" id="datePreview"></div>
-    <div class="pickers">
-      <div class="picker-wrap"><div class="selection"></div><div class="reel" data-unit="year"><div class="reel-inner"></div></div></div>
-      <div class="picker-wrap"><div class="selection"></div><div class="reel" data-unit="month"><div class="reel-inner"></div></div></div>
-      <div class="picker-wrap"><div class="selection"></div><div class="reel" data-unit="day"><div class="reel-inner"></div></div></div>
-      <div class="picker-wrap"><div class="selection"></div><div class="reel" data-unit="hour"><div class="reel-inner"></div></div></div>
+
+    <!-- DATE REELS -->
+    <div class="reel-section">
+
+      <div class="reel-title">日付</div>
+
+      <div class="date-reels">
+
+        <div
+          class="reel"
+          id="yearReel"
+          data-type="year"
+        ></div>
+
+        <div
+          class="reel"
+          id="monthReel"
+          data-type="month"
+        ></div>
+
+        <div
+          class="reel"
+          id="dayReel"
+          data-type="day"
+        ></div>
+
+      </div>
+
     </div>
-    <div class="pickers" style="grid-template-columns:1fr 1fr">
-      <div class="picker-wrap"><div class="selection"></div><div class="reel" data-unit="minute"><div class="reel-inner"></div></div></div>
-      <div class="picker-wrap"><div class="selection"></div><div class="reel" data-unit="second"><div class="reel-inner"></div></div></div>
+
+    <!-- TIME REELS -->
+    <div class="reel-section">
+
+      <div class="reel-title">時刻</div>
+
+      <div class="time-reels">
+
+        <div
+          class="reel"
+          id="hourReel"
+          data-type="hour"
+        ></div>
+
+        <div
+          class="reel"
+          id="minuteReel"
+          data-type="minute"
+        ></div>
+
+        <div
+          class="reel"
+          id="secondReel"
+          data-type="second"
+        ></div>
+
+      </div>
+
     </div>
+
+    <!-- COLOR -->
+    <div class="field" style="margin-top:16px">
+
+      <div class="label">カラー</div>
+
+      <div class="colors" id="colorPicker">
+
+        <button class="color active" data-color="#ff9fbc" style="background:#ff9fbc"></button>
+        <button class="color" data-color="#65c7f7" style="background:#65c7f7"></button>
+        <button class="color" data-color="#8ce99a" style="background:#8ce99a"></button>
+        <button class="color" data-color="#ffd166" style="background:#ffd166"></button>
+        <button class="color" data-color="#c77dff" style="background:#c77dff"></button>
+        <button class="color" data-color="#ff8fab" style="background:#ff8fab"></button>
+
+      </div>
+
+    </div>
+
+    <!-- NOTIFICATION -->
     <div class="field">
-      <div class="label">通知</div>
-      <div class="notice-row"><span>通知を有効にする</span><button class="toggle" id="notifyToggle" aria-label="通知切替"><span></span></button></div>
-      <div class="notify-days" id="notifyDays"></div>
+
+      <div class="notification-head">
+
+        <div>
+          <div class="label" style="margin-bottom:2px">
+            通知
+          </div>
+
+          <div style="font-size:10px;color:rgba(255,255,255,.58)">
+            当日・指定日前
+          </div>
+        </div>
+
+        <button
+          class="toggle active"
+          id="notificationToggle"
+          aria-label="通知"
+        ></button>
+
+      </div>
+
+      <div
+        class="notification-options"
+        id="notificationOptions"
+      ></div>
+
     </div>
-    <div class="actions"><button class="action" id="cancelBtn">キャンセル</button><button class="action primary" id="saveBtn">保存</button></div>
+
+    <div class="actions">
+
+      <button
+        class="button"
+        id="cancelButton"
+      >
+        キャンセル
+      </button>
+
+      <button
+        class="button primary"
+        id="saveButton"
+      >
+        保存
+      </button>
+
+    </div>
+
   </section>
 </div>
 
-<script>
-/* SAKURA COUNTDOWN — single-file app
-   If a separate sakura.js exists, it can be loaded before this file and exposed as window.Sakura;
-   otherwise the lightweight built-in petal fallback below is used. */
+<!-- =======================================================
+     SETTINGS SHEET
+     ======================================================= -->
 
-const $=s=>document.querySelector(s);
-const list=$("#list"), backdrop=$("#backdrop");
-const pad=n=>String(n).padStart(2,"0");
-const uid=()=>Date.now().toString(36)+Math.random().toString(36).slice(2,8);
-const defaults=[
-  {name:"東京旅行",date:"2025-08-09T00:00:00",notify:true,days:[0,1,3,7,10,30,50,100]},
-  {name:"誕生日",date:"2025-12-21T00:00:00",notify:false,days:[0,1,3,7,10,30,50,100]},
-  {name:"結婚記念日",date:"2026-02-28T00:00:00",notify:false,days:[0,1,3,7,10,30,50,100]},
-  {name:"挑戦すること",date:"2026-04-05T00:00:00",notify:false,days:[0,1,3,7,10,30,50,100]},
-  {name:"夏の終わり",date:"2026-08-22T00:00:00",notify:false,days:[0,1,3,7,10,30,50,100]}
-];
-let tasks=JSON.parse(localStorage.getItem("sakuraCountdownTasks")||"null")||defaults.map(x=>({...x,id:uid()}));
-let editingId=null, notifyOn=false, notifyDays=[0,1,3,7,10,30,50,100];
-let renderTimer=null;
+<div
+  class="overlay"
+  id="settingsOverlay"
+  aria-hidden="true"
+>
+  <section class="sheet">
 
-function save(){localStorage.setItem("sakuraCountdownTasks",JSON.stringify(tasks))}
-function targetDate(t){return new Date(t.date)}
-function formatRemaining(ms){
-  if(ms<=0) return null;
-  let cs=Math.floor(ms/10); // hundredths; browser display is 0.01s
-  const d=Math.floor(cs/8640000);cs%=8640000;
-  const h=Math.floor(cs/360000);cs%=360000;
-  const m=Math.floor(cs/6000);cs%=6000;
-  const s=Math.floor(cs/100);const xx=cs%100;
-  return `${d}日 ${pad(h)}:${pad(m)}:${pad(s)}.${pad(xx)}`;
-}
-function render(){
-  const now=Date.now();
-  const sorted=[...tasks].sort((a,b)=>{
-    const da=new Date(a.date)-now, db=new Date(b.date)-now;
-    const ad=da<=0, bd=db<=0;
-    if(ad!==bd) return ad-bd; // future first, finished after
-    return Math.abs(da)-Math.abs(db);
-  });
-  if(!sorted.length){list.innerHTML='<div class="empty">＋ から予定を追加できます<small>大切な日までの時間を、目で感じよう。</small></div>';return}
-  list.innerHTML=sorted.map(t=>{
-    const diff=new Date(t.date)-now, done=diff<=0;
-    const value=done?formatElapsed(-diff):formatRemaining(diff);
-    return `<article class="card ${done?"done":""}" data-id="${t.id}">
-      <div class="card-main">
-        <div class="card-title">${esc(t.name||"名称未設定")}</div>
-        <div class="card-sub">${done?"終了から":"まで 残り"}　${fmtDate(new Date(t.date))}</div>
-        <div class="count">${value||"0日 00:00:00.00"}</div>
+    <div class="sheet-handle"></div>
+
+    <div class="sheet-title">
+      設定
+    </div>
+
+    <div class="settings-row">
+
+      <div>
+        <div class="settings-name">
+          通知
+        </div>
+        <div class="settings-description">
+          カウントダウンごとの通知
+        </div>
       </div>
-      <div class="drag-grip" title="並び替え"><span><i></i><i></i><i></i><i></i><i></i><i></i></span></div>
-    </article>`;
-  }).join("");
-  attachCards();
-}
-function formatElapsed(ms){
-  let cs=Math.floor(ms/10),d=Math.floor(cs/8640000);cs%=8640000;
-  let h=Math.floor(cs/360000);cs%=360000,m=Math.floor(cs/6000);cs%=6000;
-  let s=Math.floor(cs/100),xx=cs%100;return `${d}日 ${pad(h)}:${pad(m)}:${pad(s)}.${pad(xx)}`;
-}
-function fmtDate(d){return `${d.getFullYear()}年 ${pad(d.getMonth()+1)}月 ${pad(d.getDate())}日 ${pad(d.getHours())}:${pad(d.getMinutes())}`;}
-function esc(s){return s.replace(/[&<>"']/g,m=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[m]))}
 
-function attachCards(){
-  document.querySelectorAll(".card").forEach(card=>{
-    let startX=0, lastX=0, dragging=false;
-    card.addEventListener("pointerdown",e=>{
-      if(e.target.closest(".drag-grip")) return;
-      startX=lastX=e.clientX; dragging=true; card.setPointerCapture(e.pointerId);
-    });
-    card.addEventListener("pointermove",e=>{
-      if(!dragging)return; lastX=e.clientX; const dx=lastX-startX;
-      if(dx<0)card.style.transform=`translateX(${dx}px)`;
-    });
-    card.addEventListener("pointerup",()=>{
-      if(!dragging)return;dragging=false;const dx=lastX-startX;
-      if(dx<-100){card.classList.add("removing");setTimeout(()=>{tasks=tasks.filter(t=>t.id!==card.dataset.id);save();render()},180)}
-      else card.style.transform="";
-    });
-    card.addEventListener("click",e=>{
-      if(Math.abs(lastX-startX)>8)return;
-      openEditor(card.dataset.id);
-    });
-  });
-  setupReorder();
-}
-function setupReorder(){
-  let active=null,startY=0,offset=0,placeholder=null;
-  document.querySelectorAll(".drag-grip").forEach(grip=>{
-    grip.addEventListener("pointerdown",e=>{
-      const card=grip.closest(".card"); active=card; startY=e.clientY;
-      const r=card.getBoundingClientRect(); offset=e.clientY-r.top;
-      card.classList.add("dragging"); card.setPointerCapture(e.pointerId);
-      placeholder=document.createElement("div");placeholder.style.height=r.height+"px";placeholder.style.margin="10px 0";
-      card.parentNode.insertBefore(placeholder,card);
-    });
-    grip.addEventListener("pointermove",e=>{
-      if(!active)return;
-      const y=e.clientY; active.style.transform=`translateY(${y-startY}px)`;
-      const siblings=[...list.querySelectorAll(".card:not(.dragging)")];
-      const target=siblings.find(c=>{const r=c.getBoundingClientRect();return y<r.top+r.height/2});
-      if(target) list.insertBefore(placeholder,target); else list.appendChild(placeholder);
-    });
-    grip.addEventListener("pointerup",()=>{
-      if(!active)return;
-      const cards=[...list.querySelectorAll(".card")], id=active.dataset.id;
-      const ids=cards.filter(c=>c!==active).map(c=>c.dataset.id);
-      const idx=[...list.children].indexOf(placeholder);
-      const order=ids.slice();order.splice(Math.max(0,idx),0,id);
-      tasks=order.map(x=>tasks.find(t=>t.id===x)).filter(Boolean);
-      placeholder.replaceWith(active);active.style.transform="";active.classList.remove("dragging");
-      save();render();
-      active=null;placeholder=null;
-    });
-  });
+      <button
+        class="toggle active"
+        id="globalNotificationToggle"
+      ></button>
+
+    </div>
+
+    <div class="settings-row">
+
+      <div>
+        <div class="settings-name">
+          並び順
+        </div>
+        <div class="settings-description">
+          カードを長押しして移動
+        </div>
+      </div>
+
+      <button
+        class="button"
+        id="manualSortButton"
+        style="width:90px;height:38px;font-size:12px"
+      >
+        自由
+      </button>
+
+    </div>
+
+    <div class="actions">
+
+      <button
+        class="button primary"
+        id="closeSettings"
+        style="grid-column:1/-1"
+      >
+        閉じる
+      </button>
+
+    </div>
+
+  </section>
+</div>
+
+<!-- =======================================================
+     FAB
+     ======================================================= -->
+
+<button
+  class="fab"
+  id="addButton"
+  aria-label="追加"
+>
+  <svg class="plus" viewBox="0 0 24 24">
+    <path d="M12 5v14M5 12h14"></path>
+  </svg>
+</button>
+
+<!-- =======================================================
+     SAKURA.JS
+     ======================================================= -->
+
+<script src="sakura.js"></script>
+
+<script>
+/* =========================================================
+   SAKURA COUNTDOWN
+   ========================================================= */
+
+(() => {
+
+"use strict";
+
+/* =========================================================
+   CONSTANTS
+   ========================================================= */
+
+const STORAGE_KEY = "sakura-countdown-v1";
+
+const MAX_VELOCITY = 2.8;
+const FRICTION = 0.965;
+const STOP_THRESHOLD = 0.025;
+
+const ITEM_HEIGHT = 50;
+const REEL_HEIGHT = 150;
+
+const NOTIFICATION_DAYS = [
+  0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 30, 50, 100
+];
+
+const COLORS = [
+  "#ff9fbc",
+  "#65c7f7",
+  "#8ce99a",
+  "#ffd166",
+  "#c77dff",
+  "#ff8fab"
+];
+
+/* =========================================================
+   STATE
+   ========================================================= */
+
+let tasks = [];
+
+let editingId = null;
+
+let selectedColor = COLORS[0];
+
+let notificationEnabled = true;
+
+let selectedNotificationDays = new Set([
+  0, 1, 3, 7, 10, 30, 50, 100
+]);
+
+let reels = {};
+
+let rafId = null;
+
+/* =========================================================
+   DOM
+   ========================================================= */
+
+const list = document.getElementById("list");
+
+const currentDate = document.getElementById("currentDate");
+
+const editorOverlay =
+  document.getElementById("editorOverlay");
+
+const settingsOverlay =
+  document.getElementById("settingsOverlay");
+
+const nameInput =
+  document.getElementById("nameInput");
+
+const editorTitle =
+  document.getElementById("editorTitle");
+
+const notificationToggle =
+  document.getElementById("notificationToggle");
+
+const notificationOptions =
+  document.getElementById("notificationOptions");
+
+const globalNotificationToggle =
+  document.getElementById("globalNotificationToggle");
+
+/* =========================================================
+   UTIL
+   ========================================================= */
+
+function uid() {
+  return (
+    Date.now().toString(36) +
+    Math.random().toString(36).slice(2)
+  );
 }
 
-const reelSpec={
-  year:[0,3000],month:[1,12],day:[1,31],hour:[0,23],minute:[0,59],second:[0,59]
-};
-const reels={};
-let editorDate=new Date();
-function openEditor(id=null){
-  editingId=id;
-  const t=id?tasks.find(x=>x.id===id):null;
-  editorDate=t?new Date(t.date):new Date(Date.now()+86400000);
-  editorDate.setMilliseconds(0);
-  $("#sheetTitle").textContent=id?"日付を編集":"カウントダウンを追加";
-  $("#nameInput").value=t?.name||"";
-  notifyOn=t?.notify??false;notifyDays=t?.days||[0,1,3,7,10,30,50,100];
-  updateToggle();buildReels();backdrop.classList.add("open");
+function clamp(value, min, max) {
+  return Math.max(min, Math.min(max, value));
 }
-function closeEditor(){backdrop.classList.remove("open")}
-function buildReels(){
-  Object.entries(reelSpec).forEach(([unit,[min,max]])=>{
-    const reel=document.querySelector(`.reel[data-unit="${unit}"]`);
-    const inner=reel.querySelector(".reel-inner");inner.innerHTML="";
-    for(let i=min;i<=max;i++){const d=document.createElement("div");d.className="reel-item";d.textContent=unit==="year"?`${i}年`:pad(i);inner.appendChild(d)}
-    reels[unit]={el:reel,inner,min,max,index:getUnit(unit)};
-    setupReel(reel,unit);
-    setReel(unit,getUnit(unit),false);
-  });
-  renderPreview();renderDays();
+
+function pad(value, length = 2) {
+  return String(value).padStart(length, "0");
 }
-function getUnit(u){switch(u){case"year":return editorDate.getFullYear();case"month":return editorDate.getMonth()+1;case"day":return editorDate.getDate();case"hour":return editorDate.getHours();case"minute":return editorDate.getMinutes();case"second":return editorDate.getSeconds()}}
-function setUnit(u,v){
-  let max=reelSpec[u][1], min=reelSpec[u][0];v=Math.max(min,Math.min(max,v));
-  if(u==="year")editorDate.setFullYear(v); if(u==="month")editorDate.setMonth(v-1); if(u==="day")editorDate.setDate(v);
-  if(u==="hour")editorDate.setHours(v); if(u==="minute")editorDate.setMinutes(v); if(u==="second")editorDate.setSeconds(v);
-  // Clamp invalid dates such as Feb 31.
-  const days=new Date(editorDate.getFullYear(),editorDate.getMonth()+1,0).getDate();
-  if(editorDate.getDate()>days)editorDate.setDate(days);
-  renderPreview();
+
+function cubicEaseOut(t) {
+  return 1 - Math.pow(1 - t, 3);
 }
-function setupReel(reel,unit){
-  const inner=reel.querySelector(".reel-inner");let y=0,v=0,raf=0,drag=false,lastT=0,hist=[];
-  function apply(){inner.style.transform=`translate3d(0,${-y}px,0)`;const idx=Math.round(y/50);[...inner.children].forEach((x,i)=>x.classList.toggle("selected",i===idx))}
-  function clamp(){const max=(inner.children.length-1)*50;y=Math.max(0,Math.min(max,y))}
-  function snap(){
-    const target=Math.round(y/50)*50, start=y, dur=150, t0=performance.now();
-    cancelAnimationFrame(raf);
-    const ease=t=>1-Math.pow(1-t,3);
-    function step(t){const p=Math.min(1,(t-t0)/dur);y=start+(target-start)*ease(p);apply();if(p<1)raf=requestAnimationFrame(step);else{y=target;apply();const val=reelSpec[unit][0]+Math.round(y/50);setUnit(unit,val)}}
-    raf=requestAnimationFrame(step);
+
+function formatJapaneseDate(date) {
+
+  const days = [
+    "日",
+    "月",
+    "火",
+    "水",
+    "木",
+    "金",
+    "土"
+  ];
+
+  return (
+    `${date.getFullYear()}年` +
+    `${date.getMonth() + 1}月` +
+    `${date.getDate()}日` +
+    `（${days[date.getDay()]}）`
+  );
+}
+
+function formatTargetDate(date) {
+
+  const days = [
+    "日",
+    "月",
+    "火",
+    "水",
+    "木",
+    "金",
+    "土"
+  ];
+
+  return (
+    `${date.getFullYear()}年` +
+    `${pad(date.getMonth() + 1)}月` +
+    `${pad(date.getDate())}日` +
+    `（${days[date.getDay()]}） ` +
+    `${pad(date.getHours())}:` +
+    `${pad(date.getMinutes())}:` +
+    `${pad(date.getSeconds())}`
+  );
+}
+
+/* =========================================================
+   STORAGE
+   ========================================================= */
+
+function saveStorage() {
+
+  localStorage.setItem(
+    STORAGE_KEY,
+    JSON.stringify({
+      tasks,
+      notificationEnabled,
+      selectedNotificationDays:
+        [...selectedNotificationDays]
+    })
+  );
+}
+
+function loadStorage() {
+
+  try {
+
+    const raw =
+      localStorage.getItem(STORAGE_KEY);
+
+    if (!raw) {
+      tasks = [];
+      return;
+    }
+
+    const data = JSON.parse(raw);
+
+    tasks = Array.isArray(data.tasks)
+      ? data.tasks
+      : [];
+
+    notificationEnabled =
+      data.notificationEnabled !== false;
+
+    if (Array.isArray(data.selectedNotificationDays)) {
+
+      selectedNotificationDays =
+        new Set(data.selectedNotificationDays);
+    }
+
+  } catch (error) {
+
+    console.error(error);
+
+    tasks = [];
   }
-  function down(e){drag=true;reel.setPointerCapture(e.pointerId);cancelAnimationFrame(raf);v=0;lastT=performance.now();hist=[[lastT,e.clientY]]}
-  function move(e){if(!drag)return;const now=performance.now(),dy=e.clientY-(hist.at(-1)?.[1]??e.clientY);y-=dy;clamp();apply();hist.push([now,e.clientY]);hist=hist.filter(a=>now-a[0]<=80);if(hist.length>1){const a=hist[0],b=hist.at(-1);v=-(b[1]-a[1])/(b[0]-a[0]||1);v=Math.max(-2.8,Math.min(2.8,v))}lastT=now}
-  function up(){if(!drag)return;drag=false;let prev=performance.now();function inertia(now){const dt=Math.min(32,now-prev);prev=now;y-=v*dt;clamp();apply();v*=Math.pow(.965,dt/16.67);if(Math.abs(v)>.025){raf=requestAnimationFrame(inertia)}else snap()}raf=requestAnimationFrame(inertia)}
-  reel.addEventListener("pointerdown",down);reel.addEventListener("pointermove",move);reel.addEventListener("pointerup",up);reel.addEventListener("pointercancel",up);
-  reel.addEventListener("wheel",e=>{e.preventDefault();y+=e.deltaY*.55;clamp();apply();clearTimeout(reel._wheel);reel._wheel=setTimeout(snap,70)},{passive:false});
-  reel.addEventListener("click",e=>{if(e.target.classList.contains("reel-item")){const i=[...inner.children].indexOf(e.target);y=i*50;apply();setUnit(unit,reelSpec[unit][0]+i)}});
 }
-function setReel(unit,val,snap=true){const r=reels[unit];if(!r)return;const i=val-r.min;r.inner.style.transform=`translate3d(0,${-i*50}px,0)`;[...r.inner.children].forEach((x,j)=>x.classList.toggle("selected",j===i))}
-function renderPreview(){$("#datePreview").textContent=fmtDate(editorDate)}
-function renderDays(){$("#notifyDays").innerHTML=[0,1,2,3,4,5,6,7,8,9,10,30,50,100].map(d=>`<button class="day-chip ${notifyDays.includes(d)?"on":""}" data-day="${d}">${d===0?"当日":d+"日前"}</button>`).join("");document.querySelectorAll(".day-chip").forEach(b=>b.onclick=()=>{const d=+b.dataset.day;notifyDays=notifyDays.includes(d)?notifyDays.filter(x=>x!==d):[...notifyDays,d];renderDays()})}
-function updateToggle(){$("#notifyToggle").classList.toggle("on",notifyOn)}
-$("#addBtn").onclick=()=>openEditor();
-$("#closeBtn").onclick=closeEditor;$("#cancelBtn").onclick=closeEditor;
-backdrop.onclick=e=>{if(e.target===backdrop)closeEditor()};
-$("#notifyToggle").onclick=()=>{notifyOn=!notifyOn;updateToggle();if(notifyOn&&"Notification"in window&&Notification.permission==="default")Notification.requestPermission()};
-$("#saveBtn").onclick=()=>{
-  const name=$("#nameInput").value.trim()||"無題";
-  const item={id:editingId||uid(),name,date:editorDate.toISOString(),notify:notifyOn,days:[...notifyDays]};
-  if(editingId)tasks=tasks.map(t=>t.id===editingId?item:t);else tasks.push(item);
-  save();closeEditor();render();
-};
-$("#notifyBtn").onclick=async()=>{
-  if(!("Notification"in window)){alert("このブラウザでは通知に対応していません。");return}
-  const p=await Notification.requestPermission();
-  if(p==="granted")new Notification("SAKURA COUNTDOWN",{body:"通知が有効になりました。"});
-};
-$("#menuBtn").onclick=()=>alert("カードを左へフリック：削除\\nカードをタップ：日付を編集\\n⋮の代わりに右側のグリップをドラッグ：並び替え");
-setInterval(render,50);render();
 
-/* Built-in sakura fallback. */
-(function petals(){
-  const root=$("#petals");for(let i=0;i<28;i++){const p=document.createElement("i");p.className="petal";p.style.left=Math.random()*100+"%";p.style.setProperty("--dx",(Math.random()*50-25)+"vw");p.style.animationDuration=(7+Math.random()*9)+"s";p.style.animationDelay=(-Math.random()*15)+"s";p.style.transform=`scale(${.45+Math.random()*.7})`;root.appendChild(p)}
+/* =========================================================
+   CURRENT DATE
+   ========================================================= */
+
+function updateCurrentDate() {
+
+  const now = new Date();
+
+  currentDate.textContent =
+    `${formatJapaneseDate(now)} ` +
+    `${pad(now.getHours())}:` +
+    `${pad(now.getMinutes())}`;
+}
+
+/* =========================================================
+   COUNTDOWN
+   ========================================================= */
+
+function getDifference(target) {
+
+  const now = Date.now();
+
+  const targetMs = target.getTime();
+
+  const diff = targetMs - now;
+
+  const future = diff >= 0;
+
+  const absolute = Math.abs(diff);
+
+  const totalSeconds =
+    Math.floor(absolute / 1000);
+
+  const milliseconds =
+    absolute % 1000;
+
+  const seconds =
+    totalSeconds % 60;
+
+  const totalMinutes =
+    Math.floor(totalSeconds / 60);
+
+  const minutes =
+    totalMinutes % 60;
+
+  const totalHours =
+    Math.floor(totalMinutes / 60);
+
+  const hours =
+    totalHours % 24;
+
+  const days =
+    Math.floor(totalHours / 24);
+
+  return {
+    future,
+    days,
+    hours,
+    minutes,
+    seconds,
+    milliseconds
+  };
+}
+
+/* =========================================================
+   CARD DISPLAY
+   ========================================================= */
+
+function updateCountdowns() {
+
+  const now = Date.now();
+
+  document
+    .querySelectorAll(".card")
+    .forEach(card => {
+
+      const id =
+        card.dataset.id;
+
+      const task =
+        tasks.find(t => t.id === id);
+
+      if (!task) return;
+
+      const target =
+        new Date(task.target);
+
+      const difference =
+        getDifference(target);
+
+      const days =
+        card.querySelector(".count-days");
+
+      const time =
+        card.querySelector(".count-time");
+
+      const ms =
+        card.querySelector(".count-ms");
+
+      const label =
+        card.querySelector(".completed-label");
+
+      days.textContent =
+        difference.days;
+
+      time.textContent =
+        `${pad(difference.hours)}:` +
+        `${pad(difference.minutes)}:` +
+        `${pad(difference.seconds)}`;
+
+      ms.textContent =
+        `.${pad(
+          Math.floor(
+            difference.milliseconds / 10
+          )
+        )}`;
+
+      if (difference.future) {
+
+        card.classList.remove("completed");
+
+        if (label) {
+          label.remove();
+        }
+
+      } else {
+
+        card.classList.add("completed");
+
+        if (!label) {
+
+          const labelElement =
+            document.createElement("span");
+
+          labelElement.className =
+            "completed-label";
+
+          labelElement.textContent =
+            "経過中";
+
+          card
+            .querySelector(".card-name")
+            .appendChild(labelElement);
+        }
+      }
+
+      card.style.setProperty(
+        "--card-color",
+        task.color
+      );
+
+    });
+
+  updateCurrentDate();
+
+  rafId =
+    requestAnimationFrame(updateCountdowns);
+}
+
+/* =========================================================
+   CARD RENDER
+   ========================================================= */
+
+function render() {
+
+  list.innerHTML = "";
+
+  if (tasks.length === 0) {
+
+    list.innerHTML = `
+      <div class="empty">
+        <div>
+          <div class="empty-symbol">＋</div>
+          <div class="empty-text">
+            ＋からカウントダウンを追加
+          </div>
+        </div>
+      </div>
+    `;
+
+    return;
+  }
+
+  tasks.forEach(task => {
+
+    const card =
+      createCard(task);
+
+    list.appendChild(card);
+  });
+}
+
+function createCard(task) {
+
+  const card =
+    document.createElement("article");
+
+  card.className = "card";
+
+  card.dataset.id =
+    task.id;
+
+  card.style.setProperty(
+    "--card-color",
+    task.color
+  );
+
+  const target =
+    new Date(task.target);
+
+  card.innerHTML = `
+
+    <div class="swipe-delete">
+
+      <svg
+        class="icon"
+        viewBox="0 0 24 24"
+        style="width:22px;height:22px"
+      >
+        <path d="M6 7h12M9 7V5h6v2M8 7l1 13h6l1-13M10 11v6M14 11v6"></path>
+      </svg>
+
+    </div>
+
+    <div class="card-content">
+
+      <div class="card-inner">
+
+        <div class="card-top">
+
+          <span class="card-dot"></span>
+
+          <div class="card-name">
+            ${escapeHTML(task.name)}
+          </div>
+
+        </div>
+
+        <div class="card-sub">
+          まで 残り
+        </div>
+
+        <div class="countdown">
+
+          <span class="count-days">
+            0
+          </span>
+
+          <span class="count-days-unit">
+            日
+          </span>
+
+          <span class="count-time">
+            00:00:00
+          </span>
+
+          <span class="count-ms">
+            .00
+          </span>
+
+        </div>
+
+        <div class="target-date">
+
+          <svg
+            class="calendar-icon"
+            viewBox="0 0 24 24"
+          >
+            <rect x="3" y="5" width="18" height="16" rx="2"></rect>
+            <path d="M16 3v4M8 3v4M3 10h18"></path>
+          </svg>
+
+          <span>
+            ${formatTargetDate(target)}
+          </span>
+
+        </div>
+
+      </div>
+
+    </div>
+  `;
+
+  setupCardInteraction(card, task);
+
+  return card;
+}
+
+function escapeHTML(value) {
+
+  return String(value)
+    .replaceAll("&", "&amp;")
+    .replaceAll("<", "&lt;")
+    .replaceAll(">", "&gt;")
+    .replaceAll('"', "&quot;")
+    .replaceAll("'", "&#039;");
+}
+
+/* =========================================================
+   CARD TAP / SWIPE / DRAG
+   ========================================================= */
+
+function setupCardInteraction(card, task) {
+
+  let pointerId = null;
+
+  let startX = 0;
+  let startY = 0;
+
+  let currentX = 0;
+  let currentY = 0;
+
+  let startTime = 0;
+
+  let moved = false;
+  let dragging = false;
+  let swiping = false;
+
+  let longPressTimer = null;
+
+  let originalIndex = 0;
+
+  function clearLongPress() {
+
+    if (longPressTimer) {
+
+      clearTimeout(longPressTimer);
+
+      longPressTimer = null;
+    }
+  }
+
+  card.addEventListener(
+    "pointerdown",
+    event => {
+
+      if (event.button !== undefined &&
+          event.button !== 0) {
+        return;
+      }
+
+      pointerId =
+        event.pointerId;
+
+      startX =
+        event.clientX;
+
+      startY =
+        event.clientY;
+
+      currentX =
+        startX;
+
+      currentY =
+        startY;
+
+      startTime =
+        performance.now();
+
+      moved = false;
+      dragging = false;
+      swiping = false;
+
+      originalIndex =
+        tasks.findIndex(
+          t => t.id === task.id
+        );
+
+      clearLongPress();
+
+      longPressTimer =
+        setTimeout(() => {
+
+          if (!moved) {
+
+            beginDrag(card, task);
+          }
+
+        }, 380);
+
+      try {
+        card.setPointerCapture(pointerId);
+      } catch {}
+    }
+  );
+
+  card.addEventListener(
+    "pointermove",
+    event => {
+
+      if (
+        pointerId === null ||
+        event.pointerId !== pointerId
+      ) {
+        return;
+      }
+
+      currentX =
+        event.clientX;
+
+      currentY =
+        event.clientY;
+
+      const dx =
+        currentX - startX;
+
+      const dy =
+        currentY - startY;
+
+      if (
+        Math.abs(dx) > 8 ||
+        Math.abs(dy) > 8
+      ) {
+
+        moved = true;
+
+        clearLongPress();
+      }
+
+      if (dragging) {
+
+        handleDragMove(
+          card,
+          currentY
+        );
+
+        return;
+      }
+
+      if (
+        Math.abs(dx) > Math.abs(dy) &&
+        Math.abs(dx) > 8
+      ) {
+
+        swiping = true;
+
+        card.classList.add("swiping");
+
+        const x =
+          Math.min(
+            0,
+            dx
+          );
+
+        card.style.transform =
+          `translateX(${x}px)`;
+      }
+    }
+  );
+
+  card.addEventListener(
+    "pointerup",
+    event => {
+
+      if (
+        pointerId === null ||
+        event.pointerId !== pointerId
+      ) {
+        return;
+      }
+
+      clearLongPress();
+
+      const dx =
+        currentX - startX;
+
+      const elapsed =
+        performance.now() - startTime;
+
+      pointerId = null;
+
+      if (dragging) {
+
+        endDrag(card);
+
+        return;
+      }
+
+      if (swiping) {
+
+        const velocity =
+          dx / Math.max(1, elapsed);
+
+        if (
+          dx < -100 ||
+          velocity < -0.65
+        ) {
+
+          deleteTask(
+            task.id,
+            card
+          );
+
+        } else {
+
+          card.style.transform =
+            "";
+
+          card.classList.remove(
+            "swiping"
+          );
+        }
+
+        return;
+      }
+
+      if (!moved) {
+
+        openEditor(task.id);
+      }
+    }
+  );
+
+  card.addEventListener(
+    "pointercancel",
+    () => {
+
+      clearLongPress();
+
+      pointerId = null;
+
+      if (dragging) {
+
+        endDrag(card);
+
+      } else {
+
+        card.style.transform =
+          "";
+
+        card.classList.remove(
+          "swiping"
+        );
+      }
+    }
+  );
+
+  function beginDrag(cardElement) {
+
+    dragging = true;
+
+    list.classList.add(
+      "drag-active"
+    );
+
+    cardElement.classList.add(
+      "dragging"
+    );
+
+    cardElement.style.touchAction =
+      "none";
+
+    cardElement._dragOffsetY =
+      currentY -
+      cardElement.getBoundingClientRect().top;
+
+    cardElement._dragStartRect =
+      cardElement.getBoundingClientRect();
+
+    cardElement._originalIndex =
+      originalIndex;
+
+    if (
+      cardElement.parentElement
+    ) {
+
+      cardElement.parentElement.appendChild(
+        cardElement
+      );
+    }
+  }
+
+  function handleDragMove(
+    cardElement,
+    pointerY
+  ) {
+
+    const rect =
+      cardElement.getBoundingClientRect();
+
+    const y =
+      pointerY -
+      cardElement._dragOffsetY;
+
+    const translate =
+      y -
+      cardElement._dragStartRect.top;
+
+    cardElement.style.transform =
+      `translateY(${translate}px) scale(1.025)`;
+
+    const cards =
+      [...list.querySelectorAll(".card:not(.dragging)")];
+
+    let targetCard = null;
+
+    for (const other of cards) {
+
+      const otherRect =
+        other.getBoundingClientRect();
+
+      const center =
+        otherRect.top +
+        otherRect.height / 2;
+
+      if (pointerY < center) {
+
+        targetCard =
+          other;
+
+        break;
+      }
+    }
+
+    if (targetCard) {
+
+      list.insertBefore(
+        cardElement,
+        targetCard
+      );
+
+    } else {
+
+      list.appendChild(
+        cardElement
+      );
+    }
+  }
+
+  function endDrag(cardElement) {
+
+    dragging = false;
+
+    list.classList.remove(
+      "drag-active"
+    );
+
+    cardElement.classList.remove(
+      "dragging"
+    );
+
+    cardElement.style.transform =
+      "";
+
+    cardElement.style.touchAction =
+      "";
+
+    const ids =
+      [...list.querySelectorAll(".card")]
+        .map(el => el.dataset.id);
+
+    const newTasks = [];
+
+    ids.forEach(id => {
+
+      const task =
+        tasks.find(t => t.id === id);
+
+      if (task) {
+        newTasks.push(task);
+      }
+    });
+
+    tasks =
+      newTasks;
+
+    saveStorage();
+  }
+}
+
+/* =========================================================
+   DELETE
+   ========================================================= */
+
+function deleteTask(id, card) {
+
+  card.style.transform =
+    "translateX(-110%)";
+
+  card.style.opacity =
+    "0";
+
+  setTimeout(() => {
+
+    tasks =
+      tasks.filter(
+        task => task.id !== id
+      );
+
+    saveStorage();
+
+    render();
+
+  }, 230);
+}
+
+/* =========================================================
+   REEL ENGINE
+   ========================================================= */
+
+class Reel {
+
+  constructor(
+    element,
+    values,
+    initialIndex = 0
+  ) {
+
+    this.element =
+      element;
+
+    this.values =
+      values;
+
+    this.index =
+      clamp(
+        initialIndex,
+        0,
+        values.length - 1
+      );
+
+    this.position =
+      this.index * ITEM_HEIGHT;
+
+    this.velocity =
+      0;
+
+    this.dragging =
+      false;
+
+    this.pointerId =
+      null;
+
+    this.history =
+      [];
+
+    this.animationFrame =
+      null;
+
+    this.snapAnimation =
+      null;
+
+    this.track =
+      document.createElement("div");
+
+    this.track.className =
+      "reel-track";
+
+    this.element.appendChild(
+      this.track
+    );
+
+    this.selection =
+      document.createElement("div");
+
+    this.selection.className =
+      "reel-selection";
+
+    this.element.appendChild(
+      this.selection
+    );
+
+    this.renderItems();
+
+    this.render();
+
+    this.bind();
+  }
+
+  renderItems() {
+
+    this.track.innerHTML = "";
+
+    /*
+      上下に余白を作る。
+      中央の選択位置が常に
+      index * 50 の中央に来る。
+    */
+
+    const spacerTop =
+      document.createElement("div");
+
+    spacerTop.style.height =
+      "50px";
+
+    this.track.appendChild(
+      spacerTop
+    );
+
+    this.values.forEach(
+      (value, index) => {
+
+        const item =
+          document.createElement("div");
+
+        item.className =
+          "reel-item";
+
+        item.dataset.index =
+          index;
+
+        item.textContent =
+          value;
+
+        item.addEventListener(
+          "click",
+          () => {
+
+            if (!this.dragging) {
+
+              this.snapTo(index);
+            }
+          }
+        );
+
+        this.track.appendChild(
+          item
+        );
+      }
+    );
+
+    const spacerBottom =
+      document.createElement("div");
+
+    spacerBottom.style.height =
+      "50px";
+
+    this.track.appendChild(
+      spacerBottom
+    );
+  }
+
+  bind() {
+
+    this.element.addEventListener(
+      "pointerdown",
+      event => {
+
+        if (
+          event.button !== undefined &&
+          event.button !== 0
+        ) {
+          return;
+        }
+
+        this.stopAnimation();
+
+        this.dragging =
+          true;
+
+        this.pointerId =
+          event.pointerId;
+
+        this.startY =
+          event.clientY;
+
+        this.lastY =
+          event.clientY;
+
+        this.lastTime =
+          performance.now();
+
+        this.history = [
+          {
+            y: event.clientY,
+            time: this.lastTime
+          }
+        ];
+
+        try {
+
+          this.element.setPointerCapture(
+            this.pointerId
+          );
+
+        } catch {}
+      }
+    );
+
+    this.element.addEventListener(
+      "pointermove",
+      event => {
+
+        if (
+          !this.dragging ||
+          event.pointerId !== this.pointerId
+        ) {
+          return;
+        }
+
+        const now =
+          performance.now();
+
+        const y =
+          event.clientY;
+
+        const dy =
+          y - this.lastY;
+
+        /*
+          指を上へ動かすと
+          リスト位置は増える。
+        */
+
+        this.position -= dy;
+
+        this.lastY =
+          y;
+
+        this.lastTime =
+          now;
+
+        this.history.push({
+          y,
+          time: now
+        });
+
+        /*
+          直近80msだけ残す。
+        */
+
+        const threshold =
+          now - 80;
+
+        this.history =
+          this.history.filter(
+            point =>
+              point.time >= threshold
+          );
+
+        this.render();
+      }
+    );
+
+    const end =
+      event => {
+
+        if (
+          !this.dragging ||
+          event.pointerId !== this.pointerId
+        ) {
+          return;
+        }
+
+        this.dragging =
+          false;
+
+        this.pointerId =
+          null;
+
+        const now =
+          performance.now();
+
+        /*
+          直近約80msの移動から速度を計算。
+          単位 px/ms
+        */
+
+        const history =
+          this.history;
+
+        if (history.length >= 2) {
+
+          const first =
+            history[0];
+
+          const last =
+            history[history.length - 1];
+
+          const dt =
+            Math.max(
+              1,
+              last.time - first.time
+            );
+
+          const dy =
+            first.y - last.y;
+
+          this.velocity =
+            clamp(
+              dy / dt,
+              -MAX_VELOCITY,
+              MAX_VELOCITY
+            );
+
+        } else {
+
+          this.velocity = 0;
+        }
+
+        this.startInertia();
+      };
+
+    this.element.addEventListener(
+      "pointerup",
+      end
+    );
+
+    this.element.addEventListener(
+      "pointercancel",
+      end
+    );
+
+    /*
+      マウスホイール対応
+    */
+
+    this.element.addEventListener(
+      "wheel",
+      event => {
+
+        event.preventDefault();
+
+        this.stopAnimation();
+
+        const delta =
+          event.deltaY;
+
+        this.position +=
+          delta;
+
+        this.position =
+          clamp(
+            this.position,
+            0,
+            (this.values.length - 1) *
+              ITEM_HEIGHT
+          );
+
+        this.render();
+
+        clearTimeout(
+          this.wheelTimer
+        );
+
+        this.wheelTimer =
+          setTimeout(() => {
+
+            this.snapToNearest();
+
+          }, 90);
+
+      },
+      {
+        passive: false
+      }
+    );
+  }
+
+  startInertia() {
+
+    this.stopAnimation();
+
+    let lastTime =
+      performance.now();
+
+    const tick =
+      now => {
+
+        const dt =
+          Math.min(
+            32,
+            Math.max(
+              1,
+              now - lastTime
+            )
+          );
+
+        lastTime =
+          now;
+
+        /*
+          FRICTION は 60Hz 基準。
+
+          フレーム時間に応じて
+          時間ベースに補正することで
+          120Hzでも減速感を維持する。
+        */
+
+        const frictionPerMs =
+          Math.pow(
+            FRICTION,
+            dt / 16.6667
+          );
+
+        this.velocity *=
+          frictionPerMs;
+
+        /*
+          px/ms × ms
+        */
+
+        this.position +=
+          this.velocity * dt;
+
+        this.position =
+          clamp(
+            this.position,
+            0,
+            (this.values.length - 1) *
+              ITEM_HEIGHT
+          );
+
+        this.render();
+
+        if (
+          Math.abs(this.velocity) >
+          STOP_THRESHOLD
+        ) {
+
+          this.animationFrame =
+            requestAnimationFrame(
+              tick
+            );
+
+        } else {
+
+          this.velocity =
+            0;
+
+          this.snapToNearest();
+        }
+      };
+
+    this.animationFrame =
+      requestAnimationFrame(
+        tick
+      );
+  }
+
+  snapToNearest() {
+
+    const index =
+      clamp(
+        Math.round(
+          this.position /
+          ITEM_HEIGHT
+        ),
+        0,
+        this.values.length - 1
+      );
+
+    this.snapTo(index);
+  }
+
+  snapTo(index) {
+
+    this.stopAnimation();
+
+    index =
+      clamp(
+        index,
+        0,
+        this.values.length - 1
+      );
+
+    const start =
+      this.position;
+
+    const target =
+      index * ITEM_HEIGHT;
+
+    const distance =
+      Math.abs(
+        target - start
+      );
+
+    /*
+      90〜180ms程度。
+    */
+
+    const duration =
+      clamp(
+        90 + distance * 1.15,
+        90,
+        180
+      );
+
+    const startTime =
+      performance.now();
+
+    const animate =
+      now => {
+
+        const elapsed =
+          now - startTime;
+
+        const progress =
+          clamp(
+            elapsed / duration,
+            0,
+            1
+          );
+
+        const eased =
+          cubicEaseOut(
+            progress
+          );
+
+        this.position =
+          start +
+          (target - start) *
+          eased;
+
+        this.render();
+
+        if (progress < 1) {
+
+          this.snapAnimation =
+            requestAnimationFrame(
+              animate
+            );
+
+        } else {
+
+          this.position =
+            target;
+
+          this.index =
+            index;
+
+          this.render();
+        }
+      };
+
+    this.snapAnimation =
+      requestAnimationFrame(
+        animate
+      );
+  }
+
+  stopAnimation() {
+
+    if (this.animationFrame) {
+
+      cancelAnimationFrame(
+        this.animationFrame
+      );
+
+      this.animationFrame =
+        null;
+    }
+
+    if (this.snapAnimation) {
+
+      cancelAnimationFrame(
+        this.snapAnimation
+      );
+
+      this.snapAnimation =
+        null;
+    }
+  }
+
+  render() {
+
+    const max =
+      (this.values.length - 1) *
+      ITEM_HEIGHT;
+
+    this.position =
+      clamp(
+        this.position,
+        0,
+        max
+      );
+
+    /*
+      中央位置 = 75px
+      アイテム中央 = 25px
+      したがって50pxを基準に配置。
+    */
+
+    this.track.style.transform =
+      `translate3d(0, ${
+        50 -
+        this.position
+      }px, 0)`;
+
+    const selected =
+      Math.round(
+        this.position /
+        ITEM_HEIGHT
+      );
+
+    this.track
+      .querySelectorAll(".reel-item")
+      .forEach(
+        (item, index) => {
+
+          if (
+            index === selected
+          ) {
+
+            item.classList.add(
+              "selected"
+            );
+
+          } else {
+
+            item.classList.remove(
+              "selected"
+            );
+          }
+        }
+      );
+
+    this.index =
+      clamp(
+        selected,
+        0,
+        this.values.length - 1
+      );
+  }
+
+  getValue() {
+
+    return this.values[
+      this.index
+    ];
+  }
+}
+
+/* =========================================================
+   REEL DATA
+   ========================================================= */
+
+function makeRange(
+  min,
+  max,
+  formatter = value => value
+) {
+
+  const result = [];
+
+  for (
+    let i = min;
+    i <= max;
+    i++
+  ) {
+
+    result.push(
+      formatter(i)
+    );
+  }
+
+  return result;
+}
+
+function initReels(date) {
+
+  reels = {};
+
+  const yearValues =
+    makeRange(
+      0,
+      3000,
+      value =>
+        `${value}年`
+    );
+
+  const monthValues =
+    makeRange(
+      1,
+      12,
+      value =>
+        `${pad(value)}月`
+    );
+
+  const dayValues =
+    makeRange(
+      1,
+      31,
+      value =>
+        `${pad(value)}日`
+    );
+
+  const hourValues =
+    makeRange(
+      0,
+      23,
+      value =>
+        pad(value)
+    );
+
+  const minuteValues =
+    makeRange(
+      0,
+      59,
+      value =>
+        pad(value)
+    );
+
+  const secondValues =
+    makeRange(
+      0,
+      59,
+      value =>
+        pad(value)
+    );
+
+  reels.year =
+    new Reel(
+      document.getElementById(
+        "yearReel"
+      ),
+      yearValues,
+      date.getFullYear()
+    );
+
+  reels.month =
+    new Reel(
+      document.getElementById(
+        "monthReel"
+      ),
+      monthValues,
+      date.getMonth()
+    );
+
+  reels.day =
+    new Reel(
+      document.getElementById(
+        "dayReel"
+      ),
+      dayValues,
+      date.getDate() - 1
+    );
+
+  reels.hour =
+    new Reel(
+      document.getElementById(
+        "hourReel"
+      ),
+      hourValues,
+      date.getHours()
+    );
+
+  reels.minute =
+    new Reel(
+      document.getElementById(
+        "minuteReel"
+      ),
+      minuteValues,
+      date.getMinutes()
+    );
+
+  reels.second =
+    new Reel(
+      document.getElementById(
+        "secondReel"
+      ),
+      secondValues,
+      date.getSeconds()
+    );
+}
+
+/* =========================================================
+   GET DATE FROM REELS
+   ========================================================= */
+
+function getDateFromReels() {
+
+  const year =
+    Number(
+      reels.year.getValue()
+        .replace("年", "")
+    );
+
+  const month =
+    Number(
+      reels.month.getValue()
+        .replace("月", "")
+    );
+
+  const day =
+    Number(
+      reels.day.getValue()
+        .replace("日", "")
+    );
+
+  const hour =
+    Number(
+      reels.hour.getValue()
+    );
+
+  const minute =
+    Number(
+      reels.minute.getValue()
+    );
+
+  const second =
+    Number(
+      reels.second.getValue()
+    );
+
+  /*
+    0年などJavaScript Date特有の
+    1900年補正を避けるため、
+    setFullYearを使用。
+  */
+
+  const date =
+    new Date(0);
+
+  date.setHours(0,0,0,0);
+
+  date.setFullYear(
+    year,
+    month - 1,
+    day
+  );
+
+  date.setHours(
+    hour,
+    minute,
+    second,
+    0
+  );
+
+  return date;
+}
+
+/* =========================================================
+   VALID DATE
+   ========================================================= */
+
+function getDaysInMonth(
+  year,
+  month
+) {
+
+  return new Date(
+    year,
+    month,
+    0
+  ).getDate();
+}
+
+/*
+  月変更時に日付が存在しない場合を
+  自動的に補正。
+*/
+
+function normalizeDateReel() {
+
+  if (
+    !reels.year ||
+    !reels.month ||
+    !reels.day
+  ) {
+    return;
+  }
+
+  const year =
+    Number(
+      reels.year
+        .getValue()
+        .replace("年", "")
+    );
+
+  const month =
+    Number(
+      reels.month
+        .getValue()
+        .replace("月", "")
+    );
+
+  const maxDay =
+    getDaysInMonth(
+      year,
+      month
+    );
+
+  const currentDay =
+    Number(
+      reels.day
+        .getValue()
+        .replace("日", "")
+    );
+
+  if (
+    currentDay > maxDay
+  ) {
+
+    reels.day.snapTo(
+      maxDay - 1
+    );
+  }
+}
+
+/* =========================================================
+   EDITOR
+   ========================================================= */
+
+function openEditor(id = null) {
+
+  editingId =
+    id;
+
+  let date =
+    new Date();
+
+  if (id) {
+
+    const task =
+      tasks.find(
+        t => t.id === id
+      );
+
+    if (!task) return;
+
+    editorTitle.textContent =
+      "編集";
+
+    nameInput.value =
+      task.name;
+
+    selectedColor =
+      task.color;
+
+    notificationEnabled =
+      task.notificationEnabled !== false;
+
+    selectedNotificationDays =
+      new Set(
+        task.notificationDays ||
+        [0,1,3,7,10,30,50,100]
+      );
+
+    date =
+      new Date(task.target);
+
+  } else {
+
+    editorTitle.textContent =
+      "新しいカウントダウン";
+
+    nameInput.value =
+      "";
+
+    /*
+      初期値は
+      現在から24時間後。
+    */
+
+    date =
+      new Date(
+        Date.now() +
+        24 * 60 * 60 * 1000
+      );
+
+    date.setSeconds(
+      0,
+      0
+    );
+
+    selectedColor =
+      COLORS[0];
+
+    notificationEnabled =
+      true;
+
+    selectedNotificationDays =
+      new Set([
+        0,1,3,7,10,30,50,100
+      ]);
+  }
+
+  updateColorUI();
+
+  updateNotificationUI();
+
+  initReels(date);
+
+  editorOverlay.classList.add(
+    "open"
+  );
+
+  editorOverlay.setAttribute(
+    "aria-hidden",
+    "false"
+  );
+
+  setTimeout(() => {
+
+    nameInput.focus();
+
+  }, 350);
+}
+
+function closeEditor() {
+
+  editorOverlay.classList.remove(
+    "open"
+  );
+
+  editorOverlay.setAttribute(
+    "aria-hidden",
+    "true"
+  );
+
+  Object.values(reels)
+    .forEach(reel => {
+      reel.stopAnimation();
+    });
+
+  reels = {};
+
+  editingId =
+    null;
+}
+
+function saveTask() {
+
+  normalizeDateReel();
+
+  const name =
+    nameInput.value.trim() ||
+    "新しいカウントダウン";
+
+  const date =
+    getDateFromReels();
+
+  /*
+    過去日時も許可。
+    終了後はカウントアップする。
+  */
+
+  if (editingId) {
+
+    const task =
+      tasks.find(
+        t => t.id === editingId
+      );
+
+    if (task) {
+
+      task.name =
+        name;
+
+      task.target =
+        date.toISOString();
+
+      task.color =
+        selectedColor;
+
+      task.notificationEnabled =
+        notificationEnabled;
+
+      task.notificationDays =
+        [...selectedNotificationDays];
+
+      /*
+        通知済み状態をリセット
+        日付変更に対応。
+      */
+
+      task.notified =
+        {};
+    }
+
+  } else {
+
+    tasks.push({
+
+      id:
+        uid(),
+
+      name,
+
+      target:
+        date.toISOString(),
+
+      color:
+        selectedColor,
+
+      notificationEnabled,
+
+      notificationDays:
+        [...selectedNotificationDays],
+
+      notified:
+        {}
+
+    });
+  }
+
+  saveStorage();
+
+  render();
+
+  closeEditor();
+}
+
+/* =========================================================
+   COLOR
+   ========================================================= */
+
+function updateColorUI() {
+
+  document
+    .querySelectorAll(".color")
+    .forEach(button => {
+
+      button.classList.toggle(
+        "active",
+        button.dataset.color ===
+        selectedColor
+      );
+    });
+}
+
+document
+  .querySelectorAll(".color")
+  .forEach(button => {
+
+    button.addEventListener(
+      "click",
+      () => {
+
+        selectedColor =
+          button.dataset.color;
+
+        updateColorUI();
+      }
+    );
+  });
+
+/* =========================================================
+   NOTIFICATION UI
+   ========================================================= */
+
+function renderNotificationOptions() {
+
+  notificationOptions.innerHTML = "";
+
+  NOTIFICATION_DAYS.forEach(
+    days => {
+
+      const button =
+        document.createElement("button");
+
+      button.className =
+        "notification-option";
+
+      if (
+        selectedNotificationDays
+          .has(days)
+      ) {
+
+        button.classList.add(
+          "active"
+        );
+      }
+
+      button.dataset.days =
+        days;
+
+      if (days === 0) {
+
+        button.textContent =
+          "当日";
+
+      } else {
+
+        button.textContent =
+          `${days}日前`;
+      }
+
+      button.addEventListener(
+        "click",
+        () => {
+
+          if (
+            selectedNotificationDays
+              .has(days)
+          ) {
+
+            selectedNotificationDays
+              .delete(days);
+
+          } else {
+
+            selectedNotificationDays
+              .add(days);
+          }
+
+          renderNotificationOptions();
+        }
+      );
+
+      notificationOptions.appendChild(
+        button
+      );
+    }
+  );
+}
+
+function updateNotificationUI() {
+
+  notificationToggle.classList.toggle(
+    "active",
+    notificationEnabled
+  );
+
+  renderNotificationOptions();
+
+  globalNotificationToggle.classList.toggle(
+    "active",
+    notificationEnabled
+  );
+}
+
+notificationToggle.addEventListener(
+  "click",
+  () => {
+
+    notificationEnabled =
+      !notificationEnabled;
+
+    updateNotificationUI();
+  }
+);
+
+globalNotificationToggle.addEventListener(
+  "click",
+  () => {
+
+    notificationEnabled =
+      !notificationEnabled;
+
+    tasks.forEach(
+      task => {
+
+        task.notificationEnabled =
+          notificationEnabled;
+      }
+    );
+
+    saveStorage();
+
+    updateNotificationUI();
+  }
+);
+
+/* =========================================================
+   NOTIFICATION PERMISSION
+   ========================================================= */
+
+async function requestNotificationPermission() {
+
+  if (
+    !("Notification" in window)
+  ) {
+    return false;
+  }
+
+  if (
+    Notification.permission ===
+    "granted"
+  ) {
+    return true;
+  }
+
+  if (
+    Notification.permission ===
+    "denied"
+  ) {
+    return false;
+  }
+
+  try {
+
+    const result =
+      await Notification.requestPermission();
+
+    return result ===
+      "granted";
+
+  } catch {
+
+    return false;
+  }
+}
+
+async function sendNotification(
+  task,
+  days
+) {
+
+  if (
+    !("Notification" in window)
+  ) {
+    return;
+  }
+
+  const permission =
+    await requestNotificationPermission();
+
+  if (!permission) {
+    return;
+  }
+
+  const text =
+    days === 0
+      ? "本日です"
+      : `あと${days}日です`;
+
+  new Notification(
+    task.name,
+    {
+      body:
+        `${text}\n` +
+        formatTargetDate(
+          new Date(task.target)
+        ),
+      tag:
+        `sakura-${task.id}-${days}`
+    }
+  );
+}
+
+/* =========================================================
+   CHECK NOTIFICATIONS
+   ========================================================= */
+
+function checkNotifications() {
+
+  const now =
+    new Date();
+
+  let changed =
+    false;
+
+  tasks.forEach(task => {
+
+    if (
+      task.notificationEnabled ===
+      false ||
+      !notificationEnabled
+    ) {
+      return;
+    }
+
+    const target =
+      new Date(task.target);
+
+    /*
+      通知判定は
+      「指定日の0時」
+      を基準にする。
+    */
+
+    const targetDay =
+      new Date(target);
+
+    targetDay.setHours(
+      0,0,0,0
+    );
+
+    const today =
+      new Date(now);
+
+    today.setHours(
+      0,0,0,0
+    );
+
+    const diff =
+      Math.round(
+        (
+          targetDay.getTime() -
+          today.getTime()
+        ) /
+        (24 * 60 * 60 * 1000)
+      );
+
+    if (
+      task.notified === undefined
+    ) {
+
+      task.notified =
+        {};
+
+      changed =
+        true;
+    }
+
+    if (
+      selectedNotificationDays
+        .includes?.(diff)
+    ) {
+
+      /*
+        Setにはincludesがないので
+        下の判定を使う。
+      */
+
+    }
+
+    if (
+      selectedNotificationDays
+        .has(diff)
+    ) {
+
+      const key =
+        `${target.toISOString()}-${diff}`;
+
+      if (
+        !task.notified[key]
+      ) {
+
+        task.notified[key] =
+          true;
+
+        changed =
+          true;
+
+        sendNotification(
+          task,
+          diff
+        );
+      }
+    }
+  });
+
+  if (changed) {
+    saveStorage();
+  }
+}
+
+/* =========================================================
+   BUTTONS
+   ========================================================= */
+
+document
+  .getElementById("addButton")
+  .addEventListener(
+    "click",
+    () => openEditor()
+  );
+
+document
+  .getElementById("cancelButton")
+  .addEventListener(
+    "click",
+    closeEditor
+  );
+
+document
+  .getElementById("saveButton")
+  .addEventListener(
+    "click",
+    saveTask
+  );
+
+editorOverlay.addEventListener(
+  "click",
+  event => {
+
+    if (
+      event.target ===
+      editorOverlay
+    ) {
+
+      closeEditor();
+    }
+  }
+);
+
+/* =========================================================
+   SETTINGS
+   ========================================================= */
+
+document
+  .getElementById("settingsButton")
+  .addEventListener(
+    "click",
+    () => {
+
+      updateNotificationUI();
+
+      settingsOverlay.classList.add(
+        "open"
+      );
+    }
+  );
+
+document
+  .getElementById("closeSettings")
+  .addEventListener(
+    "click",
+    () => {
+
+      saveStorage();
+
+      settingsOverlay.classList.remove(
+        "open"
+      );
+    }
+  );
+
+settingsOverlay.addEventListener(
+  "click",
+  event => {
+
+    if (
+      event.target ===
+      settingsOverlay
+    ) {
+
+      settingsOverlay.classList.remove(
+        "open"
+      );
+    }
+  }
+);
+
+/* =========================================================
+   SORT MENU
+   ========================================================= */
+
+document
+  .getElementById("menuButton")
+  .addEventListener(
+    "click",
+    () => {
+
+      /*
+        メニューアイコン自体を
+        「自動並び替え」にはせず、
+        長押しドラッグが基本操作。
+        クリックでは今後拡張可能な
+        ソートシートを表示する。
+      */
+
+      openSortSheet();
+    }
+  );
+
+function openSortSheet() {
+
+  const overlay =
+    document.createElement("div");
+
+  overlay.className =
+    "overlay open";
+
+  overlay.innerHTML = `
+
+    <section class="sheet">
+
+      <div class="sheet-handle"></div>
+
+      <div class="sheet-title">
+        並び替え
+      </div>
+
+      <div class="sort-mode">
+
+        <button
+          class="sort-button"
+          data-sort="manual"
+        >
+          自由
+        </button>
+
+        <button
+          class="sort-button"
+          data-sort="target"
+        >
+          日付順
+        </button>
+
+      </div>
+
+      <button
+        class="button"
+        style="width:100%"
+        data-close
+      >
+        閉じる
+      </button>
+
+    </section>
+  `;
+
+  document.body.appendChild(
+    overlay
+  );
+
+  overlay
+    .querySelectorAll(
+      ".sort-button"
+    )
+    .forEach(button => {
+
+      button.addEventListener(
+        "click",
+        () => {
+
+          const mode =
+            button.dataset.sort;
+
+          if (
+            mode === "target"
+          ) {
+
+            tasks.sort(
+              (a,b) =>
+                new Date(a.target) -
+                new Date(b.target)
+            );
+
+          }
+
+          saveStorage();
+
+          render();
+
+          overlay.remove();
+        }
+      );
+    });
+
+  overlay
+    .querySelector(
+      "[data-close]"
+    )
+    .addEventListener(
+      "click",
+      () => overlay.remove()
+    );
+
+  overlay.addEventListener(
+    "click",
+    event => {
+
+      if (
+        event.target === overlay
+      ) {
+
+        overlay.remove();
+      }
+    }
+  );
+}
+
+/* =========================================================
+   KEYBOARD
+   ========================================================= */
+
+document.addEventListener(
+  "keydown",
+  event => {
+
+    if (
+      event.key === "Escape"
+    ) {
+
+      if (
+        editorOverlay.classList.contains(
+          "open"
+        )
+      ) {
+
+        closeEditor();
+      }
+
+      settingsOverlay.classList.remove(
+        "open"
+      );
+    }
+  }
+);
+
+/* =========================================================
+   SAKURA.JS INTEGRATION
+   ========================================================= */
+
+/*
+  sakura.jsはユーザー側で用意された
+  ファイルをそのまま読み込む。
+
+  sakura.js側が自動実行型なら、
+  このHTMLから特別な初期化は不要。
+
+  canvas型の場合にも背景画像を
+  邪魔しないよう、最前面ではなく
+  アニメーション側のレイヤーとして
+  動作する設計。
+*/
+
+function prepareSakuraLayer() {
+
+  /*
+    sakura.jsが既存canvasを探すタイプにも
+    対応できるよう、body直下にcanvasを
+    置く必要がある場合の補助。
+  */
+
+  if (
+    document.getElementById(
+      "sakura"
+    )
+  ) {
+    return;
+  }
+
+  const canvas =
+    document.createElement("canvas");
+
+  canvas.id =
+    "sakura";
+
+  canvas.style.position =
+    "fixed";
+
+  canvas.style.inset =
+    "0";
+
+  canvas.style.width =
+    "100%";
+
+  canvas.style.height =
+    "100%";
+
+  canvas.style.pointerEvents =
+    "none";
+
+  canvas.style.zIndex =
+    "1";
+
+  document.body.insertBefore(
+    canvas,
+    document.querySelector(".app")
+  );
+}
+
+/* =========================================================
+   INIT
+   ========================================================= */
+
+function init() {
+
+  loadStorage();
+
+  prepareSakuraLayer();
+
+  render();
+
+  updateNotificationUI();
+
+  updateCurrentDate();
+
+  /*
+    16〜17msごとではなく
+    requestAnimationFrameで更新。
+
+    120Hz環境ではより細かく、
+    60Hz環境では60fpsで更新。
+  */
+
+  rafId =
+    requestAnimationFrame(
+      updateCountdowns
+    );
+
+  /*
+    通知チェックは1分ごと。
+  */
+
+  checkNotifications();
+
+  setInterval(
+    checkNotifications,
+    30 * 1000
+  );
+
+  /*
+    秒表示だけでなく、
+    日付変更も拾う。
+  */
+
+  setInterval(
+    updateCurrentDate,
+    1000
+  );
+}
+
+init();
+
 })();
 </script>
+
 </body>
 </html>
