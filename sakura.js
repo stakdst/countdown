@@ -1,5 +1,4 @@
-/* sakura.js - lightweight version
- *
+/* sakura.js
  * window.sakuraPetals.setCount(30);
  * window.sakuraPetals.pause();
  * window.sakuraPetals.play();
@@ -8,11 +7,9 @@
 
 (() => {
   "use strict";
-
   const STYLE_ID = "sakura-petals-style";
   const CONTAINER_ID = "sakura-petals";
   const DEFAULT_COUNT = 30;
-
   const css = `
     #${CONTAINER_ID} {
       position: fixed;
@@ -22,19 +19,14 @@
       pointer-events: none;
       perspective: 700px;
     }
-
     #${CONTAINER_ID} .sakura-petal {
       position: absolute;
       left: 0;
       top: 0;
-
       width: var(--sakura-size);
       height: calc(var(--sakura-size) * 1.34);
-
       opacity: var(--sakura-opacity);
-
       border-radius: 75% 28% 65% 35%;
-
       clip-path: polygon(
         48% 0%,
         63% 12%,
@@ -48,7 +40,6 @@
         9% 30%,
         27% 8%
       );
-
       background:
         radial-gradient(
           ellipse at 30% 23%,
@@ -57,7 +48,6 @@
           #f1c6d5 73%,
           #d99eb6 100%
         );
-
       animation:
         sakura-fall
         var(--sakura-duration)
@@ -65,7 +55,6 @@
         var(--sakura-delay)
         infinite;
     }
-
     @keyframes sakura-fall {
       0% {
         transform:
@@ -76,7 +65,6 @@
           )
           rotate(var(--sakura-rotation-start));
       }
-
       25% {
         transform:
           translate3d(
@@ -97,7 +85,6 @@
             )
           );
       }
-
       50% {
         transform:
           translate3d(
@@ -118,7 +105,6 @@
             )
           );
       }
-
       75% {
         transform:
           translate3d(
@@ -139,7 +125,6 @@
             )
           );
       }
-
       100% {
         transform:
           translate3d(
@@ -155,35 +140,27 @@
           );
       }
     }
-
     #${CONTAINER_ID}.paused .sakura-petal {
       animation-play-state: paused;
     }
-
     @media (prefers-reduced-motion: reduce) {
       #${CONTAINER_ID} .sakura-petal {
         animation-play-state: paused !important;
       }
     }
   `;
-
   const rand = (min, max) =>
     min + Math.random() * (max - min);
-
   class SakuraPetals {
     constructor(options = {}) {
       this.count = Number.isFinite(options.count)
         ? Math.max(0, Math.floor(options.count))
         : DEFAULT_COUNT;
-
       this.zIndex = options.zIndex ?? 9999;
-
       this.container = null;
       this.style = null;
-
       this.init();
     }
-
     init() {
       if (!document.head || !document.body) {
         document.addEventListener(
@@ -191,154 +168,110 @@
           () => this.init(),
           { once: true }
         );
-
         return;
       }
-
       this.injectStyle();
-
       const existing =
         document.getElementById(CONTAINER_ID);
-
       if (existing) {
         existing.remove();
       }
-
       this.container =
         document.createElement("div");
-
       this.container.id = CONTAINER_ID;
-
       this.container.setAttribute(
         "aria-hidden",
         "true"
       );
-
       this.container.style.zIndex =
         String(this.zIndex);
-
       this.createPetals();
-
       document.body.append(this.container);
     }
-
     injectStyle() {
       const existing =
         document.getElementById(STYLE_ID);
-
       if (existing) {
         this.style = existing;
         return;
       }
-
       this.style =
         document.createElement("style");
-
       this.style.id = STYLE_ID;
       this.style.textContent = css;
-
       document.head.append(this.style);
     }
-
     createPetalParams(index) {
       const depthRoll = Math.random();
-
       const depth =
         depthRoll < 0.16
           ? "near"
           : depthRoll < 0.56
             ? "far"
             : "mid";
-
-      /*
-       * 奥行き感はサイズ・透明度・速度で表現。
-       * filter: blur() は使用しない。
-       */
       const size =
         depth === "near"
           ? rand(14, 20)
           : depth === "far"
             ? rand(4, 7)
-            : rand(7, 12);
-
+            : rand(7, 12)
       const opacity =
         depth === "near"
           ? 0.8
           : depth === "far"
             ? 0.42
             : 0.7;
-
       const speed =
         depth === "near"
-          ? rand(52, 70)
+          ? rand(30, 42)
           : depth === "far"
-            ? rand(19, 28)
-            : rand(34, 48);
-
-      /*
-       * 元コードと同じく、
-       * 右上・右側から左上方向へ、
-       * 左下・下側から左上方向へ舞う構成。
-       */
+            ? rand(12, 18)
+            : rand(20, 30);
       const travelX = rand(135, 170);
       const travelY = rand(115, 155);
-
+      <!-- const travelX = rand(105, 140); -->
+      <!-- const travelY = rand(90, 130); -->
       const fromRightEdge =
         index % 2 === 0;
-
       const startX = fromRightEdge
         ? rand(101, 118)
         : rand(-12, 116);
-
       const startY = fromRightEdge
         ? rand(-18, 116)
         : rand(101, 118);
-
       const endX =
         startX - travelX;
-
       const endY =
         startY - travelY;
-
       const distance =
         Math.hypot(
           travelX,
           travelY
         );
-
       return {
         depth,
         size,
         opacity,
-
         startX,
         startY,
-
         endX,
         endY,
-
         travelX,
         travelY,
-
         duration:
           distance / speed,
-
         rotationStart:
           rand(-180, 180),
-
         rotationDistance:
           rand(320, 440)
       };
     }
-
     createPetals() {
       if (!this.container) {
         return;
       }
-
       const fragment =
         document.createDocumentFragment();
-
       for (
         let index = 0;
         index < this.count;
@@ -346,53 +279,42 @@
       ) {
         const params =
           this.createPetalParams(index);
-
         const petal =
           document.createElement("div");
-
         petal.className =
           `sakura-petal ${params.depth}`;
-
         petal.style.setProperty(
           "--sakura-size",
           `${params.size.toFixed(2)}px`
         );
-
         petal.style.setProperty(
           "--sakura-start-x",
           `${params.startX.toFixed(2)}vw`
         );
-
         petal.style.setProperty(
           "--sakura-start-y",
           `${params.startY.toFixed(2)}vh`
         );
-
         petal.style.setProperty(
           "--sakura-end-x",
           `${params.endX.toFixed(2)}vw`
         );
-
         petal.style.setProperty(
           "--sakura-end-y",
           `${params.endY.toFixed(2)}vh`
         );
-
         petal.style.setProperty(
           "--sakura-travel-x",
           `${params.travelX.toFixed(2)}vw`
         );
-
         petal.style.setProperty(
           "--sakura-travel-y",
           `${params.travelY.toFixed(2)}vh`
         );
-
         petal.style.setProperty(
           "--sakura-duration",
           `${params.duration.toFixed(2)}s`
         );
-
         petal.style.setProperty(
           "--sakura-delay",
           `${(
@@ -400,64 +322,51 @@
             params.duration
           ).toFixed(2)}s`
         );
-
         petal.style.setProperty(
           "--sakura-opacity",
           String(params.opacity)
         );
-
         petal.style.setProperty(
           "--sakura-rotation-start",
           `${params.rotationStart.toFixed(1)}deg`
         );
-
         petal.style.setProperty(
           "--sakura-rotation-distance",
           `${params.rotationDistance.toFixed(1)}deg`
         );
-
         fragment.append(petal);
       }
-
       this.container.append(fragment);
     }
-
     setCount(count) {
       if (!Number.isFinite(count)) {
         return;
       }
-
       this.count =
         Math.max(
           0,
           Math.floor(count)
         );
-
       if (this.container) {
         this.container.replaceChildren();
         this.createPetals();
       }
     }
-
     pause() {
       this.container?.classList.add(
         "paused"
       );
     }
-
     play() {
       this.container?.classList.remove(
         "paused"
       );
     }
-
     destroy() {
       this.container?.remove();
       this.container = null;
     }
   }
-
   window.sakuraPetals =
     new SakuraPetals();
-
 })();
