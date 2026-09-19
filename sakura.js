@@ -1,7 +1,4 @@
-// File: sakura.js
 /* sakura.js
- * 画面全体（四隅を含む）に花びらが舞うバージョン
- *
  * 任意:
  *   window.sakuraPetals.setCount(40);
  *   window.sakuraPetals.pause();
