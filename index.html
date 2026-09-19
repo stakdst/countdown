@@ -5,7 +5,7 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover,maximum-scale=1,user-scalable=no">
-<meta name="theme-color" content="#2b1720">
+<meta name="theme-color" content="#000000">
 <meta name="apple-mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
 <title>SAKURA COUNTDOWN</title>
@@ -24,19 +24,19 @@
   body{
     font-family:-apple-system,BlinkMacSystemFont,"SF Pro JP","Hiragino Sans","Noto Sans JP","Yu Gothic",Meiryo,sans-serif;
     color:var(--text);
-    background:#1d1016;
+    background:#000;
     touch-action:manipulation;
     -webkit-font-smoothing:antialiased;
   }
 
-  /* ===== 背景（用意済みの background.PNG） ===== */
+  /* ===== 背景（用意済みの background.PNG のみ） ===== */
   .bg{
     position:fixed;inset:0;z-index:0;
-    background:
-      linear-gradient(180deg,rgba(20,8,16,.32),rgba(20,8,16,.10) 30%,rgba(20,8,16,.45)),
-      url("background.PNG") center center / cover no-repeat,
-      linear-gradient(160deg,#4a2740,#8d5470 45%,#e6a7bd);
-    background-attachment:scroll;
+    background-color:#000;
+    background-image:url("background.PNG");
+    background-position:center center;
+    background-size:cover;
+    background-repeat:no-repeat;
   }
   /* 桜アニメーション（用意済みの sakura.js が描画） */
   .sakura-layer{position:fixed;inset:0;z-index:1;pointer-events:none}
@@ -56,29 +56,33 @@
   .topbar{
     flex:0 0 auto;
     position:relative;
-    min-height:62px;
+    min-height:70px;
     display:flex;
     flex-direction:column;
     align-items:center;
     justify-content:center;
-    gap:3px;
-    padding:6px 46px 10px;
+    gap:5px;
+    padding:6px 42px 10px;
   }
   .brand{
-    font-size:12px;
+    font-size:clamp(14px,4.2vw,21px);
     font-weight:600;
-    letter-spacing:.34em;
-    text-indent:.34em;
-    opacity:.88;
-    text-shadow:0 2px 10px rgba(0,0,0,.4);
+    letter-spacing:.16em;
+    text-indent:.16em;
+    white-space:nowrap;
+    opacity:.95;
+    text-shadow:0 2px 12px rgba(0,0,0,.45);
   }
-  .brand b{color:var(--accent);font-weight:700}
   .now{
-    font-size:17px;
+    display:flex;
+    align-items:baseline;
+    justify-content:center;
+    gap:clamp(12px,4vw,22px);
+    font-size:clamp(13px,4vw,18px);
     font-weight:300;
     letter-spacing:.04em;
     font-variant-numeric:tabular-nums;
-    text-shadow:0 2px 9px rgba(0,0,0,.35);
+    text-shadow:0 2px 9px rgba(0,0,0,.4);
     white-space:nowrap;
   }
   .iconbtn{
@@ -96,7 +100,7 @@
   .menu.open .hamburger span:nth-child(2){opacity:0;transform:scaleX(.3)}
   .menu.open .hamburger span:nth-child(3){transform:translateY(-8px) rotate(-45deg)}
 
-  /* ===== ガラス共通 ===== */
+  /* ===== ガラス共通（パネル / シート / FAB 用） ===== */
   .glass{
     border:1px solid var(--glass-line);
     background:linear-gradient(135deg,rgba(255,255,255,.22),rgba(255,255,255,.065) 48%,rgba(255,255,255,.03));
@@ -129,17 +133,22 @@
   }
   .row.dragging{z-index:5;transition:none}
   .row.removing{transition:transform .26s ease,opacity .26s ease,height .26s ease,margin .26s ease}
+  @keyframes pop{from{opacity:0;transform:translateY(12px)}to{opacity:1;transform:none}}
+  .row.pop{animation:pop .34s cubic-bezier(.2,.9,.25,1) both}
 
   .row-bg{
     position:absolute;inset:0;
     border-radius:22px;
-    background:linear-gradient(90deg,rgba(255,80,120,.12),rgba(255,60,105,.72));
+    background:linear-gradient(90deg,rgba(255,80,120,.10),rgba(255,60,105,.62));
     display:flex;align-items:center;justify-content:flex-end;
-    padding-right:26px;
-    opacity:0;transition:opacity .16s;
+    padding-right:28px;
+    opacity:0;transition:opacity .16s,background .2s;
+    cursor:pointer;
   }
   .row.swiping .row-bg,.row.open .row-bg{opacity:1}
-  .row-bg .trash{width:26px;height:26px;opacity:.96}
+  .row.armed .row-bg{background:linear-gradient(90deg,rgba(255,60,105,.72),rgba(255,40,88,.96))}
+  .row-bg .trash{width:26px;height:26px;opacity:.96;transition:transform .18s cubic-bezier(.2,.9,.25,1)}
+  .row.armed .row-bg .trash{transform:scale(1.22)}
 
   .item{
     position:relative;
@@ -150,30 +159,43 @@
     touch-action:pan-y;
     cursor:pointer;
     will-change:transform;
+    /* カードの影は無し（内側ハイライトのみ） */
+    box-shadow:
+      inset 0 1px 1px rgba(255,255,255,.34),
+      inset 0 -1px 1px rgba(0,0,0,.10);
   }
   .item::before{
     content:"";position:absolute;inset:1px;border-radius:21px;pointer-events:none;
     background:linear-gradient(120deg,rgba(255,255,255,.16),transparent 30%,transparent 72%,rgba(255,255,255,.05));
   }
   .row.dragging .item{
-    box-shadow:inset 0 1px 1px rgba(255,255,255,.4),0 22px 46px rgba(0,0,0,.42);
-    background:linear-gradient(135deg,rgba(255,255,255,.30),rgba(255,255,255,.10));
+    box-shadow:
+      inset 0 1px 1px rgba(255,255,255,.44),
+      inset 0 -1px 1px rgba(0,0,0,.10);
+    background:linear-gradient(135deg,rgba(255,255,255,.32),rgba(255,255,255,.12));
+    border-color:rgba(255,255,255,.5);
   }
   .label{
     position:relative;z-index:1;
     display:flex;align-items:baseline;gap:10px;
     font-size:20px;line-height:1.25;font-weight:600;
-    margin-bottom:6px;min-width:0;
+    margin-bottom:6px;min-width:0;padding-right:26px;
   }
   .label .ttl{overflow:hidden;text-overflow:ellipsis;white-space:nowrap;min-width:0}
   .card-date{flex:0 0 auto;font-size:12px;font-weight:400;opacity:.9;letter-spacing:.02em;white-space:nowrap;font-variant-numeric:tabular-nums}
   .count{
     position:relative;z-index:1;display:block;
-    font-size:clamp(30px,7.4vw,58px);
+    font-size:clamp(32px,8vw,62px);
     line-height:1.08;font-weight:250;letter-spacing:-.02em;
     white-space:nowrap;font-variant-numeric:tabular-nums;
   }
-  .count small{font-size:.58em;font-weight:300;letter-spacing:-.01em;opacity:.95}
+  .count .n{
+    display:inline-block;
+    min-width:3ch;              /* 3桁ぶんを確保（0埋めなし・左は空白） */
+    text-align:right;
+    font-variant-numeric:tabular-nums;
+  }
+  .count small{font-size:.74em;font-weight:300;letter-spacing:-.01em;opacity:.96}
   .item.past .count{color:#ffd3e2}
   .item.soon .count{color:#fff0f5;text-shadow:0 0 18px rgba(255,120,170,.65),0 2px 8px rgba(0,0,0,.3)}
   .item.soon::after{
@@ -194,6 +216,7 @@
     opacity:.9;pointer-events:none;
   }
   .empty .ring{
+    position:relative;
     width:96px;height:96px;border-radius:50%;
     border:1px dashed rgba(255,255,255,.55);
     display:grid;place-items:center;
@@ -230,21 +253,31 @@
   /* ===== 設定パネル ===== */
   .panel{
     position:fixed;z-index:8;
-    top:calc(64px + var(--safe-t));
+    top:calc(72px + var(--safe-t));
     right:16px;
     width:min(320px,calc(100vw - 32px));
     border-radius:22px;
-    padding:16px 18px 18px;
+    padding:16px 16px 16px;
     transform:translateY(-12px) scale(.96);
     opacity:0;pointer-events:none;
     transform-origin:100% 0;
     transition:.24s cubic-bezier(.2,.9,.25,1);
   }
   .panel.show{opacity:1;transform:none;pointer-events:auto}
-  .prow{display:flex;align-items:center;gap:14px;padding:6px 0}
+  .prow{display:flex;align-items:center;gap:14px;padding:8px 6px}
   .prow .ic{width:26px;height:26px;display:grid;place-items:center;opacity:.95;flex:0 0 auto}
-  .prow .sp{flex:1}
-  .chips{display:flex;flex-wrap:wrap;gap:6px;margin-top:10px;transition:opacity .2s}
+  .prow .sp{flex:1;min-width:0}
+  button.prow{
+    -webkit-appearance:none;appearance:none;
+    width:100%;border:0;background:transparent;color:inherit;font:inherit;
+    text-align:left;cursor:pointer;border-radius:14px;
+    transition:background .18s;
+  }
+  button.prow:active{background:rgba(255,255,255,.14)}
+  #sortLabel{font-size:13px;opacity:.88;letter-spacing:.05em;font-variant-numeric:tabular-nums}
+  #sortBtn .chev{transition:transform .26s cubic-bezier(.2,.9,.25,1);opacity:.7}
+  #sortBtn.desc .chev{transform:rotate(180deg)}
+  .chips{display:flex;flex-wrap:wrap;gap:6px;margin:4px 6px 0;transition:opacity .2s}
   .chips.off{opacity:.34}
   .chip{
     font-size:11px;padding:4px 9px;border-radius:999px;
@@ -252,7 +285,7 @@
     font-variant-numeric:tabular-nums;letter-spacing:.02em;
   }
   .chip.now{background:rgba(255,135,178,.55);border-color:rgba(255,190,214,.7)}
-  .divider{height:1px;background:rgba(255,255,255,.18);margin:12px 0}
+  .divider{height:1px;background:rgba(255,255,255,.18);margin:12px 4px}
   .sw{
     width:52px;height:31px;border-radius:16px;flex:0 0 auto;cursor:pointer;
     background:rgba(255,255,255,.16);border:1px solid rgba(255,255,255,.32);
@@ -267,7 +300,7 @@
   /* ===== シート ===== */
   .scrim{
     position:fixed;inset:0;z-index:9;
-    background:rgba(18,8,14,.42);
+    background:rgba(10,10,12,.42);
     backdrop-filter:blur(3px);-webkit-backdrop-filter:blur(3px);
     opacity:0;pointer-events:none;transition:opacity .28s;
   }
@@ -282,7 +315,7 @@
     will-change:transform;
   }
   .sheet.show{transform:translate(-50%,0)}
-  .grip{width:42px;height:5px;border-radius:3px;background:rgba(255,255,255,.55);margin:2px auto 12px;cursor:grab}
+  .grip{width:42px;height:5px;border-radius:3px;background:rgba(255,255,255,.55);margin:2px auto 12px;cursor:grab;touch-action:none}
   .tinput{
     width:100%;display:block;
     -webkit-appearance:none;appearance:none;
@@ -293,7 +326,7 @@
     text-align:center;letter-spacing:.02em;
     font-family:inherit;outline:none;
   }
-  .tinput::placeholder{color:rgba(255,255,255,.5);font-weight:400}
+  .tinput::placeholder{color:rgba(255,255,255,.55);font-weight:600;font-size:15px;letter-spacing:.3em;text-indent:.3em}
   .tinput:focus{border-color:rgba(255,160,195,.8);background:rgba(255,255,255,.17)}
 
   .picker{position:relative;height:var(--view-h);margin:16px 0 6px;user-select:none;-webkit-user-select:none}
@@ -328,6 +361,7 @@
   .w-y{width:92px}.w-m{width:56px}.w-d{width:56px}.w-h{width:58px}.w-i{width:58px}
 
   .sheet-actions{display:flex;align-items:center;gap:12px;margin-top:14px}
+  .sheet-actions .spacer{flex:1}
   .gbtn{
     -webkit-appearance:none;appearance:none;cursor:pointer;
     width:54px;height:54px;border-radius:50%;
@@ -335,11 +369,10 @@
     background:linear-gradient(145deg,rgba(255,255,255,.22),rgba(255,255,255,.07));
     box-shadow:inset 0 1px 1px rgba(255,255,255,.3),0 8px 20px rgba(0,0,0,.24);
     color:#fff;display:grid;place-items:center;
-    transition:transform .16s cubic-bezier(.2,.9,.25,1),background .2s;
+    transition:transform .16s cubic-bezier(.2,.9,.25,1),background .2s,opacity .2s;
   }
   .gbtn:active{transform:scale(.9)}
-  .gbtn.ok{margin-left:auto;background:linear-gradient(145deg,rgba(255,150,190,.9),rgba(255,95,150,.85));border-color:rgba(255,205,225,.65)}
-  .gbtn.del{background:linear-gradient(145deg,rgba(255,110,140,.42),rgba(255,60,100,.3))}
+  .gbtn.ok{background:linear-gradient(145deg,rgba(255,150,190,.9),rgba(255,95,150,.85));border-color:rgba(255,205,225,.65)}
   .gbtn.bell.off{opacity:.42}
   .gbtn svg{width:23px;height:23px}
   .sheet-hint{
@@ -355,7 +388,6 @@
     .fab{width:64px;height:64px}
   }
   @media (min-width:760px){
-    .now{font-size:19px}
     .item{padding:24px 26px 26px}
   }
   @media (prefers-reduced-motion:reduce){
@@ -369,8 +401,11 @@
 
   <main class="app">
     <header class="topbar">
-      <div class="brand">SAKURA<b>&nbsp;•&nbsp;</b>COUNTDOWN</div>
-      <div class="now" id="now">----/--/-- --:--:--.--</div>
+      <div class="brand">SAKURA COUNTDOWN</div>
+      <div class="now" id="now">
+        <span id="nowDate">---- / -- / --</span>
+        <span id="nowTime">--:--:--.--</span>
+      </div>
       <button class="iconbtn menu" id="menuBtn" aria-label="menu">
         <span class="hamburger"><span></span><span></span><span></span></span>
       </button>
@@ -395,22 +430,24 @@
     </div>
     <div class="chips off" id="chips"></div>
     <div class="divider"></div>
-    <div class="prow" id="sortBtn" style="cursor:pointer">
+    <button class="prow" id="sortBtn" type="button" aria-label="sort">
       <span class="ic">
         <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" width="22" height="22">
           <path d="M7 4v16M7 20l-3-3M7 20l3-3M17 20V4M17 4l-3 3M17 4l3 3"/>
         </svg>
       </span>
-      <span class="sp" style="font-size:13px;opacity:.85;letter-spacing:.04em">0 → 999</span>
-      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" width="18" height="18" style="opacity:.7"><path d="M9 6l6 6-6 6"/></svg>
-    </div>
+      <span class="sp" id="sortLabel">0 → 999</span>
+      <svg class="chev" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" width="18" height="18">
+        <path d="M12 5v14M12 19l-5-5M12 19l5-5"/>
+      </svg>
+    </button>
   </aside>
 
   <!-- 編集シート -->
   <div class="scrim" id="scrim"></div>
   <section class="sheet glass" id="sheet" role="dialog" aria-modal="true">
     <div class="grip" id="grip"></div>
-    <input class="tinput" id="title" placeholder="…" maxlength="28" autocomplete="off" spellcheck="false">
+    <input class="tinput" id="title" placeholder="TITLE" maxlength="28" autocomplete="off" spellcheck="false">
     <div class="picker">
       <div class="band"></div>
       <div class="reels">
@@ -425,11 +462,7 @@
       <button class="gbtn" id="btnCancel" aria-label="cancel">
         <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.1" stroke-linecap="round"><path d="M6 6l12 12M18 6L6 18"/></svg>
       </button>
-      <button class="gbtn del" id="btnDelete" aria-label="delete" hidden>
-        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">
-          <path d="M4 7h16M10 11v6M14 11v6M6 7l1 13h10l1-13M9 7V4h6v3"/>
-        </svg>
-      </button>
+      <span class="spacer"></span>
       <button class="gbtn bell" id="btnBell" aria-label="notify">
         <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">
           <path d="M18 8a6 6 0 1 0-12 0c0 7-3 9-3 9h18s-3-2-3-9"/><path d="M13.7 21a2 2 0 0 1-3.4 0"/>
@@ -474,7 +507,6 @@
   var items = loadJSON(K_ITEMS, null);
   if (!items || !items.length) {
     var base = new Date();
-    base.setHours(23, 59, 0, 0);
     items = [{
       id: 'seed-' + Date.now(),
       title: 'SAKURA',
@@ -483,10 +515,12 @@
       created: Date.now()
     }];
   }
-  var cfg = loadJSON(K_CFG, { notify: false });
+  var cfg = loadJSON(K_CFG, { notify: false, sortDesc: false });
+  if (typeof cfg.sortDesc !== 'boolean') cfg.sortDesc = false;
   var fired = loadJSON(K_FIRED, {});
 
   function persist(){ saveJSON(K_ITEMS, items); }
+  function persistCfg(){ saveJSON(K_CFG, cfg); }
 
   function daysInMonth(y, m){ // m: 1-12
     var d = new Date(2000, 0, 1);
@@ -504,10 +538,11 @@
     return pad4(d.getFullYear()) + ' / ' + pad2(d.getMonth() + 1) + ' / ' + pad2(d.getDate())
          + '  ' + pad2(d.getHours()) + ':' + pad2(d.getMinutes());
   }
-  function fmtNow(t){
-    var d = new Date(t);
-    return pad4(d.getFullYear()) + ' / ' + pad2(d.getMonth() + 1) + ' / ' + pad2(d.getDate())
-         + ' ' + pad2(d.getHours()) + ':' + pad2(d.getMinutes()) + ':' + pad2(d.getSeconds())
+  function fmtDate(d){
+    return pad4(d.getFullYear()) + ' / ' + pad2(d.getMonth() + 1) + ' / ' + pad2(d.getDate());
+  }
+  function fmtTime(d){
+    return pad2(d.getHours()) + ':' + pad2(d.getMinutes()) + ':' + pad2(d.getSeconds())
          + '.' + pad2(Math.floor(d.getMilliseconds() / 10));
   }
   function split(diff){
@@ -536,9 +571,9 @@
   var VIEW_H = 150;
   var CENTER_OFF = (VIEW_H - ITEM_H) / 2;
 
-  var MAX_VELOCITY  = 2.8;    // px/ms
-  var FRICTION      = 0.965;  // per 16.667ms
-  var STOP_THRESHOLD = 0.025; // px/ms
+  var MAX_VELOCITY   = 2.8;    // px/ms
+  var FRICTION       = 0.965;  // per 16.667ms
+  var STOP_THRESHOLD = 0.025;  // px/ms
   var FRAME = 1000 / 60;
 
   function Reel(el, opt){
@@ -774,6 +809,7 @@
   ============================================================ */
   var listEl = $('#list');
   var refs = [];
+  var animateNext = false;
 
   var TRASH_SVG = '<svg class="trash" viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M4 7h16M10 11v6M14 11v6M6 7l1 13h10l1-13M9 7V4h6v3"/></svg>';
   var BELL_SVG  = '<svg viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"><path d="M18 8a6 6 0 1 0-12 0c0 7-3 9-3 9h18s-3-2-3-9"/><path d="M13.7 21a2 2 0 0 1-3.4 0"/></svg>';
@@ -784,11 +820,12 @@
     if (!items.length) {
       var em = document.createElement('div');
       em.className = 'empty';
-      em.innerHTML = '<div class="ring" style="position:relative"></div><div class="arrow">↘</div>';
+      em.innerHTML = '<div class="ring"></div><div class="arrow">↘</div>';
       listEl.appendChild(em);
+      animateNext = false;
       return;
     }
-    items.forEach(function(it){
+    items.forEach(function(it, i){
       var row = document.createElement('div');
       row.className = 'row';
       row.dataset.id = it.id;
@@ -804,6 +841,14 @@
       row.querySelector('.ttl').textContent = it.title || '—';
       row.querySelector('.card-date').textContent = fmtCardDate(it.ts);
       row.querySelector('.bell-dot').hidden = !(it.notify && cfg.notify);
+      if (animateNext) {
+        row.classList.add('pop');
+        row.style.animationDelay = (i * 28) + 'ms';
+        row.addEventListener('animationend', function(){
+          row.classList.remove('pop');
+          row.style.animationDelay = '';
+        }, { once: true });
+      }
       listEl.appendChild(row);
       refs.push({
         it: it, row: row, card: card,
@@ -813,19 +858,21 @@
       });
       bindGestures(row, card, it);
     });
+    animateNext = false;
   }
 
   /* ---- 1フレームごとの更新 ---- */
-  var nowEl = $('#now');
+  var nowDateEl = $('#nowDate'), nowTimeEl = $('#nowTime');
   function frame(){
     var t = Date.now();
-    nowEl.textContent = fmtNow(t);
+    var nd = new Date(t);
+    nowDateEl.textContent = fmtDate(nd);
+    nowTimeEl.textContent = fmtTime(nd);
     for (var i = 0; i < refs.length; i++){
       var r = refs[i];
       var diff = r.it.ts - t;
       var o = split(diff);
-      var sign = o.past ? '+' : '';
-      var nTxt = sign + o.day;
+      var nTxt = (o.past ? '+' : '') + o.day;
       if (r.n.textContent !== nTxt) r.n.textContent = nTxt;
       r.s.textContent = '日 ' + o.rest;
       if (o.past) r.card.classList.add('past'); else r.card.classList.remove('past');
@@ -839,9 +886,11 @@
   requestAnimationFrame(frame);
 
   /* ============================================================
-     ジェスチャー : タップ / 左スワイプ削除 / 長押しドラッグ並べ替え
+     ジェスチャー : タップ / 2段階スワイプ削除 / 長押しドラッグ並べ替え
   ============================================================ */
-  var OPEN_X = -92, DEL_X = -190;
+  var OPEN_X = -96;      // 1段階目：ゴミ箱を露出させる位置
+  var CONFIRM_X = -168;  // 2段階目：ここを越えて離すと削除
+  var DEL_X = -220;      // ドラッグ上限
   var openRow = null;
   var sheetOpen = false;
   var blockTouch = function(e){ e.preventDefault(); };
@@ -852,6 +901,7 @@
       c.style.transition = 'transform .24s cubic-bezier(.2,.9,.25,1)';
       c.style.transform = 'translateX(0)';
       openRow.classList.remove('open');
+      openRow.classList.remove('armed');
       openRow = null;
     }
   }
@@ -860,6 +910,7 @@
     var idx = -1;
     for (var i = 0; i < items.length; i++) if (items[i].id === id) idx = i;
     if (idx < 0) return;
+    if (openRow && openRow.dataset.id === id) openRow = null;
     if (rowEl) {
       var h = rowEl.offsetHeight;
       rowEl.style.height = h + 'px';
@@ -881,11 +932,17 @@
 
   function bindGestures(row, card, it){
     var sx = 0, sy = 0, st = 0, mode = null, lp = null, pid = null, tx = 0;
+    var wasArmed = false;
     var dragState = null;
 
     row.querySelector('.row-bg').addEventListener('click', function(e){
       e.stopPropagation();
-      if (openRow === row) { openRow = null; removeItem(it.id, row); }
+      if (openRow === row) {
+        var c = row.querySelector('.item');
+        c.style.transition = 'transform .2s cubic-bezier(.2,.9,.25,1)';
+        c.style.transform = 'translateX(-115%)';
+        removeItem(it.id, row);
+      }
     });
 
     card.addEventListener('pointerdown', function(e){
@@ -894,6 +951,8 @@
       pid = e.pointerId;
       sx = e.clientX; sy = e.clientY; st = performance.now();
       mode = null;
+      wasArmed = false;
+      tx = (openRow === row) ? OPEN_X : 0;
       card.style.transition = 'none';
       try { card.setPointerCapture(pid); } catch(err){}
       card.addEventListener('pointermove', onMove);
@@ -944,7 +1003,6 @@
         else if (d.to < d.from && i >= d.to && i < d.from) t = d.step;
         r.style.transform = 'translateY(' + t + 'px)';
       });
-      // 端でオートスクロール
       var lr = listEl.getBoundingClientRect();
       if (clientY < lr.top + 72) listEl.scrollTop -= 9;
       else if (clientY > lr.bottom - 72) listEl.scrollTop += 9;
@@ -984,12 +1042,20 @@
         }
       }
       if (mode === 'swipe') {
-        var base = (openRow === row) ? OPEN_X : 0;
+        var opened = (openRow === row);
+        var base = opened ? OPEN_X : 0;
         var v = base + dx;
         if (v > 0) v = v * 0.22;
         if (v < DEL_X) v = DEL_X + (v - DEL_X) * 0.35;
         tx = v;
         card.style.transform = 'translateX(' + v + 'px)';
+        // 2段階目のアーム表示（1段階目では削除しない）
+        var armed = opened && v < CONFIRM_X;
+        if (armed !== wasArmed) {
+          wasArmed = armed;
+          row.classList.toggle('armed', armed);
+          haptic(armed ? 10 : 4);
+        }
       }
     }
 
@@ -1005,29 +1071,34 @@
       cleanup();
       if (mode === 'drag') { endDrag(); return; }
       if (mode === 'swipe') {
+        var opened = (openRow === row);
         row.classList.remove('swiping');
         card.style.transition = 'transform .26s cubic-bezier(.2,.9,.25,1)';
-        if (tx < DEL_X * 0.72) {
-          openRow = null;
+        if (opened && tx < CONFIRM_X) {
+          /* 2段階目 : 削除確定 */
+          row.classList.remove('armed');
           card.style.transform = 'translateX(-115%)';
           removeItem(it.id, row);
-        } else if (tx < OPEN_X * 0.5) {
+        } else if (tx < OPEN_X * 0.45) {
+          /* 1段階目 : ゴミ箱を表示するだけ */
+          row.classList.remove('armed');
           card.style.transform = 'translateX(' + OPEN_X + 'px)';
           row.classList.add('open');
+          if (!opened) haptic(8);
           openRow = row;
-          haptic(6);
         } else {
+          row.classList.remove('armed');
           card.style.transform = 'translateX(0)';
           row.classList.remove('open');
           if (openRow === row) openRow = null;
         }
+        wasArmed = false;
         return;
       }
       // タップ
       var dt = performance.now() - st;
       var moved = Math.abs(e.clientX - sx) + Math.abs(e.clientY - sy);
       if (mode === null && moved < 12 && dt < 520) {
-        if (openRow === row) { closeOpenRow(); return; }
         if (openRow) { closeOpenRow(); return; }
         openSheet(it);
       }
@@ -1040,7 +1111,7 @@
      シート（追加 / 編集）
   ============================================================ */
   var sheet = $('#sheet'), scrim = $('#scrim'), titleEl = $('#title');
-  var btnDelete = $('#btnDelete'), btnBell = $('#btnBell'), hintEl = $('#sheetHint');
+  var btnBell = $('#btnBell'), hintEl = $('#sheetHint');
   var editing = null, editNotify = true;
 
   var rY = new Reel($('#rY'), { count: 3001, format: function(i){ return String(i); }, onChange: onYM });
@@ -1082,7 +1153,6 @@
     titleEl.value = it ? (it.title || '') : '';
     editNotify = it ? !!it.notify : true;
     btnBell.classList.toggle('off', !editNotify);
-    btnDelete.hidden = !it;
     var ts;
     if (it) ts = it.ts;
     else {
@@ -1134,15 +1204,6 @@
     btnBell.classList.toggle('off', !editNotify);
     haptic(6);
   });
-  btnDelete.addEventListener('click', function(){
-    if (!editing) return;
-    var id = editing.id;
-    closeSheet();
-    setTimeout(function(){
-      var rowEl = listEl.querySelector('.row[data-id="' + id + '"]');
-      removeItem(id, rowEl);
-    }, 180);
-  });
   titleEl.addEventListener('keydown', function(e){
     if (e.key === 'Enter') { e.preventDefault(); titleEl.blur(); }
   });
@@ -1153,22 +1214,22 @@
 
   /* シートを下方向にドラッグして閉じる */
   (function(){
-    var grip = $('#grip'), sy = 0, dragging = false;
+    var grip = $('#grip'), gy = 0, dragging = false;
     grip.addEventListener('pointerdown', function(e){
-      dragging = true; sy = e.clientY;
+      dragging = true; gy = e.clientY;
       sheet.style.transition = 'none';
       try { grip.setPointerCapture(e.pointerId); } catch(err){}
     });
     grip.addEventListener('pointermove', function(e){
       if (!dragging) return;
-      var dy = Math.max(0, e.clientY - sy);
+      var dy = Math.max(0, e.clientY - gy);
       sheet.style.transform = 'translate(-50%,' + dy + 'px)';
     });
     function end(e){
       if (!dragging) return;
       dragging = false;
       sheet.style.transition = '';
-      var dy = Math.max(0, e.clientY - sy);
+      var dy = Math.max(0, e.clientY - gy);
       if (dy > 110) closeSheet(); else sheet.style.transform = 'translate(-50%,0)';
     }
     grip.addEventListener('pointerup', end);
@@ -1176,9 +1237,10 @@
   })();
 
   /* ============================================================
-     設定パネル / 通知
+     設定パネル / 並び替え / 通知
   ============================================================ */
   var panel = $('#panel'), menuBtn = $('#menuBtn'), swNotify = $('#swNotify'), chips = $('#chips');
+  var sortBtn = $('#sortBtn'), sortLabel = $('#sortLabel');
 
   (function(){
     var html = '';
@@ -1191,43 +1253,72 @@
   function syncNotifyUI(){
     swNotify.classList.toggle('on', !!cfg.notify);
     chips.classList.toggle('off', !cfg.notify);
-    var dots = listEl.querySelectorAll('.bell-dot');
-    for (var i = 0; i < refs.length; i++) refs[i].row.querySelector('.bell-dot').hidden = !(refs[i].it.notify && cfg.notify);
+    for (var i = 0; i < refs.length; i++){
+      refs[i].row.querySelector('.bell-dot').hidden = !(refs[i].it.notify && cfg.notify);
+    }
   }
   function openPanel(){ panel.classList.add('show'); menuBtn.classList.add('open'); }
   function closePanel(){ panel.classList.remove('show'); menuBtn.classList.remove('open'); }
 
   menuBtn.addEventListener('click', function(e){
     e.stopPropagation();
+    closeOpenRow();
     if (panel.classList.contains('show')) closePanel(); else openPanel();
   });
   document.addEventListener('click', function(e){
-    if (panel.classList.contains('show') && !panel.contains(e.target) && e.target !== menuBtn) closePanel();
+    if (panel.classList.contains('show') && !panel.contains(e.target) && !menuBtn.contains(e.target)) closePanel();
   });
 
   swNotify.addEventListener('click', function(){
     if (!cfg.notify) {
-      if (!('Notification' in window)) { panel.classList.add('shake'); setTimeout(function(){ panel.classList.remove('shake'); }, 400); return; }
+      if (!('Notification' in window)) { shakePanel(); return; }
       Notification.requestPermission().then(function(p){
-        if (p === 'granted') { cfg.notify = true; saveJSON(K_CFG, cfg); syncNotifyUI(); haptic(10); checkNotify(); }
-        else { panel.classList.add('shake'); setTimeout(function(){ panel.classList.remove('shake'); }, 400); }
+        if (p === 'granted') { cfg.notify = true; persistCfg(); syncNotifyUI(); haptic(10); checkNotify(); }
+        else shakePanel();
       });
     } else {
-      cfg.notify = false; saveJSON(K_CFG, cfg); syncNotifyUI(); haptic(6);
+      cfg.notify = false; persistCfg(); syncNotifyUI(); haptic(6);
     }
   });
+  function shakePanel(){
+    panel.classList.add('shake');
+    setTimeout(function(){ panel.classList.remove('shake'); }, 400);
+  }
 
-  $('#sortBtn').addEventListener('click', function(){
+  /* --- 並び替え（昇順 / 降順トグル） --- */
+  function rank(it, now){
+    var d = it.ts - now;
+    // 未来 : 残り時間が少ない順 / 過去 : 未来のあとに、経過が少ない順
+    return d >= 0 ? d : 4e15 + (-d);
+  }
+  function syncSortUI(){
+    sortBtn.classList.toggle('desc', !!cfg.sortDesc);
+    sortLabel.textContent = cfg.sortDesc ? '999 → 0' : '0 → 999';
+  }
+  function doSort(){
     var now = Date.now();
     items.sort(function(a, b){
-      var da = a.ts - now, db = b.ts - now;
-      if (da >= 0 && db < 0) return -1;
-      if (da < 0 && db >= 0) return 1;
-      return da >= 0 ? da - db : db - da;
+      var r = rank(a, now) - rank(b, now);
+      if (r === 0) r = (a.created || 0) - (b.created || 0);
+      return cfg.sortDesc ? -r : r;
     });
-    persist(); render(); haptic(10); closePanel();
+    persist();
+    closeOpenRow();
+    animateNext = true;
+    render();
+    syncNotifyUI();
+    haptic(10);
+  }
+  sortBtn.addEventListener('click', function(e){
+    e.preventDefault();
+    e.stopPropagation();
+    doSort();
+    cfg.sortDesc = !cfg.sortDesc;   // 次回は逆順
+    persistCfg();
+    syncSortUI();
   });
 
+  /* --- 通知 --- */
   function checkNotify(){
     if (!cfg.notify || !('Notification' in window) || Notification.permission !== 'granted') return;
     var today = new Date(); today.setHours(0, 0, 0, 0);
@@ -1248,7 +1339,6 @@
         });
       } catch(e){}
     });
-    // 古い記録を整理
     var keys = Object.keys(fired);
     if (keys.length > 400) {
       keys.slice(0, keys.length - 200).forEach(function(k){ delete fired[k]; });
@@ -1264,6 +1354,7 @@
   ============================================================ */
   render();
   syncNotifyUI();
+  syncSortUI();
   checkNotify();
   window.addEventListener('resize', function(){ if (openRow) closeOpenRow(); });
   document.addEventListener('gesturestart', function(e){ e.preventDefault(); });
