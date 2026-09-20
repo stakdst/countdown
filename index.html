@@ -1,6 +1,5 @@
 <!doctype html>
 <html lang="ja">
-
 <head>
   <meta charset="utf-8">
   <meta name="viewport"
@@ -36,7 +35,6 @@
       --safe-t: env(safe-area-inset-top, 0px);
       --safe-b: env(safe-area-inset-bottom, 0px);
     }
-
     .item .ttl,
     .item .card-date,
     .item .count,
@@ -50,7 +48,6 @@
     .sheet .gbtn {
       text-shadow: 0 2px 5px rgba(0, 0, 0, .68), 0 1px 2px rgba(0, 0, 0, .48);
     }
-
     .sheet .tinput {
       color: #fff;
       -webkit-text-fill-color: #fff;
@@ -58,12 +55,10 @@
         0 1px 2px rgba(0, 0, 0, .55),
         0 2px 5px rgba(0, 0, 0, .28);
     }
-
     * {
       box-sizing: border-box;
       -webkit-tap-highlight-color: transparent
     }
-
     html,
     body {
       margin: 0;
@@ -72,12 +67,10 @@
       min-height: 100%;
       overflow: hidden
     }
-
     html {
       height: 100%;
       min-height: 100dvh;
     }
-
     body {
       min-height: 100dvh;
       font-family:
@@ -93,7 +86,6 @@
       touch-action: manipulation;
       -webkit-font-smoothing: antialiased;
     }
-
     /* === 背景 === */
     .bg {
       position: fixed;
@@ -107,7 +99,6 @@
       background-size: cover;
       background-repeat: no-repeat;
     }
-
     .bg::after {
       content: "";
       position: absolute;
@@ -120,17 +111,14 @@
       pointer-events: none;
       transition: opacity .8s ease;
     }
-
     .bg.dark::after {
       opacity: 1;
     }
-
     @media (prefers-reduced-motion:reduce) {
       .bg::after {
         transition: none;
       }
     }
-
     .sakura-layer {
       position: fixed;
       inset: 0;
@@ -138,16 +126,13 @@
       pointer-events: none;
       transition: opacity .18s ease;
     }
-
     .sakura-layer.hidden {
       visibility: hidden;
       opacity: 0;
     }
-
     canvas {
       pointer-events: none;
     }
-
     /* === 共通ガラス === */
     .glass {
       border: 1px solid var(--glass-line);
@@ -160,7 +145,6 @@
         inset 0 -1px 1px rgba(0, 0, 0, .08),
         0 12px 34px var(--glass-shadow);
     }
-
     /* === レイアウト === */
     .app {
       position: relative;
@@ -173,7 +157,6 @@
       display: flex;
       flex-direction: column;
     }
-
     .topbar {
       flex: 0 0 auto;
       position: relative;
@@ -185,7 +168,6 @@
       gap: 5px;
       padding: 6px 42px 10px;
     }
-
     .brand {
       font-size: clamp(14px, 4.2vw, 21px);
       font-weight: 600;
@@ -195,7 +177,6 @@
       opacity: .95;
       text-shadow: 0 2px 12px rgba(0, 0, 0, .45);
     }
-
     .now {
       display: flex;
       align-items: baseline;
@@ -208,7 +189,6 @@
       text-shadow: 0 2px 9px rgba(0, 0, 0, .4);
       white-space: nowrap;
     }
-
     .iconbtn {
       -webkit-appearance: none;
       appearance: none;
@@ -221,7 +201,6 @@
       place-items: center;
       cursor: pointer;
     }
-
     .topbar .menu {
       position: absolute;
       right: 0;
@@ -230,7 +209,6 @@
       height: 40px;
       border-radius: 50%;
     }
-
     .hamburger {
       display: flex;
       flex-direction: column;
@@ -238,7 +216,6 @@
       width: 24px;
       filter: drop-shadow(0 2px 5px rgba(0, 0, 0, .35))
     }
-
     .hamburger span {
       height: 2px;
       width: 24px;
@@ -246,20 +223,16 @@
       border-radius: 2px;
       transition: .26s cubic-bezier(.3, .9, .3, 1)
     }
-
     .menu.open .hamburger span:nth-child(1) {
       transform: translateY(8px) rotate(45deg)
     }
-
     .menu.open .hamburger span:nth-child(2) {
       opacity: 0;
       transform: scaleX(.3)
     }
-
     .menu.open .hamburger span:nth-child(3) {
       transform: translateY(-8px) rotate(-45deg)
     }
-
     /* === リスト === */
     .list {
       flex: 1 1 auto;
@@ -270,27 +243,22 @@
       padding: 4px 2px calc(130px + var(--safe-b));
       overscroll-behavior: contain;
     }
-
     .list::-webkit-scrollbar {
       display: none
     }
-
     .list.locked {
       overflow: hidden
     }
-
     .row {
       position: relative;
       margin: 0 0 14px;
       border-radius: 22px;
       transition: transform .2s cubic-bezier(.2, .9, .25, 1);
     }
-
     .row.dragging {
       z-index: 5;
       transition: none
     }
-
     .row.removing {
       transition:
         transform .26s ease,
@@ -298,23 +266,19 @@
         height .26s ease,
         margin .26s ease
     }
-
     @keyframes pop {
       from {
         opacity: 0;
         transform: translateY(12px)
       }
-
       to {
         opacity: 1;
         transform: none
       }
     }
-
     .row.pop {
       animation: pop .34s cubic-bezier(.2, .9, .25, 1) both
     }
-
     /* === 削除背景 === */
     .row-bg {
       position: absolute;
@@ -333,28 +297,23 @@
       cursor: pointer;
       z-index: 0;
     }
-
     .row.swiping .row-bg,
     .row.open .row-bg {
       opacity: 1;
       background: rgba(255, 60, 105, .62);
     }
-
     .row.armed .row-bg {
       background: rgba(255, 60, 105, .62);
     }
-
     .row-bg .trash {
       width: 26px;
       height: 26px;
       opacity: .96;
       transition: transform .18s cubic-bezier(.2, .9, .25, 1)
     }
-
     .row.armed .row-bg .trash {
       transform: scale(1.22)
     }
-
     /* === カード === */
     .item {
       position: relative;
@@ -374,7 +333,6 @@
         inset 0 1px 1px rgba(255, 255, 255, .27),
         inset 0 -1px 1px rgba(0, 0, 0, .08);
     }
-
     .item::before {
       content: "";
       position: absolute;
@@ -388,7 +346,6 @@
           transparent 72%,
           rgba(255, 255, 255, .055));
     }
-
     .row.dragging .item {
       will-change: transform;
       box-shadow:
@@ -400,7 +357,6 @@
           rgba(255, 255, 255, .065));
       border-color: rgba(255, 255, 255, .42);
     }
-
     .label {
       position: relative;
       z-index: 1;
@@ -414,14 +370,12 @@
       min-width: 0;
       padding-right: 26px;
     }
-
     .label .ttl {
       overflow: hidden;
       text-overflow: ellipsis;
       white-space: nowrap;
       min-width: 0
     }
-
     .card-date {
       flex: 0 0 auto;
       font-size: 12px;
@@ -431,7 +385,6 @@
       white-space: nowrap;
       font-variant-numeric: tabular-nums
     }
-
     .count {
       position: relative;
       z-index: 1;
@@ -443,7 +396,6 @@
       white-space: nowrap;
       font-variant-numeric: tabular-nums;
     }
-
     .count .n {
       display: inline-block;
       min-width: 2ch;
@@ -451,25 +403,21 @@
       font-variant-numeric: tabular-nums;
       text-shadow: 0 2px 5px rgba(0, 0, 0, .68), 0 1px 2px rgba(0, 0, 0, .48);
     }
-
     .count small {
       font-size: .74em;
       font-weight: 600;
       letter-spacing: -.01em;
       opacity: .96
     }
-
     .item.past .count {
       color: #ffd3e2;
     }
-
     .item.soon .count {
       color: #fff0f5;
       text-shadow:
         0 0 18px rgba(255, 120, 170, .65),
         0 2px 8px rgba(0, 0, 0, .3)
     }
-
     .item.soon::after {
       content: "";
       position: absolute;
@@ -479,19 +427,15 @@
       border: 1px solid rgba(255, 150, 185, .55);
       animation: pulse 1.6s ease-in-out infinite;
     }
-
     @keyframes pulse {
-
       0%,
       100% {
         opacity: .25
       }
-
       50% {
         opacity: .85
       }
     }
-
     .bar {
       position: relative;
       z-index: 1;
@@ -501,7 +445,6 @@
       background: rgba(255, 255, 255, .16);
       overflow: hidden
     }
-
     .bar i {
       display: block;
       height: 100%;
@@ -511,20 +454,32 @@
           rgba(255, 255, 255, .75),
           var(--accent))
     }
-
     .bell-dot {
       position: absolute;
-      right: 18px;
-      top: 18px;
-      z-index: 1;
-      opacity: .85
+      right: 14px;
+      top: 14px;
+      z-index: 2;
+      width: 36px;
+      height: 36px;
+      display: grid;
+      place-items: center;
+      padding: 0;
+      border: 0;
+      border-radius: 50%;
+      color: #fff;
+      background: transparent;
+      opacity: .9;
+      cursor: pointer;
+      touch-action: manipulation;
     }
-
+    .bell-dot:active {
+      transform: scale(.88);
+      background: rgba(255, 255, 255, .14);
+    }
     .bell-dot svg {
-      width: 15px;
-      height: 15px
+      width: 30px;
+      height: 30px;
     }
-
     /* === FAB === */
     .fab {
       position: fixed;
@@ -543,11 +498,9 @@
       cursor: pointer;
       transition: transform .18s cubic-bezier(.2, .9, .25, 1);
     }
-
     .fab:active {
       transform: scale(.92)
     }
-
     .fab:before,
     .fab:after {
       content: "";
@@ -559,17 +512,14 @@
       transform: translate(-50%, -50%);
       box-shadow: 0 1px 4px rgba(0, 0, 0, .18);
     }
-
     .fab:before {
       width: 26px;
       height: 2px
     }
-
     .fab:after {
       width: 2px;
       height: 26px
     }
-
     /* === 設定パネル === */
     .panel {
       position: fixed;
@@ -587,20 +537,17 @@
       backdrop-filter: blur(22px) saturate(130%);
       -webkit-backdrop-filter: blur(22px) saturate(130%);
     }
-
     .panel.show {
       opacity: 1;
       transform: none;
       pointer-events: auto
     }
-
     .prow {
       display: flex;
       align-items: center;
       gap: 14px;
       padding: 8px 6px
     }
-
     .prow .ic {
       width: 26px;
       height: 26px;
@@ -609,12 +556,10 @@
       opacity: .95;
       flex: 0 0 auto
     }
-
     .prow .sp {
       flex: 1;
       min-width: 0
     }
-
     button.prow {
       -webkit-appearance: none;
       appearance: none;
@@ -628,51 +573,41 @@
       border-radius: 14px;
       transition: background .18s;
     }
-
     button.prow:active {
       background: rgba(255, 255, 255, .10)
     }
-
     #sortLabel {
       font-size: 13px;
       opacity: .88;
       letter-spacing: .05em;
       font-variant-numeric: tabular-nums
     }
-
     #sortBtn .chev {
       transition: transform .26s cubic-bezier(.2, .9, .25, 1);
       opacity: .7
     }
-
     #sortBtn.desc .chev {
       transform: rotate(180deg)
     }
-
     #sakuraToggle .sakura-status {
       font-size: 12px;
       opacity: .62;
       letter-spacing: .04em
     }
-
     #sakuraToggle.paused .sakura-status {
       opacity: .9;
       color: #ffd7e6
     }
-
     #sakuraToggle .sp {
       font-weight: 400;
       letter-spacing: .02em
     }
-
     #sakuraToggle .sw {
       margin-left: auto
     }
-
     #sakuraToggle .ic {
       color: #fff
     }
-
     #sakuraToggle .ic.sakura-letter {
       width: 26px;
       height: 26px;
@@ -689,13 +624,11 @@
       font-family: inherit;
       text-align: center;
     }
-
     #sakuraToggle .ic svg {
       display: block;
       width: 23px;
       height: 23px
     }
-
     .chips {
       display: flex;
       flex-wrap: wrap;
@@ -703,11 +636,9 @@
       margin: 4px 6px 0;
       transition: opacity .2s
     }
-
     .chips.off {
       opacity: .72;
     }
-
     .chip {
       -webkit-appearance: none;
       appearance: none;
@@ -727,40 +658,32 @@
         transform .12s,
         opacity .18s;
     }
-
     .chip:disabled {
       cursor: not-allowed;
       opacity: .78;
     }
-
     .chip:disabled:active {
       transform: none;
     }
-
     .chips.off .chip.selected {
       background: rgba(255, 135, 178, .30);
       border-color: rgba(255, 190, 214, .42);
     }
-
     .chip:active {
       transform: scale(.95);
     }
-
     .chip.selected {
       background: rgba(255, 135, 178, .48);
       border-color: rgba(255, 190, 214, .6);
     }
-
     .chip.now {
       font-weight: 600;
     }
-
     .divider {
       height: 1px;
       background: rgba(255, 255, 255, .15);
       margin: 12px 4px
     }
-
     .sw {
       width: 52px;
       height: 31px;
@@ -772,7 +695,6 @@
       position: relative;
       transition: .24s cubic-bezier(.2, .9, .25, 1);
     }
-
     .sw.on {
       background:
         linear-gradient(90deg,
@@ -780,7 +702,6 @@
           rgba(255, 105, 160, .88));
       border-color: rgba(255, 200, 220, .55)
     }
-
     .sw i {
       position: absolute;
       top: 2px;
@@ -792,39 +713,30 @@
       box-shadow: 0 2px 6px rgba(0, 0, 0, .28);
       transition: .24s cubic-bezier(.2, .9, .25, 1)
     }
-
     .sw.on i {
       transform: translateX(21px)
     }
-
     .shake {
       animation: shake .38s
     }
-
     @keyframes shake {
-
       0%,
       100% {
         transform: translateX(0)
       }
-
       20% {
         transform: translateX(-7px)
       }
-
       40% {
         transform: translateX(6px)
       }
-
       60% {
         transform: translateX(-4px)
       }
-
       80% {
         transform: translateX(3px)
       }
     }
-
     /* === シート === */
     .scrim {
       position: fixed;
@@ -837,12 +749,10 @@
       pointer-events: none;
       transition: opacity .28s;
     }
-
     .scrim.show {
       opacity: 1;
       pointer-events: auto
     }
-
     .sheet {
       position: fixed;
       z-index: 10;
@@ -865,11 +775,9 @@
       backdrop-filter: blur(22px) saturate(130%);
       -webkit-backdrop-filter: blur(22px) saturate(130%);
     }
-
     .sheet.show {
       transform: translate(-50%, 0)
     }
-
     .grip {
       width: 42px;
       height: 5px;
@@ -879,7 +787,6 @@
       cursor: grab;
       touch-action: none
     }
-
     .tinput {
       width: 100%;
       display: block;
@@ -897,7 +804,6 @@
       font-family: inherit;
       outline: none;
     }
-
     .tinput::placeholder {
       color: rgba(255, 255, 255, .50);
       font-weight: 600;
@@ -905,12 +811,10 @@
       letter-spacing: .3em;
       text-indent: .3em
     }
-
     .tinput:focus {
       border-color: rgba(255, 160, 195, .75);
       background: rgba(255, 255, 255, .11)
     }
-
     .picker {
       position: relative;
       height: var(--view-h);
@@ -918,7 +822,6 @@
       user-select: none;
       -webkit-user-select: none
     }
-
     .band {
       position: absolute;
       left: -4px;
@@ -932,7 +835,6 @@
       border-bottom: 1px solid rgba(255, 255, 255, .25);
       box-shadow: inset 0 1px 0 rgba(255, 255, 255, .18);
     }
-
     .reels {
       position: relative;
       height: 100%;
@@ -953,7 +855,6 @@
           #000 76%,
           transparent 100%);
     }
-
     .reel {
       position: relative;
       height: 100%;
@@ -962,11 +863,9 @@
       touch-action: none;
       cursor: grab;
     }
-
     .reel:active {
       cursor: grabbing
     }
-
     .reel .it {
       position: absolute;
       left: 0;
@@ -982,12 +881,10 @@
       will-change: transform, opacity;
       backface-visibility: hidden;
     }
-
     .reel .it.sel {
       font-weight: 600;
       text-shadow: 0 2px 5px rgba(0, 0, 0, .68), 0 1px 2px rgba(0, 0, 0, .48);
     }
-
     .unit {
       align-self: center;
       font-size: 12px;
@@ -995,7 +892,6 @@
       padding: 0 2px 0 1px;
       transform: translateY(1px)
     }
-
     .colon {
       align-self: center;
       font-size: 20px;
@@ -1003,38 +899,30 @@
       padding: 0 2px;
       transform: translateY(-1px)
     }
-
     .w-y {
       width: 92px
     }
-
     .w-m {
       width: 56px
     }
-
     .w-d {
       width: 56px
     }
-
     .w-h {
       width: 58px
     }
-
     .w-i {
       width: 58px
     }
-
     .sheet-actions {
       display: flex;
       align-items: center;
       gap: 12px;
       margin-top: 14px
     }
-
     .sheet-actions .spacer {
       flex: 1
     }
-
     .gbtn {
       -webkit-appearance: none;
       appearance: none;
@@ -1058,11 +946,9 @@
         background .2s,
         opacity .2s;
     }
-
     .gbtn:active {
       transform: scale(.9)
     }
-
     .gbtn.ok {
       background:
         linear-gradient(145deg,
@@ -1070,16 +956,16 @@
           rgba(255, 95, 150, .76));
       border-color: rgba(255, 205, 225, .60)
     }
-
     .gbtn.bell.off {
-      opacity: .42
+      opacity: 1;
     }
-
+    .gbtn.bell.off svg {
+      opacity: 1;
+    }
     .gbtn svg {
       width: 23px;
       height: 23px
     }
-
     .sheet-hint {
       text-align: center;
       font-size: 11px;
@@ -1088,55 +974,44 @@
       margin-top: 12px;
       font-variant-numeric: tabular-nums;
     }
-
     /* === Responsive === */
     @media (max-width:420px) {
       .app {
         padding-left: 14px;
         padding-right: 14px
       }
-
       .item {
         padding: 17px 17px 19px
       }
-
       .label {
         font-size: 18px;
         gap: 8px
       }
-
       .w-y {
         width: 84px
       }
-
       .w-m {
         width: 50px
       }
-
       .w-d {
         width: 50px
       }
-
       .w-h {
         width: 52px
       }
-
       .w-i {
         width: 52px
       }
-
       .fab {
         width: 64px;
         height: 64px
       }
     }
-
     @media (min-width:760px) {
       .item {
         padding: 24px 26px 26px
       }
     }
-
     @media (prefers-reduced-motion:reduce) {
       * {
         animation-duration: .001ms !important
@@ -1144,7 +1019,6 @@
     }
   </style>
 </head>
-
 <body>
   <div class="bg" aria-hidden="true"></div>
   <div class="sakura-layer" id="sakura" aria-hidden="true"></div>
@@ -1892,9 +1766,9 @@
             '<div class="bar">' +
             '<i></i>' +
             '</div>' +
-            '<span class="bell-dot">' +
+            '<button class="bell-dot" type="button" aria-label="通知を切り替え">' +
             BELL_SVG +
-            '</span>' +
+            '</button>' +
             '</article>';
           var card =
             row.querySelector('.item');
@@ -1908,11 +1782,45 @@
             it.notify
               ? BELL_SVG
               : BELL_OFF_SVG;
-          bell.classList.toggle(
-            'off',
-            !it.notify
+          bell.setAttribute(
+            'aria-label',
+            it.notify
+              ? '通知をオフにする'
+              : '通知をオンにする'
+          );
+          bell.setAttribute(
+            'aria-pressed',
+            it.notify
+              ? 'true'
+              : 'false'
           );
           bell.hidden = false;
+          bell.addEventListener(
+            'click',
+            function (e) {
+              e.stopPropagation();
+              it.notify = !it.notify;
+              persist();
+              bell.innerHTML =
+                it.notify
+                  ? BELL_SVG
+                  : BELL_OFF_SVG;
+              bell.setAttribute(
+                'aria-label',
+                it.notify
+                  ? '通知をオフにする'
+                  : '通知をオンにする'
+              );
+              bell.setAttribute(
+                'aria-pressed',
+                it.notify
+                  ? 'true'
+                  : 'false'
+              );
+              haptic(6);
+              checkNotify();
+            }
+          );
           if (animateNext) {
             row.classList.add('pop');
             row.style.animationDelay =
@@ -2264,6 +2172,11 @@
           'pointerdown',
           function (e) {
             if (sheetOpen) return;
+            if (
+              e.target.closest('.bell-dot')
+            ) {
+              return;
+            }
             if (
               e.pointerType === 'mouse' &&
               e.button !== 0
@@ -2808,9 +2721,19 @@
           it !== null
             ? it.notify === true
             : true;
+        btnBell.innerHTML =
+          editNotify
+            ? BELL_SVG
+            : BELL_OFF_SVG;
         btnBell.classList.toggle(
           'off',
           !editNotify
+        );
+        btnBell.setAttribute(
+          'aria-label',
+          editNotify
+            ? '通知をオフにする'
+            : '通知をオンにする'
         );
         btnBell.setAttribute(
           'aria-pressed',
@@ -2913,9 +2836,25 @@
         function () {
           editNotify =
             !editNotify;
+          btnBell.innerHTML =
+            editNotify
+              ? BELL_SVG
+              : BELL_OFF_SVG;
           btnBell.classList.toggle(
             'off',
             !editNotify
+          );
+          btnBell.setAttribute(
+            'aria-label',
+            editNotify
+              ? '通知をオフにする'
+              : '通知をオンにする'
+          );
+          btnBell.setAttribute(
+            'aria-pressed',
+            editNotify
+              ? 'true'
+              : 'false'
           );
           haptic(6);
         }
@@ -3123,9 +3062,21 @@
             refs[i]
               .row
               .querySelector('.bell-dot');
-          bell.classList.toggle(
-            'off',
-            !refs[i].it.notify
+          bell.innerHTML =
+            refs[i].it.notify
+              ? BELL_SVG
+              : BELL_OFF_SVG;
+          bell.setAttribute(
+            'aria-label',
+            refs[i].it.notify
+              ? '通知をオフにする'
+              : '通知をオンにする'
+          );
+          bell.setAttribute(
+            'aria-pressed',
+            refs[i].it.notify
+              ? 'true'
+              : 'false'
           );
           bell.hidden = false;
         }
@@ -3568,5 +3519,4 @@
   </script>
   <script src="./sakura.js"></script>
 </body>
-
 </html>
