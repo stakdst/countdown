@@ -630,6 +630,10 @@
     opacity:.34
   }
   .chip{
+    -webkit-appearance:none;
+    appearance:none;
+    font:inherit;
+    color:inherit;
     font-size:11px;
     padding:4px 9px;
     border-radius:999px;
@@ -637,10 +641,24 @@
     background:rgba(255,255,255,.09);
     font-variant-numeric:tabular-nums;
     letter-spacing:.02em;
+    cursor:pointer;
+    transition:
+      background .18s,
+      border-color .18s,
+      transform .12s;
   }
-  .chip.now{
+
+  .chip:active{
+    transform:scale(.95);
+  }
+
+  .chip.selected{
     background:rgba(255,135,178,.48);
-    border-color:rgba(255,190,214,.6)
+    border-color:rgba(255,190,214,.6);
+  }
+
+  .chip.now{
+    font-weight:600;
   }
   .divider{
     height:1px;
@@ -1175,7 +1193,7 @@
   var K_CFG   = 'sakura.countdown.cfg.v1';
   var K_FIRED = 'sakura.countdown.fired.v1';
   var NOTIFY_DAYS = [
-    100,50,30,10,9,8,7,6,5,4,3,2,1,0
+    0,1,2,3,4,5,6,7,8,9,10,30,50,100
   ];
   function loadJSON(key, def){
     try{
@@ -1212,11 +1230,24 @@
   var cfg = loadJSON(K_CFG, {
     notify:false,
     sortDesc:false,
-    darkMode:false
+    darkMode:false,
+    notifyDays:[0,1,7,30,100]
   });
   if (typeof cfg.sortDesc !== 'boolean'){
     cfg.sortDesc = false;
   }
+  if (typeof cfg.darkMode !== 'boolean'){
+    cfg.darkMode = false;
+  }
+  if (!Array.isArray(cfg.notifyDays)){
+    cfg.notifyDays = [0];
+  }
+  cfg.notifyDays =
+    NOTIFY_DAYS.filter(
+      function(d){
+        return cfg.notifyDays.indexOf(d) >= 0;
+      }
+    );
   if (typeof cfg.darkMode !== 'boolean'){
     cfg.darkMode = false;
   }
@@ -1932,11 +1963,6 @@
   }
   updateClock();
   updateCountdown();
-  /*
-    時計・0.99・プログレスバーを1本のRAFに統合。
-    0.99は従来どおり10ms単位で更新し、フレームレートは落とさない。
-    Date.now()も1フレームにつき1回だけ取得する。
-  */
   var centiLastTick = -1;
   var progressLastTick = -1;
   var headerLastTick = -1;
@@ -1944,7 +1970,6 @@
   var lastSecondTick = -1;
   function updateAnimationFrame(){
     var t = Date.now();
-    /* ヘッダーの百分の一秒 */
     var headerTick = Math.floor(t / 10);
     if (headerTick !== headerLastTick){
       headerLastTick = headerTick;
@@ -1954,7 +1979,6 @@
         nowCsEl.textContent = headerCs;
       }
     }
-    /* カードの0.99部分。10ms単位の更新を維持 */
     if (headerTick !== centiLastTick){
       centiLastTick = headerTick;
       for (var i=0;i<refs.length;i++){
@@ -1973,7 +1997,6 @@
         }
       }
     }
-    /* プログレスバーは従来どおり20fps */
     var progressTick = Math.floor(t / 50);
     if (progressRunning && progressTick !== progressLastTick){
       progressLastTick = progressTick;
@@ -2878,20 +2901,35 @@
     $('#darkModeToggle');
   var swDarkMode =
     $('#swDarkMode');
-  (function(){
+  function isNotifyDaySelected(d){
+    return cfg.notifyDays.indexOf(d) >= 0;
+  }
+  function renderNotifyDayButtons(){
     var html = '';
     NOTIFY_DAYS.forEach(
       function(d){
+        var selected =
+          isNotifyDaySelected(d);
         html +=
-          '<span class="chip' +
+          '<button' +
+          ' type="button"' +
+          ' class="chip' +
+          (selected ? ' selected' : '') +
           (d === 0 ? ' now' : '') +
+          '"' +
+          ' data-day="' +
+          d +
+          '"' +
+          ' aria-pressed="' +
+          (selected ? 'true' : 'false') +
           '">' +
           (d === 0 ? '当日' : d) +
-          '</span>';
+          '</button>';
       }
     );
     chips.innerHTML = html;
-  })();
+  }
+  renderNotifyDayButtons();
   function applyDarkMode(){
     var bg =
       document.querySelector('.bg');
@@ -2915,6 +2953,31 @@
         : 'false'
     );
   }
+  function syncNotifyDayUI(){
+    var buttons =
+      chips.querySelectorAll('.chip');
+    for (
+      var i=0;
+      i<buttons.length;
+      i++
+    ){
+      var button = buttons[i];
+      var d =
+        Number(button.getAttribute('data-day'));
+      var selected =
+        isNotifyDaySelected(d);
+      button.classList.toggle(
+        'selected',
+        selected
+      );
+      button.setAttribute(
+        'aria-pressed',
+        selected
+          ? 'true'
+          : 'false'
+      );
+    }
+  }
   function syncNotifyUI(){
     swNotify.classList.toggle(
       'on',
@@ -2924,6 +2987,7 @@
       'off',
       !cfg.notify
     );
+    syncNotifyDayUI();
     for (
       var i=0;
       i<refs.length;
@@ -2939,6 +3003,35 @@
         );
     }
   }
+  chips.addEventListener(
+    'click',
+    function(e){
+      var button =
+        e.target.closest('.chip');
+      if (!button){
+        return;
+      }
+      var d =
+        Number(button.getAttribute('data-day'));
+      var index =
+        cfg.notifyDays.indexOf(d);
+      if (index >= 0){
+        cfg.notifyDays.splice(index, 1);
+      }else{
+        cfg.notifyDays.push(d);
+        cfg.notifyDays =
+          NOTIFY_DAYS.filter(
+            function(day){
+              return cfg.notifyDays.indexOf(day) >= 0;
+            }
+          );
+      }
+      persistCfg();
+      syncNotifyDayUI();
+      haptic(6);
+      checkNotify();
+    }
+  );
   function openPanel(){
     panel.classList.add(
       'show'
@@ -3242,7 +3335,7 @@
         var d =
           dayDiff(it.ts);
         if (
-          NOTIFY_DAYS.indexOf(d) < 0
+          cfg.notifyDays.indexOf(d) < 0
         ){
           return;
         }
