@@ -3130,31 +3130,6 @@
           bell.hidden = false;
         }
       }
-      function syncNotifyUI() {
-        swNotify.classList.toggle(
-          'on',
-          !!cfg.notify
-        );
-        chips.classList.toggle(
-          'off',
-          !cfg.notify
-        );
-        syncNotifyDayUI();
-        for (
-          var i = 0;
-          i < refs.length;
-          i++
-        ) {
-          refs[i]
-            .row
-            .querySelector('.bell-dot')
-            .hidden =
-            !(
-              refs[i].it.notify &&
-              cfg.notify
-            );
-        }
-      }
       chips.addEventListener(
         'click',
         function (e) {
