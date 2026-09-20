@@ -1031,6 +1031,33 @@
         <i></i>
       </div>
     </div>
+    <div class="divider"></div>
+    <!-- Dark mode -->
+    <div class="prow"
+         id="darkModeToggle"
+         role="group"
+         aria-label="dark mode">
+      <span class="ic" aria-hidden="true">
+        <svg viewBox="0 0 24 24"
+             fill="none"
+             stroke="currentColor"
+             stroke-width="1.7"
+             stroke-linecap="round"
+             stroke-linejoin="round"
+             width="22"
+             height="22">
+          <path d="M20.5 15.5A8.5 8.5 0 0 1 8.5 3.5a8.5 8.5 0 1 0 12 12z"/>
+        </svg>
+      </span>
+      <span class="sp">dark mode</span>
+      <div class="sw"
+           id="swDarkMode"
+           role="switch"
+           aria-checked="false"
+           aria-label="dark mode">
+        <i></i>
+      </div>
+    </div>
   </aside>
   <!-- === 編集シート === -->
   <div class="scrim" id="scrim"></div>
@@ -1163,10 +1190,14 @@
   }
   var cfg = loadJSON(K_CFG, {
     notify:false,
-    sortDesc:false
+    sortDesc:false,
+    darkMode:false
   });
   if (typeof cfg.sortDesc !== 'boolean'){
     cfg.sortDesc = false;
+  }
+  if (typeof cfg.darkMode !== 'boolean'){
+    cfg.darkMode = false;
   }
   var fired = loadJSON(K_FIRED, {});
   function persist(){
@@ -2825,6 +2856,10 @@
   var swSakura =
     $('#swSakura');
   var sakuraPaused = false;
+  var darkModeToggle =
+    $('#darkModeToggle');
+  var swDarkMode =
+    $('#swDarkMode');
   (function(){
     var html = '';
     NOTIFY_DAYS.forEach(
@@ -2839,6 +2874,29 @@
     );
     chips.innerHTML = html;
   })();
+  function applyDarkMode(){
+    var bg =
+      document.querySelector('.bg');
+    if (!bg){
+      return;
+    }
+    bg.style.backgroundImage =
+      cfg.darkMode
+        ? 'url("background-dark.PNG")'
+        : 'url("background.PNG")';
+  }
+  function syncDarkModeUI(){
+    swDarkMode.classList.toggle(
+      'on',
+      !!cfg.darkMode
+    );
+    swDarkMode.setAttribute(
+      'aria-checked',
+      cfg.darkMode
+        ? 'true'
+        : 'false'
+    );
+  }
   function syncNotifyUI(){
     swNotify.classList.toggle(
       'on',
@@ -3235,7 +3293,22 @@
       }
     }
   );
+  /* === ダークモード === */
+  darkModeToggle.addEventListener(
+    'click',
+    function(){
+      cfg.darkMode =
+        !cfg.darkMode;
+
+      persistCfg();
+      applyDarkMode();
+      syncDarkModeUI();
+      haptic(6);
+    }
+  );
   /* === 起動 === */
+  applyDarkMode();
+  syncDarkModeUI();
   render();
   syncNotifyUI();
   syncSortUI();
