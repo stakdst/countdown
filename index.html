@@ -99,6 +99,26 @@
     background-size:cover;
     background-repeat:no-repeat;
   }
+  .bg::after{
+    content:"";
+    position:absolute;
+    inset:0;
+    background-image:url("background-dark.PNG");
+    background-position:55% center;
+    background-size:cover;
+    background-repeat:no-repeat;
+    opacity:0;
+    pointer-events:none;
+    transition:opacity .8s ease;
+  }
+  .bg.dark::after{
+    opacity:1;
+  }
+  @media (prefers-reduced-motion:reduce){
+    .bg::after{
+      transition:none;
+    }
+  }
   .sakura-layer{
     position:fixed;
     inset:0;
@@ -2880,10 +2900,10 @@
     if (!bg){
       return;
     }
-    bg.style.backgroundImage =
-      cfg.darkMode
-        ? 'url("background-dark.PNG")'
-        : 'url("background.PNG")';
+    bg.classList.toggle(
+      'dark',
+      !!cfg.darkMode
+    );
   }
   function syncDarkModeUI(){
     swDarkMode.classList.toggle(
