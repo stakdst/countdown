@@ -409,6 +409,7 @@
     min-width:2ch;
     text-align:right;
     font-variant-numeric:tabular-nums;
+    text-shadow:0 2px 5px rgba(0,0,0,.68), 0 1px 2px rgba(0,0,0,.48);
   }
   .count small{
     font-size:.74em;
@@ -417,7 +418,7 @@
     opacity:.96
   }
   .item.past .count{
-    color:#ffd3e2
+    color:#ffd3e2;
   }
   .item.soon .count{
     color:#fff0f5;
@@ -1981,15 +1982,12 @@
         if (!pr.visible){
           continue;
         }
-        var created =
-          pr.it.created ||
-          (pr.it.ts - 86400000);
-        var span =
-          pr.it.ts - created;
+        var created = pr.it.created;
+        var span = pr.it.ts - created;
         var p =
           span > 0
             ? clamp(
-                (t-created)/span,
+                (t - created) / span,
                 0,
                 1
               )
