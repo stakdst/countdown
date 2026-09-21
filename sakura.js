@@ -229,8 +229,6 @@
             : rand(34, 48);
       const travelX = rand(135, 170);
       const travelY = rand(115, 155);
-      <!-- const travelX = rand(105, 140); -->
-      <!-- const travelY = rand(90, 130); -->
       const fromRightEdge =
         index % 2 === 0;
       const startX = fromRightEdge
