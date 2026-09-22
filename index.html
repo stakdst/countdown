@@ -64,9 +64,13 @@
       margin: 0;
       width: 100%;
       height: 100%;
-      min-height: 100vh;
-      min-height: 100lvh;
+      /* height: 100vh; */
+      /* height: 100lvh; */
+      min-height: 100%;
+      /* min-height: 100vh; */
+      /* min-height: 100lvh; */
       overflow: hidden;
+      background: #111827;
     }
     body {
       font-family:
@@ -87,11 +91,9 @@
       position: fixed;
       inset: 0;
       z-index: 0;
-      width: 100%;
-      height: 10dvh;
-      min-height: 100dvh;
+      /* background: #3897fd; */
       background-image: url("background.PNG");
-      background-position: 57% center;
+      background-position: 62% center;
       background-size: cover;
       background-repeat: no-repeat;
     }
@@ -99,8 +101,9 @@
       content: "";
       position: absolute;
       inset: 0;
+      /* background: #111827; */
       background-image: url("background-dark.PNG");
-      background-position: 57% center;
+      background-position: 62% center;
       background-size: cover;
       background-repeat: no-repeat;
       opacity: 0;
@@ -236,9 +239,9 @@
       overflow-x: hidden;
       -webkit-overflow-scrolling: touch;
       scrollbar-width: none;
-      padding: 4px 2px calc(130px + var(--safe-b));
+      padding: 4px 2px;
       overscroll-behavior: contain;
-    }
+      }
     .list::-webkit-scrollbar {
       display: none
     }
@@ -1015,8 +1018,7 @@
     }
   </style>
 </head>
-<body>
-  <div class="bg" aria-hidden="true"></div>
+<body class="bg">
   <div class="sakura-layer" id="sakura" aria-hidden="true"></div>
   <main class="app">
     <header class="topbar">
