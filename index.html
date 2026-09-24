@@ -258,6 +258,14 @@
       transform: translateY(-8px) rotate(-45deg)
     }
 
+    /* === 百分の一秒表示オフ === */
+    .centiseconds-off .clock-dot,
+    .centiseconds-off #nowCs,
+    .centiseconds-off .count .cs-separator,
+    .centiseconds-off .count .cs {
+      display: none;
+    }
+
     /* === リスト === */
     .list {
       flex: 1 1 auto;
@@ -1182,8 +1190,11 @@
       <div class="brand">SAKURA COUNTDOWN</div>
       <div class="now" id="now">
         <span id="nowDate">---- / -- / --</span>
-        <span id="nowTime"><span id="nowHms">--:--:--</span><span class="clock-dot">.</span><span
-            id="nowCs">--</span></span>
+        <span id="nowTime">
+          <span id="nowHms">--:--:--</span>
+          <span class="clock-dot">.</span>
+          <span id="nowCs">--</span>
+        </span>
       </div>
       <button class="iconbtn menu" id="menuBtn" aria-label="menu">
         <span class="hamburger">
@@ -1214,6 +1225,20 @@
       </div>
     </div>
     <div class="chips off" id="chips"></div>
+    <div class="divider"></div>
+    <div class="prow" id="centisecondsToggle" role="group" aria-label="10ms表示">
+      <span class="ic" aria-hidden="true">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round"
+          stroke-linejoin="round" width="22" height="22">
+          <circle cx="12" cy="12" r="8"></circle>
+          <path d="M12 8v4l2.5 2"></path>
+        </svg>
+      </span>
+      <span class="sp">0.00</span>
+      <div class="sw on" id="swCentiseconds" role="switch" aria-checked="true" aria-label="10ms表示">
+        <i></i>
+      </div>
+    </div>
     <div class="divider"></div>
     <button class="prow" id="sortBtn" type="button" aria-label="sort">
       <span class="ic">
@@ -1359,6 +1384,7 @@
         notify: false,
         sortDesc: false,
         darkMode: false,
+        centiseconds: true,
         notifyDays: [0, 1, 7, 30, 100]
       });
       if (typeof cfg.sortDesc !== 'boolean') {
@@ -1366,6 +1392,9 @@
       }
       if (typeof cfg.darkMode !== 'boolean') {
         cfg.darkMode = false;
+      }
+      if (typeof cfg.centiseconds !== 'boolean') {
+        cfg.centiseconds = true;
       }
       if (!Array.isArray(cfg.notifyDays)) {
         cfg.notifyDays = [0];
@@ -2211,7 +2240,9 @@
             '</div>' +
             '<div class="count">' +
             '<span class="n"></span>' +
-            '<small>日 <span class="rest"></span>.<span class="cs"></span></small>' +
+            '<small>日 <span class="rest"></span>' +
+            '<span class="cs-separator">.</span>' +
+            '<span class="cs"></span></small>' +
             '</div>' +
             '<div class="bar">' +
             '<i></i>' +
@@ -2443,11 +2474,15 @@
       var progressRunning = true;
       var lastSecondTick = -1;
       function updateAnimationFrame() {
+        if (!cfg.centiseconds) {
+          return;
+        }
         var t = Date.now();
         var headerTick = Math.floor(t / 10);
         if (headerTick !== headerLastTick) {
           headerLastTick = headerTick;
-          var headerCs = pad2(Math.floor((t % 1000) / 10));
+          var headerCs =
+            pad2(Math.floor((t % 1000) / 10));
           if (headerCs !== lastHeaderCs) {
             lastHeaderCs = headerCs;
             nowCsEl.textContent = headerCs;
@@ -2471,42 +2506,15 @@
             }
           }
         }
-        var progressTick = Math.floor(t / 50);
-        if (progressRunning && progressTick !== progressLastTick) {
-          progressLastTick = progressTick;
-          for (var j = 0; j < refs.length; j++) {
-            var pr = refs[j];
-            if (!pr.visible) {
-              continue;
-            }
-            var created = pr.it.created;
-            var span = pr.it.ts - created;
-            var p =
-              span > 0
-                ? clamp(
-                  (t - created) / span,
-                  0,
-                  1
-                )
-                : 1;
-            var width =
-              (p * 100).toFixed(1) +
-              '%';
-            if (
-              pr.bar.style.width !==
-              width
-            ) {
-              pr.bar.style.width =
-                width;
-            }
-          }
-        }
         requestAnimationFrame(updateAnimationFrame);
       }
-      requestAnimationFrame(updateAnimationFrame);
+      if (cfg.centiseconds) {
+        requestAnimationFrame(updateAnimationFrame);
+      }
       setInterval(function () {
         updateClock();
         updateCountdown();
+        updateProgress(Date.now());
       }, 100);
       /* === ジェスチャー === */
       var OPEN_X = -96;
@@ -3412,6 +3420,10 @@
         $('#darkModeToggle');
       var swDarkMode =
         $('#swDarkMode');
+      var centisecondsToggle =
+        $('#centisecondsToggle');
+      var swCentiseconds =
+        $('#swCentiseconds');
       function isNotifyDaySelected(d) {
         return cfg.notifyDays.indexOf(d) >= 0;
       }
@@ -3450,6 +3462,30 @@
         bg.classList.toggle(
           'dark',
           !!cfg.darkMode
+        );
+      }
+      function applyCentisecondsUI() {
+        document.body.classList.toggle(
+          'centiseconds-off',
+          !cfg.centiseconds
+        );
+      }
+      function syncCentisecondsUI() {
+        swCentiseconds.classList.toggle(
+          'on',
+          !!cfg.centiseconds
+        );
+        swCentiseconds.setAttribute(
+          'aria-checked',
+          cfg.centiseconds
+            ? 'true'
+            : 'false'
+        );
+        swCentiseconds.setAttribute(
+          'aria-label',
+          cfg.centiseconds
+            ? '10ms表示 オン'
+            : '10ms表示 オフ'
         );
       }
       function syncDarkModeUI() {
@@ -3643,6 +3679,25 @@
             syncNotifyUI();
             haptic(6);
           }
+        }
+      );
+      /* === 10ms表示 === */
+      centisecondsToggle.addEventListener(
+        'click',
+        function () {
+          cfg.centiseconds =
+            !cfg.centiseconds;
+          persistCfg();
+          applyCentisecondsUI();
+          syncCentisecondsUI();
+          if (cfg.centiseconds) {
+            lastHeaderCs = '';
+            centiLastTick = -1;
+            requestAnimationFrame(
+              updateAnimationFrame
+            );
+          }
+          haptic(6);
         }
       );
       function shakePanel() {
@@ -3951,6 +4006,8 @@
       /* === 起動 === */
       applyDarkMode();
       syncDarkModeUI();
+      applyCentisecondsUI();
+      syncCentisecondsUI();
       render();
       syncNotifyUI();
       syncSortUI();
