@@ -1191,9 +1191,7 @@
       <div class="now" id="now">
         <span id="nowDate">---- / -- / --</span>
         <span id="nowTime">
-          <span id="nowHms">--:--:--</span>
-          <span class="clock-dot">.</span>
-          <span id="nowCs">--</span>
+          <span id="nowHms">--:--:--</span><span class="clock-dot">.</span><span id="nowCs">--</span>
         </span>
       </div>
       <button class="iconbtn menu" id="menuBtn" aria-label="menu">
@@ -2441,9 +2439,6 @@
               !!pastState
             );
           }
-          /*
-            24時間以内
-          */
           var soonState =
             (!o.past &&
               diff < 86400000)
